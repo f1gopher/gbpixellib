@@ -42,11 +42,14 @@ type CPU struct {
 	opcodes map[byte]func()
 
 	debugLogFile *os.File
+
+	count int
 }
 
 func CreateCPU(memory *memory.Memory) *CPU {
 	chip := CPU{
 		memory: memory,
+		count:  2,
 	}
 
 	// TODO - opcodes range from 0-256 so we can use an array instead
@@ -179,6 +182,32 @@ func CreateCPU(memory *memory.Memory) *CPU {
 		0xF0: chip.op_LDH_A_n,
 		0xFE: chip.op_CP_n,
 		0xFA: chip.op_LD_A_nn,
+		0xE6: chip.op_AND_n,
+		0xC4: chip.op_CALL_NZ_nn,
+		0xCC: chip.op_CALL_Z_nn,
+		0xD4: chip.op_CALL_NC_nn,
+		0xDC: chip.op_CALL_C_nn,
+		0x70: chip.op_LD_HL_B,
+		0x71: chip.op_LD_HL_C,
+		0x72: chip.op_LD_HL_D,
+		0x73: chip.op_LD_HL_E,
+		0x74: chip.op_LD_HL_H,
+		0x75: chip.op_LD_HL_L,
+		0x77: chip.op_LD_HL_A,
+		0x1A: chip.op_LD_A_DE,
+		0x22: chip.op_LD_HL_plus_A,
+		0x32: chip.op_LD_HL_sub_A,
+		0xC6: chip.op_ADD_n,
+		0xD6: chip.op_SUB_n,
+		0x46: chip.op_LD_B_HL,
+		0x56: chip.op_LD_D_HL,
+		0x66: chip.op_LD_H_HL,
+		0x4E: chip.op_LD_C_HL,
+		0x5E: chip.op_LD_E_HL,
+		0x6E: chip.op_LD_L_HL,
+		0x7E: chip.op_LD_A_HL,
+		0xAE: chip.op_XOR_HL,
+		0xCB: chip.op_CB_op,
 	}
 
 	return &chip
@@ -213,7 +242,7 @@ func (c *CPU) SetDebugLog(file string) error {
 func (c *CPU) Tick() {
 	opcode := c.memory.ReadByte(c.regPC)
 
-	//	fmt.Printf("Op: 0x%02X ", opcode)
+	fmt.Printf("%d - Op: 0x%02X ", c.count, opcode)
 
 	executor, exists := c.opcodes[opcode]
 	if !exists {
@@ -225,6 +254,8 @@ func (c *CPU) Tick() {
 	executor()
 
 	c.debugLog()
+
+	c.count++
 }
 
 func (c *CPU) getRegShort(reg register) uint16 {
@@ -400,7 +431,7 @@ func (c *CPU) debugLog() {
 		p3,
 		p4)
 
-	//	fmt.Print(msg)
+	fmt.Print(msg)
 	if c.debugLogFile != nil {
 		c.debugLogFile.WriteString(msg)
 	}
@@ -508,6 +539,45 @@ func (c *CPU) op_LDH_n_A() {
 	var addr uint16 = 0xFF00 | uint16(n)
 	c.memory.WriteByte(addr, c.getRegByte(A))
 }
+
+func (c *CPU) op_LD_HL_B() { c.LD_HL_x(B) }
+func (c *CPU) op_LD_HL_C() { c.LD_HL_x(C) }
+func (c *CPU) op_LD_HL_D() { c.LD_HL_x(D) }
+func (c *CPU) op_LD_HL_E() { c.LD_HL_x(E) }
+func (c *CPU) op_LD_HL_H() { c.LD_HL_x(H) }
+func (c *CPU) op_LD_HL_L() { c.LD_HL_x(L) }
+func (c *CPU) op_LD_HL_A() { c.LD_HL_x(A) }
+
+func (c *CPU) LD_HL_x(reg register) {
+	c.memory.WriteByte(c.regHL, c.getRegByte(reg))
+}
+
+func (c *CPU) op_LD_A_DE() {
+	c.setRegByte(A, c.memory.ReadByte(c.getRegShort(DE)))
+}
+
+func (c *CPU) op_LD_HL_plus_A() {
+	c.memory.WriteByte(c.regHL, c.getRegByte(A))
+	c.regHL++
+}
+
+func (c *CPU) op_LD_HL_sub_A() {
+	c.memory.WriteByte(c.regHL, c.getRegByte(A))
+	c.regHL--
+}
+
+func (c *CPU) op_LD_B_HL() { c.LD_x_HL(B) }
+func (c *CPU) op_LD_D_HL() { c.LD_x_HL(D) }
+func (c *CPU) op_LD_H_HL() { c.LD_x_HL(H) }
+func (c *CPU) op_LD_C_HL() { c.LD_x_HL(C) }
+func (c *CPU) op_LD_E_HL() { c.LD_x_HL(E) }
+func (c *CPU) op_LD_L_HL() { c.LD_x_HL(L) }
+func (c *CPU) op_LD_A_HL() { c.LD_x_HL(A) }
+
+func (c *CPU) LD_x_HL(reg register) {
+	c.setRegByte(reg, c.memory.ReadByte(c.regHL))
+}
+
 func (c *CPU) op_INC_C()  { c.incrementByteRegister(C) }
 func (c *CPU) op_INC_E()  { c.incrementByteRegister(E) }
 func (c *CPU) op_INC_L()  { c.incrementByteRegister(L) }
@@ -550,19 +620,43 @@ func (c *CPU) decrementByteRegister(reg register) {
 
 func (c *CPU) incrementShortRegister(reg register) {
 	current := c.getRegShort(reg) + 1
-	c.setFlagZ(current == 0)
-	c.setFlagN(false)
-	c.setFlagH(current&0x10 == 0x10)
-	c.setFlagC(true) // TODO - why?
+	//	c.setFlagZ(current == 0)
+	//	c.setFlagN(true) // TODO - why?
+	//	c.setFlagH(current&0x10 == 0x10)
+	//	c.setFlagC(true) // TODO - why?
 	c.setRegShort(reg, current)
 }
 
 func (c *CPU) decrementShortRegister(reg register) {
 	current := c.getRegShort(reg) + 1
-	c.setFlagZ(current == 0)
-	c.setFlagN(true)
-	c.setFlagH(current&0x10 == 0x10)
+	//	c.setFlagZ(current == 0)
+	//	c.setFlagN(true)
+	//	c.setFlagH(current&0x10 == 0x10)
 	c.setRegShort(reg, current)
+}
+
+func (c *CPU) op_ADD_n() {
+	n := c.memory.ReadByte(c.regPC)
+	c.regPC++
+	a := c.getRegByte(A)
+	result := a + n
+	c.setRegByte(A, result)
+	c.setFlagZ(result == 0)
+	c.setFlagN(false)
+	c.setFlagH((a & 0x10) == 0x10)
+	c.setFlagC((a & 0x0F) == 0x0F)
+}
+
+func (c *CPU) op_SUB_n() {
+	n := c.memory.ReadByte(c.regPC)
+	c.regPC++
+	a := c.getRegByte(A)
+	result := a - n
+	c.setRegByte(A, result)
+	c.setFlagZ(result == 0)
+	c.setFlagN(true)
+	c.setFlagH((a & 0x10) == 0x10)
+	c.setFlagC((a & 0x0F) == 0x0F)
 }
 
 func (c *CPU) op_NOP() {}
@@ -616,6 +710,21 @@ func (c *CPU) op_CALL_nn() {
 	c.regSP -= 2
 	c.memory.WriteShort(c.regSP, c.regPC)
 	c.regPC = nn
+}
+
+func (c *CPU) op_CALL_NZ_nn() { c.callCondition(!c.getFlagZ()) }
+func (c *CPU) op_CALL_Z_nn()  { c.callCondition(c.getFlagZ()) }
+func (c *CPU) op_CALL_NC_nn() { c.callCondition(!c.getFlagC()) }
+func (c *CPU) op_CALL_C_nn()  { c.callCondition(c.getFlagC()) }
+
+func (c *CPU) callCondition(condition bool) {
+	nn := c.memory.ReadShort(c.regPC)
+	c.regPC += 2
+	if !c.getFlagZ() {
+		c.regSP -= 2
+		c.memory.WriteShort(c.regSP, c.regPC)
+		c.setRegShort(PC, nn)
+	}
 }
 
 func (c *CPU) op_RET() {
@@ -694,14 +803,25 @@ func (c *CPU) xor(reg register) {
 	c.setFlagC(false)
 }
 
+func (c *CPU) op_XOR_HL() {
+	data := c.memory.ReadByte(c.getRegShort(HL))
+	result := c.getRegByte(A) ^ data
+	c.setRegByte(A, result)
+	c.setFlagZ(result == 0)
+	c.setFlagN(false)
+	c.setFlagH(false)
+	c.setFlagC(false)
+}
+
 func (c *CPU) op_CP_n() {
 	n := c.memory.ReadByte(c.regPC)
 	c.regPC++
-	result := c.getRegByte(A) - n
+	a := c.getRegByte(A)
+	result := a - n
 	c.setFlagZ(result == 0)
 	c.setFlagN(true)
-	c.setFlagH(((result - 1) & 0x0F) == 0x0F)
-	c.setFlagC(((result - 1) & 0xF0) == 0xF0)
+	c.setFlagH(((result - 1) & 0x0F) != 0x0F)
+	c.setFlagC(a < n)
 }
 
 func (c *CPU) op_LDH_A_n() {
@@ -714,4 +834,54 @@ func (c *CPU) op_LD_A_nn() {
 	nn := c.memory.ReadShort(c.regPC)
 	c.regPC += 2
 	c.setRegByte(A, c.memory.ReadByte(nn))
+}
+
+func (c *CPU) op_AND_n() {
+	n := c.memory.ReadByte(c.regPC)
+	c.regPC++
+	result := c.getRegByte(A) & n
+	c.setRegByte(A, n)
+	c.setFlagZ(result == 0)
+	c.setFlagN(false)
+	c.setFlagH(true)
+	c.setFlagC(false)
+}
+
+func (c *CPU) op_CB_op() {
+	// TODO - no idea if this is right
+	op := c.memory.ReadByte(c.regPC)
+	c.regPC++
+
+	var reg register
+	switch op {
+	case 0x37:
+		reg = A
+	case 0x30:
+		reg = B
+	case 0x31:
+		reg = C
+	case 0x32:
+		reg = D
+	case 0x33:
+		reg = E
+	case 0x34:
+		reg = H
+	case 0x35:
+		reg = L
+	case 0x36:
+		reg = HL
+	default:
+		//	panic(fmt.Sprintf("Unknown op for CB: 0x%02X", op))
+		// TODO - implement loads of things
+		return
+	}
+
+	n := c.getRegByte(reg)
+	// TODO - swap upper and lower nibbles
+	c.setRegByte(reg, n)
+
+	c.setFlagZ(n == 0)
+	c.setFlagN(false)
+	c.setFlagH(false)
+	c.setFlagC(false)
 }
