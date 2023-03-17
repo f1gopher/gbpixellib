@@ -18,6 +18,15 @@ func CreateMemory() *Memory {
 	}
 }
 
+func (m *Memory) ReadBit(address uint16, bit byte) bool {
+	if bit < 0 || bit > 7 {
+		panic(fmt.Sprintf("Invalid bit: %d", bit))
+	}
+
+	value := m.ReadByte(address)
+	return (value>>bit)&0x01 == 0x01
+}
+
 func (m *Memory) ReadByte(address uint16) byte {
 	// TODO - remove after implementing screen
 	// Only used for debug ROMs

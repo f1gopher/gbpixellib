@@ -1,43 +1,60 @@
 package display
 
-import "fmt"
+import "go-boy/memory"
 
 const screenWidth = 160
 const screenHeight = 144
 
-type ScreenColor int
+const lcdcRegister = 0xFF40
+const lcdStatus = 0xFF41
+
+type lcdStatusMode int
 
 const (
-	Color0 ScreenColor = iota
-	Color1
-	Color2
-	Color3
-	Blank
+	hblank lcdStatusMode = iota
+	vblank
+	searchOAM
+	transferringToController
 )
 
-func (s ScreenColor) String() string {
-	return [...]string{"#", "x", "o", ".", " "}[s]
+type screenColor int
+
+const (
+	white screenColor = iota
+	lightGray
+	darkGray
+	black
+)
+
+func (s screenColor) String() string {
+	return [...]string{"#", "o", ".", " "}[s]
 }
 
-type screen struct {
-	buffer []ScreenColor
+type Screen struct {
+	memory *memory.Memory
+
+	buffer []screenColor
 }
 
-func CreateScreen() *screen {
-	return &screen{
-		buffer: make([]ScreenColor, screenWidth*screenHeight),
+func CreateScreen(memory *memory.Memory) *Screen {
+	return &Screen{
+		memory: memory,
+		buffer: make([]screenColor, screenWidth*screenHeight),
 	}
 }
 
-func (s *screen) Render() {
-	for x := 0; x < screenWidth; x++ {
-		for y := 0; y < screenHeight; y++ {
-			fmt.Print(s.buffer[x*screenWidth+y].String())
+func (s *Screen) Render() string {
+	var output string
+	for y := 0; y < screenHeight; y++ {
+		for x := 0; x < screenWidth; x++ {
+			output += s.buffer[y*screenWidth+x].String()
 		}
-		fmt.Print("\n")
+		output += "\n"
 	}
+
+	return output
 }
 
-func (s *screen) Set(x int, y int, value ScreenColor) {
-	s.buffer[screenWidth*x+y] = value
+func (s *Screen) read() {
+
 }
