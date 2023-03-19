@@ -49,7 +49,7 @@ type CPU struct {
 func CreateCPU(memory *memory.Memory) *CPU {
 	chip := CPU{
 		memory: memory,
-		count:  2,
+		count:  0,
 	}
 
 	// TODO - opcodes range from 0-256 so we can use an array instead
@@ -208,6 +208,8 @@ func CreateCPU(memory *memory.Memory) *CPU {
 		0x7E: chip.op_LD_A_HL,
 		0xAE: chip.op_XOR_HL,
 		0xCB: chip.op_CB_op,
+		0xE2: chip.op_LDH_C_A,
+		0x17: chip.op_RL_A,
 	}
 
 	return &chip
@@ -228,6 +230,46 @@ func (c *CPU) InitForTestROM() {
 	c.debugLog()
 }
 
+func (c *CPU) Init() {
+	c.setRegShort(PC, 0x0000) //0x100)
+	c.setRegShort(AF, 0x01B0)
+	c.setRegShort(BC, 0x0013)
+	c.setRegShort(DE, 0x00D8)
+	c.setRegShort(HL, 0x014D)
+	c.setRegShort(SP, 0xFFFE)
+	c.memory.WriteByte(0xFF05, 0x00)
+	c.memory.WriteByte(0xFF06, 0x00)
+	c.memory.WriteByte(0xFF07, 0x00)
+	c.memory.WriteByte(0xFF10, 0x80)
+	c.memory.WriteByte(0xFF11, 0xBF)
+	c.memory.WriteByte(0xFF12, 0xF3)
+	c.memory.WriteByte(0xFF14, 0xBF)
+	c.memory.WriteByte(0xFF16, 0x3F)
+	c.memory.WriteByte(0xFF17, 0x00)
+	c.memory.WriteByte(0xFF19, 0xBF)
+	c.memory.WriteByte(0xFF1A, 0x7F)
+	c.memory.WriteByte(0xFF1B, 0xFF)
+	c.memory.WriteByte(0xFF1C, 0x9F)
+	c.memory.WriteByte(0xFF1E, 0xBF)
+	c.memory.WriteByte(0xFF20, 0xFF)
+	c.memory.WriteByte(0xFF21, 0x00)
+	c.memory.WriteByte(0xFF22, 0x00)
+	c.memory.WriteByte(0xFF23, 0xBF)
+	c.memory.WriteByte(0xFF24, 0x77)
+	c.memory.WriteByte(0xFF25, 0xF3)
+	c.memory.WriteByte(0xFF26, 0xF1)
+	c.memory.WriteByte(0xFF40, 0x91)
+	c.memory.WriteByte(0xFF42, 0x00)
+	c.memory.WriteByte(0xFF43, 0x00)
+	c.memory.WriteByte(0xFF45, 0x00)
+	c.memory.WriteByte(0xFF47, 0xFC)
+	c.memory.WriteByte(0xFF48, 0xFF)
+	c.memory.WriteByte(0xFF49, 0xFF)
+	c.memory.WriteByte(0xFF4A, 0x00)
+	c.memory.WriteByte(0xFF4B, 0x00)
+	c.memory.WriteByte(0xFFFF, 0x00)
+}
+
 func (c *CPU) SetDebugLog(file string) error {
 	var err error
 	c.debugLogFile, err = os.Create(file)
@@ -242,7 +284,7 @@ func (c *CPU) SetDebugLog(file string) error {
 func (c *CPU) Tick() {
 	opcode := c.memory.ReadByte(c.regPC)
 
-	fmt.Printf("%d - Op: 0x%02X ", c.count, opcode)
+	//fmt.Printf("%d - Op: 0x%02X ", c.count, opcode)
 
 	executor, exists := c.opcodes[opcode]
 	if !exists {
@@ -408,14 +450,25 @@ func (c *CPU) setRegBit(reg register, bit int, value bool) {
 }
 
 func (c *CPU) debugLog() {
+	msg := c.Debug()
+	//fmt.Print(msg)
+	if c.debugLogFile != nil {
+		c.debugLogFile.WriteString(msg)
+	}
+}
+
+func (c *CPU) Debug() string {
+
 	// TODO - handle the PC address being 0xFFFF so trying to read would go past the end
 	p1 := c.memory.ReadByte(c.regPC)
 	p2 := c.memory.ReadByte(c.regPC + 1)
 	p3 := c.memory.ReadByte(c.regPC + 2)
 	p4 := c.memory.ReadByte(c.regPC + 3)
 
-	msg := fmt.Sprintf(
-		"A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
+	return fmt.Sprintf(
+		"%d=>Next_Opcode:0x%02X A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
+		c.count,
+		p1,
 		c.getRegByte(A),
 		c.getRegByte(F),
 		c.getRegByte(B),
@@ -430,11 +483,6 @@ func (c *CPU) debugLog() {
 		p2,
 		p3,
 		p4)
-
-	fmt.Print(msg)
-	if c.debugLogFile != nil {
-		c.debugLogFile.WriteString(msg)
-	}
 }
 
 func (c *CPU) op_LD_B_B() { c.loadByte(B, B) }
@@ -564,6 +612,11 @@ func (c *CPU) op_LD_HL_plus_A() {
 func (c *CPU) op_LD_HL_sub_A() {
 	c.memory.WriteByte(c.regHL, c.getRegByte(A))
 	c.regHL--
+}
+
+func (c *CPU) op_LDH_C_A() {
+	addr := 0xFF00 | uint16(c.getRegByte(C))
+	c.memory.WriteByte(addr, c.getRegByte(A))
 }
 
 func (c *CPU) op_LD_B_HL() { c.LD_x_HL(B) }
@@ -884,4 +937,22 @@ func (c *CPU) op_CB_op() {
 	c.setFlagN(false)
 	c.setFlagH(false)
 	c.setFlagC(false)
+}
+
+func (c *CPU) op_RL_A() { c.rotateLeft(A) }
+
+func (c *CPU) rotateLeft(reg register) {
+	result := c.getRegByte(reg)
+
+	carry := result & 0x80
+	carry = carry >> 7
+	result = result << 1
+	result = result & 0xFE
+	result = result | carry
+
+	c.setRegByte(reg, result)
+	c.setFlagZ(result == 0)
+	c.setFlagN(false)
+	c.setFlagH(false)
+	c.setFlagC(carry&0x01 == 0x01)
 }

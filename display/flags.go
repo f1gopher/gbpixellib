@@ -4,7 +4,7 @@ func (s *Screen) lcdEnable() bool {
 	return s.memory.ReadBit(lcdcRegister, 7)
 }
 
-func (s *Screen) windowTileMpaStart() uint16 {
+func (s *Screen) windowTileMapStart() uint16 {
 	if s.memory.ReadBit(lcdcRegister, 6) {
 		return 0x9C00
 	}

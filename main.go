@@ -26,6 +26,7 @@ func main() {
 	// time.Sleep(time.Millisecond * 10)
 	//}
 
-	system := system.CreateSystem("./bios/dmg.bin", "")
+	system := system.CreateSystem("./bios/dmg.bin", "./rom/games/Tetris (World) (Rev 1).gb")
+	system.Start()
 	ui.Main(system)
 }

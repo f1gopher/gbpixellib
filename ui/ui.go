@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func Main(system *system.System) {
@@ -43,9 +44,15 @@ func (m model) Init() tea.Cmd {
 // message and send back an updated model accordingly. You can also return
 // a command, which is a function that performs I/O and returns a message.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg.(type) {
+	switch msgType := msg.(type) {
 	case tea.KeyMsg:
-		return m, tea.Quit
+		switch msgType.Type {
+		case tea.KeySpace:
+			m.system.Tick()
+		case tea.KeyEsc:
+			return m, tea.Quit
+
+		}
 	case tickMsg:
 		//m--
 		//if m <= 0 {
@@ -60,7 +67,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // rendered to the terminal.
 func (m model) View() string {
 	//return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
-	return m.system.Pixels()
+	//return m.system.Pixels()
+
+	cpuStyle := lipgloss.NewStyle().Padding(0, 5)
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.system.Pixels(),
+		cpuStyle.Render(m.system.State()))
 }
 
 // Messages are events that we respond to in our Update function. This

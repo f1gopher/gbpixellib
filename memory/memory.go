@@ -77,6 +77,17 @@ func (m *Memory) LoadBios(path string) error {
 	return m.Write(0, data)
 }
 
+func (m *Memory) LoadRom(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return errors.Join(errors.New("Failed to load ROM"), err)
+	}
+
+	// TODO - check not too big
+
+	return m.Write(0, data)
+}
+
 func (m *Memory) DumpBios() {
 	for x := 0; x < 256; x += 8 {
 		fmt.Printf("%05d 0x%04X    %02X %02X %02X %02X %02X %02X %02X %02X    %s%s%s%s%s%s%s%s\n",
