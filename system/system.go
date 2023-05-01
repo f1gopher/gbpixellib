@@ -7,7 +7,6 @@ import (
 	"log"
 	"strings"
 	"sync"
-	"time"
 )
 
 type System struct {
@@ -49,8 +48,7 @@ func (s *System) Start() {
 		log.Panic(err)
 	}
 
-	//go s.loop()
-
+	go s.loop()
 }
 
 func (s *System) Pixels() string {
@@ -62,7 +60,7 @@ func (s *System) Pixels() string {
 func (s *System) loop() {
 	for {
 		s.Tick()
-		time.Sleep(time.Millisecond * 5)
+		//		time.Sleep(time.Millisecond * 1)
 	}
 }
 

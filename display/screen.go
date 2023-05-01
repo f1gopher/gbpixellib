@@ -3,6 +3,7 @@ package display
 import (
 	"fmt"
 	"go-boy/memory"
+	"strings"
 )
 
 const screenWidth = 160
@@ -64,15 +65,16 @@ func (s *Screen) Render() string {
 
 	s.read()
 
-	var output string
+	var output strings.Builder
+	output.Grow(101 * screenWidth)
 	for y := 0; y < 100; y++ {
 		for x := 0; x < screenWidth; x++ {
-			output += s.buffer[y*screenWidth+x].String()
+			output.WriteString(s.buffer[y*screenWidth+x].String())
 		}
-		output += "\n"
+		output.WriteString("\n")
 	}
 
-	return output
+	return output.String()
 }
 
 func (s *Screen) read() {
