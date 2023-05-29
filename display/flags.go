@@ -24,15 +24,15 @@ func (s *Screen) bgWindowTileDataArea() uint16 {
 	return 0x8800
 }
 
-func (s *Screen) bgTileMapArea() uint16 {
-	if s.memory.ReadBit(lcdcRegister, 3) {
+func (s *Screen) bgTileMapArea(bit byte) uint16 {
+	if s.memory.ReadBit(lcdcRegister, bit) {
 		return 0x9C00
 	}
 
 	return 0x9800
 }
 
-func (s *Screen) objSize() int {
+func (s *Screen) objSize() byte {
 	if s.memory.ReadBit(lcdcRegister, 2) {
 		return 16
 	}
@@ -49,7 +49,7 @@ func (s *Screen) bgWindowEnablePriority() bool {
 }
 
 func (s *Screen) ly() byte {
-	return s.memory.ReadByte(0xFF44)
+	return s.memory.ReadByte(lcdScanline)
 }
 
 func (s *Screen) lyc() byte {

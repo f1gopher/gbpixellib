@@ -16,11 +16,11 @@ func main() {
 
 	//log.Info("Hello World")
 
-	//screen := display.CreateScreen()
 	//memory := memory.CreateMemory()
 	//cpu := cpu.CreateCPU(memory)
+	//screen := display.CreateScreen(memory)
 
-	//err := memory.LoadBios("./rom/test/08-misc instrs.gb")
+	//memory.LoadBios("./rom/test/01-special.gb")
 	//if err != nil {
 	//	log.Error(err)
 	//}
@@ -31,9 +31,10 @@ func main() {
 
 	//for {
 	//	cpu.Tick()
-	// time.Sleep(time.Millisecond * 10)
+	//	time.Sleep(time.Millisecond * 10)
 	//}
 
+	//system := system.CreateTestSystem("./rom/test/06-ld r,r.gb")
 	system := system.CreateSystem("./bios/dmg.bin", "./rom/games/Tetris (World) (Rev 1).gb")
 	system.Start()
 	ui.Main(system)

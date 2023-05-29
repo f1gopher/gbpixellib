@@ -1,8 +1,8 @@
 package cpu
 
 import (
-	"errors"
 	"fmt"
+	"go-boy/log"
 	"go-boy/memory"
 	"os"
 )
@@ -30,6 +30,780 @@ func (r register) String() string {
 	return [...]string{"AF", "BC", "DE", "HL", "SP", "PC", "A", "F", "B", "C", "D", "E", "H", "L"}[r]
 }
 
+var opcodeCycles = [...]int{
+	1, // NOP",
+	3, // LB BC,nn",
+	1, // LD (BC),A",
+	1, // INC BC",
+	1, // INC B",
+	1, // DEC B",
+	2, // LD B,n",
+	1, // RLCA",
+	5, // LD (nn),SP",
+	1, // ADD HL,BC",
+	2, // LD A,(BC)",
+	1, // DEC BC",
+	1, // INC C",
+	1, // DEC C",
+	2, // LD C,n",
+	1, // RRCA",
+	1, // STOP",
+	3, // LD DE,nn",
+	1, // LD (DE),A",
+	1, // INC DE",
+	1, // INC D",
+	1, // DEC D",
+	2, // LD D,n",
+	1, // RLA",
+	3, // JR e",
+	1, // ADD HL,DE",
+	2, // LD A,(DE)",
+	1, // DEC DE",
+	1, // INC E",
+	1, // DEC E",
+	2, // LD E,n",
+	1, // RRA",
+	1, // JR NZ,e",
+	1, // LD HL,nn",
+	1, // LD (HL+),A",
+	1, // INC HL",
+	1, // INC H",
+	1, // DEC H",
+	1, // LD H,n",
+	1, // DAA",
+	1, // JR Z, e",
+	1, // ADD HL,HL",
+	1, // LD A,(HL+)",
+	1, // DEC HL",
+	1, // INC L",
+	1, // DEC L",
+	1, // LD L,n",
+	1, // CPL",
+	1, // JR NC,e",
+	1, // LD SP,nn",
+	1, // LD (HL-),A",
+	1, // INC SP",
+	1, // INC (HL)",
+	1, // DEC (HL)",
+	3, // LD (HL),n",
+	1, // SCF",
+	1, // JR C,e",
+	1, // ADD HL,SP",
+	1, // LD A,(HL-)",
+	1, // DEC SP",
+	1, // INC A",
+	1, // DEC A",
+	1, // LD A,n",
+	1, // CCF",
+	1, // LD B,B",
+	1, // LD B,C",
+	1, // LD B,D",
+	1, // LD B,E",
+	1, // LD B,H",
+	1, // LD B,L",
+	1, // LD B,(HL)",
+	1, // LD B,A",
+	1, // LD C,B",
+	1, // LD C,C",
+	1, // LD C,D",
+	1, // LD C,E",
+	1, // LD C,H",
+	1, // LD C,L",
+	1, // LD C,(HL)",
+	1, // LD C,A",
+	1, // LD D,B",
+	1, // LD D,C",
+	1, // LD D,D",
+	1, // LD D,E",
+	1, // LD D,H",
+	1, // LD D,L",
+	1, // LD D,(HL)",
+	1, // LD D,A",
+	1, // LD E,B",
+	1, // LD E,C",
+	1, // LD E,D",
+	1, // LD E,E",
+	1, // LD E,H",
+	1, // LD E,L",
+	1, // LD E,(HL)",
+	1, // LD E,A",
+	1, // LD H,B",
+	1, // LD H,C",
+	1, // LD H,D",
+	1, // LD H,E",
+	1, // LD H,H",
+	1, // LD H,L",
+	1, // LD H,(HL)",
+	1, // LD H,A",
+	1, // LD L,B",
+	1, // LD L,C",
+	1, // LD L,D",
+	1, // LD L,E",
+	1, // LD L,H",
+	1, // LD L,L",
+	1, // LD L,(HL)",
+	1, // LD L,A",
+	1, // LD (HL),B",
+	1, // LD (HL),C",
+	1, // LD (HL),D",
+	1, // LD (HL),E",
+	1, // LD (HL),H",
+	1, // LD (HL),L",
+	1, // HALT",
+	1, // LD (HL),A",
+	1, // LD A,B",
+	1, // LD A,C",
+	1, // LD A,D",
+	1, // LD A,E",
+	1, // LD A,H",
+	1, // LD A,L",
+	1, // LD A,(HL)",
+	1, // LD A,A",
+	1, // ADD B",
+	1, // ADD C",
+	1, // ADD D",
+	1, // ADD E",
+	1, // ADD H",
+	1, // ADD L",
+	1, // ADD (HL)",
+	1, // ADD A",
+	1, // ADC B",
+	1, // ADC C",
+	1, // ADC D",
+	1, // ADC E",
+	1, // ADC H",
+	1, // ADC L",
+	1, // ADC (HL)",
+	1, // ADC A",
+	1, // SUB B",
+	1, // SUB C",
+	1, // SUB D",
+	1, // SUB E",
+	1, // SUB H",
+	1, // SUB L",
+	1, // SUB (HL)",
+	1, // SUB A",
+	1, // SBC B",
+	1, // SBC C",
+	1, // SBC D",
+	1, // SBC E",
+	1, // SBC H",
+	1, // SBC L",
+	1, // SBC (HL)",
+	1, // SBC A",
+	1, // AND B",
+	1, // AND C",
+	1, // AND D",
+	1, // AND E",
+	1, // AND H",
+	1, // AND L",
+	1, // AND (HL)",
+	1, // AND A",
+	1, // XOR B",
+	1, // XOR C",
+	1, // XOR D",
+	1, // XOR E",
+	1, // XOR H",
+	1, // XOR L",
+	1, // XOR (HL)",
+	1, // XOR A",
+	1, // OR B",
+	1, // OR C",
+	1, // OR D",
+	1, // OR E",
+	1, // OR H",
+	1, // OR L",
+	1, // OR (HL)",
+	1, // OR A",
+	1, // CP B",
+	1, // CP C",
+	1, // CP D",
+	1, // CP E",
+	1, // CP H",
+	1, // CP L",
+	1, // CP (HL)",
+	1, // CP A",
+	1, // RET NZ",
+	1, // POP BC",
+	1, // JP NZ,nn",
+	1, // JP nn",
+	1, // CALL NZ,nn",
+	1, // PUSH BC",
+	1, // ADD n",
+	1, // RST 0x00",
+	1, // RET Z",
+	1, // RET",
+	1, // JP Z,nn",
+	1, // CB",
+	1, // CALL Z,nn",
+	1, // CALL nn",
+	1, // ADC n",
+	1, // RST 0x08",
+	1, // RET NC",
+	1, // POP DE",
+	1, // JP NC,nn",
+	1, // <NULL>",
+	1, // CALL NC,nn",
+	1, // PUSH DE",
+	1, // SUB n",
+	1, // RST 0x10",
+	1, // RET C",
+	1, // RETI",
+	1, // JP C,nn",
+	1, // <NULL>",
+	1, // CALL C,nn",
+	1, // <NULL>",
+	1, // SBC n",
+	1, // RST 0x18",
+	1, // LDH (n),A",
+	1, // POP HL",
+	1, // LDH (C),A",
+	1, // <NULL>",
+	1, // <NULL>",
+	1, // PUSH HL",
+	1, // AND n",
+	1, // RST 0x20",
+	1, // ADD SP,e",
+	1, // JP HL",
+	1, // LD (nn),A",
+	1, // <NULL>",
+	1, // <NULL>",
+	1, // <NULL>",
+	1, // XOR n",
+	1, // RST 0x28",
+	1, // LDH A,(n)",
+	1, // POP AF",
+	1, // LDH A,(C)",
+	1, // DI",
+	1, // <NULL>",
+	1, // PUSH AF",
+	1, // OR n",
+	1, // RST 0x30",
+	1, // LD HL,SP+e",
+	1, // LD SP,HL",
+	1, // LD A,(nn)",
+	1, // EI",
+	1, // <NULL>",
+	1, // <NULL>",
+	1, // CP n",
+	1, // RST 0x38",
+}
+
+var opcodeNames = [...]string{
+	"NOP",
+	"LB BC,nn",
+	"LD (BC),A",
+	"INC BC",
+	"INC B",
+	"DEC B",
+	"LD B,n",
+	"RLCA",
+	"LD (nn),SP",
+	"ADD HL,BC",
+	"LD A,(BC)",
+	"DEC BC",
+	"INC C",
+	"DEC C",
+	"LD C,n",
+	"RRCA",
+	"STOP",
+	"LD DE,nn",
+	"LD (DE),A",
+	"INC DE",
+	"INC D",
+	"DEC D",
+	"LD D,n",
+	"RLA",
+	"JR e",
+	"ADD HL,DE",
+	"LD A,(DE)",
+	"DEC DE",
+	"INC E",
+	"DEC E",
+	"LD E,n",
+	"RRA",
+	"JR NZ,e",
+	"LD HL,nn",
+	"LD (HL+),A",
+	"INC HL",
+	"INC H",
+	"DEC H",
+	"LD H,n",
+	"DAA",
+	"JR Z, e",
+	"ADD HL,HL",
+	"LD A,(HL+)",
+	"DEC HL",
+	"INC L",
+	"DEC L",
+	"LD L,n",
+	"CPL",
+	"JR NC,e",
+	"LD SP,nn",
+	"LD (HL-),A",
+	"INC SP",
+	"INC (HL)",
+	"DEC (HL)",
+	"LD (HL),n",
+	"SCF",
+	"JR C,e",
+	"ADD HL,SP",
+	"LD A,(HL-)",
+	"DEC SP",
+	"INC A",
+	"DEC A",
+	"LD A,n",
+	"CCF",
+	"LD B,B",
+	"LD B,C",
+	"LD B,D",
+	"LD B,E",
+	"LD B,H",
+	"LD B,L",
+	"LD B,(HL)",
+	"LD B,A",
+	"LD C,B",
+	"LD C,C",
+	"LD C,D",
+	"LD C,E",
+	"LD C,H",
+	"LD C,L",
+	"LD C,(HL)",
+	"LD C,A",
+	"LD D,B",
+	"LD D,C",
+	"LD D,D",
+	"LD D,E",
+	"LD D,H",
+	"LD D,L",
+	"LD D,(HL)",
+	"LD D,A",
+	"LD E,B",
+	"LD E,C",
+	"LD E,D",
+	"LD E,E",
+	"LD E,H",
+	"LD E,L",
+	"LD E,(HL)",
+	"LD E,A",
+	"LD H,B",
+	"LD H,C",
+	"LD H,D",
+	"LD H,E",
+	"LD H,H",
+	"LD H,L",
+	"LD H,(HL)",
+	"LD H,A",
+	"LD L,B",
+	"LD L,C",
+	"LD L,D",
+	"LD L,E",
+	"LD L,H",
+	"LD L,L",
+	"LD L,(HL)",
+	"LD L,A",
+	"LD (HL),B",
+	"LD (HL),C",
+	"LD (HL),D",
+	"LD (HL),E",
+	"LD (HL),H",
+	"LD (HL),L",
+	"HALT",
+	"LD (HL),A",
+	"LD A,B",
+	"LD A,C",
+	"LD A,D",
+	"LD A,E",
+	"LD A,H",
+	"LD A,L",
+	"LD A,(HL)",
+	"LD A,A",
+	"ADD B",
+	"ADD C",
+	"ADD D",
+	"ADD E",
+	"ADD H",
+	"ADD L",
+	"ADD (HL)",
+	"ADD A",
+	"ADC B",
+	"ADC C",
+	"ADC D",
+	"ADC E",
+	"ADC H",
+	"ADC L",
+	"ADC (HL)",
+	"ADC A",
+	"SUB B",
+	"SUB C",
+	"SUB D",
+	"SUB E",
+	"SUB H",
+	"SUB L",
+	"SUB (HL)",
+	"SUB A",
+	"SBC B",
+	"SBC C",
+	"SBC D",
+	"SBC E",
+	"SBC H",
+	"SBC L",
+	"SBC (HL)",
+	"SBC A",
+	"AND B",
+	"AND C",
+	"AND D",
+	"AND E",
+	"AND H",
+	"AND L",
+	"AND (HL)",
+	"AND A",
+	"XOR B",
+	"XOR C",
+	"XOR D",
+	"XOR E",
+	"XOR H",
+	"XOR L",
+	"XOR (HL)",
+	"XOR A",
+	"OR B",
+	"OR C",
+	"OR D",
+	"OR E",
+	"OR H",
+	"OR L",
+	"OR (HL)",
+	"OR A",
+	"CP B",
+	"CP C",
+	"CP D",
+	"CP E",
+	"CP H",
+	"CP L",
+	"CP (HL)",
+	"CP A",
+	"RET NZ",
+	"POP BC",
+	"JP NZ,nn",
+	"JP nn",
+	"CALL NZ,nn",
+	"PUSH BC",
+	"ADD n",
+	"RST 0x00",
+	"RET Z",
+	"RET",
+	"JP Z,nn",
+	"CB",
+	"CALL Z,nn",
+	"CALL nn",
+	"ADC n",
+	"RST 0x08",
+	"RET NC",
+	"POP DE",
+	"JP NC,nn",
+	"<NULL>",
+	"CALL NC,nn",
+	"PUSH DE",
+	"SUB n",
+	"RST 0x10",
+	"RET C",
+	"RETI",
+	"JP C,nn",
+	"<NULL>",
+	"CALL C,nn",
+	"<NULL>",
+	"SBC n",
+	"RST 0x18",
+	"LDH (n),A",
+	"POP HL",
+	"LDH (C),A",
+	"<NULL>",
+	"<NULL>",
+	"PUSH HL",
+	"AND n",
+	"RST 0x20",
+	"ADD SP,e",
+	"JP HL",
+	"LD (nn),A",
+	"<NULL>",
+	"<NULL>",
+	"<NULL>",
+	"XOR n",
+	"RST 0x28",
+	"LDH A,(n)",
+	"POP AF",
+	"LDH A,(C)",
+	"DI",
+	"<NULL>",
+	"PUSH AF",
+	"OR n",
+	"RST 0x30",
+	"LD HL,SP+e",
+	"LD SP,HL",
+	"LD A,(nn)",
+	"EI",
+	"<NULL>",
+	"<NULL>",
+	"CP n",
+	"RST 0x38",
+}
+
+var cbNames = [...]string{
+	"RLC B",
+	"RLC C",
+	"RLC D",
+	"RLC E",
+	"RLC H",
+	"RLC L",
+	"RLC (HL)",
+	"RLC A",
+	"RRC B",
+	"RRC C",
+	"RRC D",
+	"RRC E",
+	"RRC H",
+	"RRC L",
+	"RRC (HL)",
+	"RRC A",
+	"RL B",
+	"RL C",
+	"RL D",
+	"RL E",
+	"RL H",
+	"RL L",
+	"RL (HL)",
+	"RL A",
+	"RR B",
+	"RR C",
+	"RR D",
+	"RR E",
+	"RR H",
+	"RR L",
+	"RR (HL)",
+	"RR A",
+	"SLA B",
+	"SLA C",
+	"SLA D",
+	"SLA E",
+	"SLA H",
+	"SLA L",
+	"SLA (HL)",
+	"SLA A",
+	"SRA B",
+	"SRA C",
+	"SRA D",
+	"SRA E",
+	"SRA H",
+	"SRA L",
+	"SRA (HL)",
+	"SRA A",
+	"SWAP B",
+	"SWAP C",
+	"SWAP D",
+	"SWAP E",
+	"SWAP H",
+	"SWAP L",
+	"SWAP (HL)",
+	"SWAP A",
+	"SRL B",
+	"SRL C",
+	"SRL D",
+	"SRL E",
+	"SRL H",
+	"SRL L",
+	"SRL (HL)",
+	"SRL A",
+	"BIT 0, B",
+	"BIT 0,C",
+	"BIT 0,D",
+	"BIT 0,E",
+	"BIT 0,H",
+	"BIT 0,L",
+	"BIT 0,(HL)",
+	"BIT 0,A",
+	"BIT 1,B",
+	"BIT 1,C",
+	"BIT 1,D",
+	"BIT 1,E",
+	"BIT 1,H",
+	"BIT 1,L",
+	"BIT 1,(HL)",
+	"BIT 1,A",
+	"BIT 2,B",
+	"BIT 2,C",
+	"BIT 2,D",
+	"BIT 2,E",
+	"BIT 2,H",
+	"BIT 2,L",
+	"BIT 2,(HL)",
+	"BIT 2,A",
+	"BIT 3,B",
+	"BIT 3,C",
+	"BIT 3,D",
+	"BIT 3,E",
+	"BIT 3,H",
+	"BIT 3,L",
+	"BIT 3,(HL)",
+	"BIT 3,A",
+	"BIT 4,B",
+	"BIT 4,C",
+	"BIT 4,D",
+	"BIT 4,E",
+	"BIT 4,H",
+	"BIT 4,L",
+	"BIT 4,(HL)",
+	"BIT 4,A",
+	"BIT 5,B",
+	"BIT 5,C",
+	"BIT 5,D",
+	"BIT 5,E",
+	"BIT 5,H",
+	"BIT 5,L",
+	"BIT 5,(HL)",
+	"BIT 5,A",
+	"BIT 6,B",
+	"BIT 6,C",
+	"BIT 6,D",
+	"BIT 6,E",
+	"BIT 6,H",
+	"BIT 6,L",
+	"BIT 6,(HL)",
+	"BIT 6,A",
+	"BIT 7,B",
+	"BIT 7,C",
+	"BIT 7,D",
+	"BIT 7,E",
+	"BIT 7,H",
+	"BIT 7,L",
+	"BIT 7,(HL)",
+	"BIT 7,A",
+	"RES 0,B",
+	"RES 0,C",
+	"RES 0,D",
+	"RES 0,E",
+	"RES 0,H",
+	"RES 0,L",
+	"RES 0,(HL)",
+	"RES 0,A",
+	"RES 1,B",
+	"RES 1,C",
+	"RES 1,D",
+	"RES 1,E",
+	"RES 1,H",
+	"RES 1,L",
+	"RES 1,(HL)",
+	"RES 1,A",
+	"RES 2,B",
+	"RES 2,C",
+	"RES 2,D",
+	"RES 2,E",
+	"RES 2,H",
+	"RES 2,L",
+	"RES 2,(HL)",
+	"RES 3,B",
+	"RES 3,C",
+	"RES 3,D",
+	"RES 3,E",
+	"RES 3,H",
+	"RES 3,L",
+	"RES 3,(HL)",
+	"RES 3,A",
+	"RES 4,B",
+	"RES 4,C",
+	"RES 4,D",
+	"RES 4,E",
+	"RES 4,H",
+	"RES 4,L",
+	"RES 4,(HL)",
+	"RES 4,A",
+	"RES 5,B",
+	"RES 5,C",
+	"RES 5,D",
+	"RES 5,E",
+	"RES 5,H",
+	"RES 5,L",
+	"RES 5,(HL)",
+	"RES 5,A",
+	"RES 6,B",
+	"RES 6,C",
+	"RES 6,D",
+	"RES 6,E",
+	"RES 6,H",
+	"RES 6,L",
+	"RES 6,HL",
+	"RES 6,A",
+	"RES 7,B",
+	"RES 7,C",
+	"RES 7,D",
+	"RES 7,E",
+	"RES 7,H",
+	"RES 7,L",
+	"RES 7,(HL)",
+	"RES 7,A",
+	"SET 0,C",
+	"SET 0,D",
+	"SET 0,E",
+	"SET 0,H",
+	"SET 0,L",
+	"SET 0,(HL)",
+	"SET 0,A",
+	"SET 1,B",
+	"SET 1,C",
+	"SET 1,D",
+	"SET 1,E",
+	"SET 1,H",
+	"SET 1,L",
+	"SET 1,(HL)",
+	"SET 1,A",
+	"SET 2,B",
+	"SET 2,C",
+	"SET 2,D",
+	"SET 2,E",
+	"SET 2,H",
+	"SET 2,L",
+	"SET 2,(HL)",
+	"SET 3,B",
+	"SET 3,C",
+	"SET 3,D",
+	"SET 3,E",
+	"SET 3,H",
+	"SET 3,L",
+	"SET 3,(HL)",
+	"SET 3,A",
+	"SET 4,B",
+	"SET 4,C",
+	"SET 4,D",
+	"SET 4,E",
+	"SET 4,H",
+	"SET 4,L",
+	"SET 4,(HL)",
+	"SET 4,A",
+	"SET 5,B",
+	"SET 5,C",
+	"SET 5,D",
+	"SET 5,E",
+	"SET 5,H",
+	"SET 5,L",
+	"SET 5,(HL)",
+	"SET 5,A",
+	"SET 6,B",
+	"SET 6,C",
+	"SET 6,D",
+	"SET 6,E",
+	"SET 6,H",
+	"SET 6,L",
+	"SET 6,HL",
+	"SET 6,A",
+	"SET 7,B",
+	"SET 7,C",
+	"SET 7,D",
+	"SET 7,E",
+	"SET 7,H",
+	"SET 7,L",
+	"SET 7,(HL)",
+	"SET 7,A",
+}
+
 type CPU struct {
 	memory *memory.Memory
 	regAF  uint16
@@ -39,15 +813,19 @@ type CPU struct {
 	regSP  uint16
 	regPC  uint16
 
-	opcodes map[byte]func()
+	opcodes     map[byte]func()
+	opcodesUsed [255]bool
 
-	debugLogFile *os.File
+	//debugLogFile *os.File
+
+	log *log.Log
 
 	count int
 }
 
-func CreateCPU(memory *memory.Memory) *CPU {
+func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 	chip := CPU{
+		log:    log,
 		memory: memory,
 		count:  0,
 	}
@@ -206,7 +984,7 @@ func CreateCPU(memory *memory.Memory) *CPU {
 		0x5E: chip.op_LD_E_HL,
 		0x6E: chip.op_LD_L_HL,
 		0x7E: chip.op_LD_A_HL,
-		0xAE: chip.op_XOR_HL,
+		//0xAE: chip.op_XOR_HL,
 		0xCB: chip.op_CB_op,
 		0xE2: chip.op_LDH_C_A,
 		0x17: chip.op_RL_A,
@@ -234,25 +1012,24 @@ func CreateCPU(memory *memory.Memory) *CPU {
 		0x85: chip.op_ADD_L,
 		0x86: chip.op_ADD_HL,
 		0x87: chip.op_ADD_A,
+		0x36: chip.op_LD_HL_n,
 	}
 
 	return &chip
 }
 
-//func (c *CPU) InitForTestROM() {
-//	c.setRegByte(A, 0x01)
-//	c.setRegByte(F, 0xB0)
-//	c.setRegByte(B, 0x00)
-//	c.setRegByte(C, 0x13)
-//	c.setRegByte(D, 0x00)
-//	c.setRegByte(E, 0xD8)
-//	c.setRegByte(H, 0x01)
-//	c.setRegByte(L, 0x4D)
-//	c.setRegShort(SP, 0xFFFE)
-//	c.setRegShort(PC, 0x0100)
-
-//	c.debugLog()
-//}
+func (c *CPU) InitForTestROM() {
+	c.setRegByte(A, 0x01)
+	c.setRegByte(F, 0xB0)
+	c.setRegByte(B, 0x00)
+	c.setRegByte(C, 0x13)
+	c.setRegByte(D, 0x00)
+	c.setRegByte(E, 0xD8)
+	c.setRegByte(H, 0x01)
+	c.setRegByte(L, 0x4D)
+	c.setRegShort(SP, 0xFFFE)
+	c.setRegShort(PC, 0x0100)
+}
 
 func (c *CPU) Init() {
 	c.setRegShort(PC, 0x0000) //0x100)
@@ -294,34 +1071,61 @@ func (c *CPU) Init() {
 	c.memory.WriteByte(0xFFFF, 0x00)
 }
 
-func (c *CPU) SetDebugLog(file string) error {
-	var err error
-	c.debugLogFile, err = os.Create(file)
+//func (c *CPU) SetDebugLog(file string) error {
+//	var err error
+//	c.debugLogFile, err = os.Create(file)
+//
+//	if err != nil {
+//		return errors.Join(errors.New("Unable to set debug log"), err)
+//	}
+//
+//	return nil
+//}
 
-	if err != nil {
-		return errors.Join(errors.New("Unable to set debug log"), err)
-	}
+func (c *CPU) PushAndReplacePC(newPC uint16) {
 
-	return nil
+	currentPC := c.getRegShort(PC)
+
+	c.regSP -= 2
+	c.memory.WriteShort(c.regSP, currentPC)
+
+	c.setRegShort(PC, newPC)
 }
 
-func (c *CPU) Tick() {
+func (c *CPU) Tick() int {
+	c.debugLog()
+
 	opcode := c.memory.ReadByte(c.regPC)
 
 	//fmt.Printf("%d - Op: 0x%02X ", c.count, opcode)
 
-	executor, exists := c.opcodes[opcode]
-	if !exists {
-		panic(fmt.Sprintf("Unsupported opcode: 0x%02X", opcode))
-	}
+	c.opcodesUsed[opcode] = true
+
+	executor := c.getOpcode(opcode)
 
 	// TODO - is this the best place to increment the program counter?
 	c.regPC++
 	executor()
 
-	c.debugLog()
-
 	c.count++
+
+	// TODO - return correct cycles count for opcode
+	return opcodeCycles[opcode]
+}
+
+func (c *CPU) getOpcode(opcode byte) func() {
+
+	executor, exists := c.opcodes[opcode]
+	if !exists {
+		panic(fmt.Sprintf("Unsupported opcode: 0x%02X %s", opcode, opcodeNames[opcode]))
+	}
+
+	name := opcodeNames[opcode]
+	if opcode == 0xCB {
+		name = name + " - " + cbNames[0]
+	}
+
+	return executor
 }
 
 func (c *CPU) getRegShort(reg register) uint16 {
@@ -372,15 +1176,7 @@ func (c *CPU) getFlagH() bool { return c.getRegBit(F, 5) }
 func (c *CPU) getFlagC() bool { return c.getRegBit(F, 4) }
 
 func (c *CPU) getRegBit(reg register, bit int) bool {
-	if bit > 7 || bit < 0 {
-		panic(fmt.Sprintf("Invalid bit for getRegBit: %d", bit))
-	}
-
-	if c.getRegByte(reg)>>bit == 1 {
-		return true
-	}
-
-	return false
+	return memory.GetBit(c.getRegByte(reg), bit)
 }
 
 func (c *CPU) setRegShort(reg register, value uint16) {
@@ -454,27 +1250,38 @@ func (c *CPU) setRegBit(reg register, bit int, value bool) {
 		panic(fmt.Sprintf("Unexpected register for get set bit: %s", reg.String()))
 	}
 
-	if bit > 7 || bit < 0 {
-		panic(fmt.Sprintf("Invalid bit for setRegBit: %d", bit))
-	}
-
-	current := c.getRegByte(reg)
-
-	if value {
-		current = current | 0x01<<bit
-	} else {
-		current = current &^ (0x01 << bit)
-	}
-
-	c.setRegByte(reg, current)
+	c.setRegByte(reg, memory.SetBit(c.getRegByte(reg), bit, value))
 }
 
 func (c *CPU) debugLog() {
-	msg := c.Debug()
-	//fmt.Print(msg)
-	if c.debugLogFile != nil {
-		c.debugLogFile.WriteString(msg)
-	}
+	//msg := c.Debug()
+	//	fmt.Print(msg)
+	//if c.debugLogFile != nil {
+	// TODO - handle the PC address being 0xFFFF so trying to read would go past the end
+	p1 := c.memory.ReadByte(c.regPC)
+	p2 := c.memory.ReadByte(c.regPC + 1)
+	p3 := c.memory.ReadByte(c.regPC + 2)
+	p4 := c.memory.ReadByte(c.regPC + 3)
+
+	msg := fmt.Sprintf(
+		"[A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X]",
+		c.getRegByte(A),
+		c.getRegByte(F),
+		c.getRegByte(B),
+		c.getRegByte(C),
+		c.getRegByte(D),
+		c.getRegByte(E),
+		c.getRegByte(H),
+		c.getRegByte(L),
+		c.getRegShort(SP),
+		c.getRegShort(PC),
+		p1,
+		p2,
+		p3,
+		p4)
+
+	c.log.Debug(msg)
+	//}
 }
 
 func (c *CPU) Debug() string {
@@ -485,10 +1292,17 @@ func (c *CPU) Debug() string {
 	p3 := c.memory.ReadByte(c.regPC + 2)
 	p4 := c.memory.ReadByte(c.regPC + 3)
 
+	name := opcodeNames[p1]
+	if p1 == 0xCB {
+		// TODO - is p2 right?1
+		name = name + " - " + cbNames[p2]
+	}
+
 	return fmt.Sprintf(
-		"%d=>Next_Opcode:0x%02X A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X Z:%t N:%t H:%t C:%t\n",
+		"%d=>Next_Opcode:0x%02X %12s -> A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X Z:%t N:%t H:%t C:%t\n",
 		c.count,
 		p1,
+		name,
 		c.getRegByte(A),
 		c.getRegByte(F),
 		c.getRegByte(B),
@@ -507,6 +1321,18 @@ func (c *CPU) Debug() string {
 		c.getFlagN(),
 		c.getFlagH(),
 		c.getFlagC())
+}
+
+func (c *CPU) DumpOpcodesUsed() {
+	f, _ := os.Create("./opcodes_used.txt")
+	for x := 0; x < len(c.opcodesUsed); x++ {
+		if !c.opcodesUsed[x] {
+			continue
+		}
+
+		f.WriteString(fmt.Sprintf("0x%02X\n - %s", x, opcodeNames[x]))
+	}
+	f.Close()
 }
 
 func (c *CPU) op_LD_B_B() { c.loadByte(B, B) }
@@ -679,19 +1505,25 @@ func (c *CPU) op_DEC_HL() { c.decrementShortRegister(HL) }
 func (c *CPU) op_DEC_SP() { c.decrementShortRegister(SP) }
 
 func (c *CPU) incrementByteRegister(reg register) {
-	current := c.getRegByte(reg) + 1
+	value := c.getRegByte(reg)
+	current := value + 1
 	c.setFlagZ(current == 0)
 	c.setFlagN(false)
-	c.setFlagH(((current - 1) & 0x0F) == 0x0F)
-	c.setFlagC(true) // TODO - why?
+
+	abc := current ^ 0x01 ^ value
+	c.setFlagH(abc&0x10 == 0x10) //((current - 1) & 0x10) == 0x10)
+	//c.setFlagC(true) // TODO - why?
 	c.setRegByte(reg, current)
 }
 
 func (c *CPU) decrementByteRegister(reg register) {
-	current := c.getRegByte(reg) - 1
+	value := c.getRegByte(reg)
+	current := value - 1
 	c.setFlagZ(current == 0)
 	c.setFlagN(true)
-	c.setFlagH(((current + 1) & 0x10) == 0x10)
+
+	abc := current ^ 0x01 ^ value
+	c.setFlagH(abc&0x10 == 0x10) //((current + 1) & 0x10) == 0x10)
 	c.setRegByte(reg, current)
 }
 
@@ -805,7 +1637,7 @@ func (c *CPU) op_CALL_C_nn()  { c.callCondition(c.getFlagC()) }
 func (c *CPU) callCondition(condition bool) {
 	nn := c.memory.ReadShort(c.regPC)
 	c.regPC += 2
-	if !c.getFlagZ() {
+	if condition {
 		c.regSP -= 2
 		c.memory.WriteShort(c.regSP, c.regPC)
 		c.setRegShort(PC, nn)
@@ -909,14 +1741,14 @@ func (c *CPU) op_CP(n byte) {
 	result := a - n
 	c.setFlagZ(result == 0)
 	c.setFlagN(true)
-	c.setFlagH(((result - 1) & 0x0F) != 0x0F)
+	c.setFlagH((a & 0x0F) < (n & 0x0F))
 	c.setFlagC(a < n)
 }
 
 func (c *CPU) op_LDH_A_n() {
 	n := c.memory.ReadByte(c.regPC)
 	c.regPC++
-	c.setRegByte(A, c.memory.ReadByte((0xFF00 | uint16(n))))
+	c.setRegByte(A, c.memory.ReadByte(0xFF00|uint16(n)))
 }
 
 func (c *CPU) op_LD_A_nn() {
@@ -1120,33 +1952,54 @@ func (c *CPU) op_RL(op byte) {
 		panic(fmt.Sprintf("Unknown reg op for RL: 0x%02X", op))
 	}
 
-	oldBit7 := c.getRegBit(reg, 7)
+	//oldBit7 := c.getRegBit(reg, 7)
 
 	c.rotateLeft(reg)
-	value := c.getRegByte(reg)
+	//value := c.getRegByte(reg)
 
-	c.setFlagZ(value == 0)
-	c.setFlagN(false)
-	c.setFlagH(false)
-	c.setFlagC(oldBit7)
+	//c.setFlagZ(value == 0)
+	//c.setFlagN(false)
+	//c.setFlagH(false)
+	//c.setFlagC(oldBit7)
 }
 
-func (c *CPU) op_RL_A() { c.rotateLeft(A) }
+func (c *CPU) op_RL_A() {
+	result := c.getRegByte(A)
+
+	carry := result & 0x80
+	//carry = carry >> 7
+	result = result << 1
+	//result = result & 0xFE
+	//result = result | carry
+
+	if c.getFlagC() {
+		result = result ^ 0x01
+	}
+
+	c.setRegByte(A, result)
+	c.setFlagZ(result == 0)
+	c.setFlagN(false)
+	c.setFlagH(false)
+	c.setFlagC(carry == 0x80) //carry&0x01 == 0x01)
+}
 
 func (c *CPU) rotateLeft(reg register) {
 	result := c.getRegByte(reg)
 
 	carry := result & 0x80
-	carry = carry >> 7
+	//carry = carry >> 7
 	result = result << 1
-	result = result & 0xFE
-	result = result | carry
+	//result = result & 0xFE
+	//result = result | carry
+	if c.getFlagC() {
+		result = result ^ 0x01
+	}
 
 	c.setRegByte(reg, result)
 	c.setFlagZ(result == 0)
 	c.setFlagN(false)
 	c.setFlagH(false)
-	c.setFlagC(carry&0x01 == 0x01)
+	c.setFlagC(carry == 0x80) //carry&0x01 == 0x01)
 }
 
 func (c *CPU) op_SUB_B()  { c.op_SUB(c.getRegByte(B)) }
@@ -1175,3 +2028,10 @@ func (c *CPU) op_ADD_H()  { c.op_ADD(c.getRegByte(H)) }
 func (c *CPU) op_ADD_L()  { c.op_ADD(c.getRegByte(L)) }
 func (c *CPU) op_ADD_HL() { c.op_ADD(c.memory.ReadByte(c.getRegShort(HL))) }
 func (c *CPU) op_ADD_A()  { c.op_ADD(c.getRegByte(A)) }
+
+func (c *CPU) op_LD_HL_n() {
+	pc := c.getRegShort(PC)
+	n := c.memory.ReadByte(pc)
+	c.setRegShort(PC, pc+1)
+	c.memory.WriteByte(c.getRegShort(HL), n)
+}

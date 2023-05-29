@@ -50,6 +50,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeySpace:
 			m.system.Tick()
 		case tea.KeyEsc:
+			m.system.OpcodesUsed()
 			return m, tea.Quit
 
 		}

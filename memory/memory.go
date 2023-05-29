@@ -3,6 +3,7 @@ package memory
 import (
 	"errors"
 	"fmt"
+	"go-boy/log"
 	"os"
 )
 
@@ -10,11 +11,16 @@ const memorySize = 0xFFFF
 
 type Memory struct {
 	buffer []byte
+	log    *log.Log
+
+	abc []byte
 }
 
-func CreateMemory() *Memory {
+func CreateMemory(log *log.Log) *Memory {
 	return &Memory{
+		log:    log,
 		buffer: make([]byte, memorySize+1),
+		abc:    make([]byte, 256),
 	}
 }
 
@@ -28,33 +34,78 @@ func (m *Memory) ReadBit(address uint16, bit byte) bool {
 }
 
 func (m *Memory) ReadByte(address uint16) byte {
-	// TODO - remove after implementing screen
-	// Only used for debug ROMs
-	if address == 0xFF44 {
-		return 0x90
-	}
+	// TODO - Only used for debug ROMs
+	//if address == 0xFF44 {
+	//	return 0x90
+	//}
 	return m.buffer[address]
 }
 
 func (m *Memory) ReadShort(address uint16) uint16 {
-	// TODO - the bytes are in the opposite endian/order
 	var result uint16
-	result = uint16(m.buffer[address])
-	//	result = result << 8
-	tmp := uint16(m.buffer[address+1])
-	tmp = tmp << 8
-	result = result | tmp //uint16(m.buffer[address+1])
+	lsb := m.buffer[address]
+	msb := m.buffer[address+1]
+	// Little endian, lsb stored first
+	result = uint16(msb)
+	result = result << 8
+	result = result | uint16(lsb)
 	return result
 }
 
 func (m *Memory) WriteByte(address uint16, value byte) {
+	if address != 0xFF41 {
+		m.log.Debug(fmt.Sprintf("[RAM: 0x%04X 0x%02X]", address, value))
+	}
+
+	// If the CPU tries to write to the address (regardless of value) we
+	// set the value to zero
+	if address == 0xFF44 {
+		m.buffer[address] = 0
+		return
+	}
+
+	// Trigger DMA transfer
+	if address == 0xFF46 {
+		dmaAddress := uint16(value << 8)
+		var i uint16 = 0
+		for i = 0; i < 0xA0; i++ {
+			m.WriteByte(0xFE00+i, m.ReadByte(dmaAddress+i))
+		}
+
+		// TODO - is this right?
+		return
+	}
+
 	m.buffer[address] = value
+
+	if address >= 0xE00 && address < 0xFE00 {
+		m.buffer[address-0x2000] = value
+	}
+}
+
+func (m *Memory) DisplaySetScanline(value byte) {
+	// Only used by the display
+	m.buffer[0xFF44] = value
+}
+
+func (m *Memory) DumpTiles() {
+	copy(m.abc, m.buffer[0x9800:0x9BFF])
 }
 
 func (m *Memory) WriteShort(address uint16, value uint16) {
-	// Write bytes in opposite order
-	m.buffer[address] = byte(value)
-	m.buffer[address+1] = byte(value >> 8)
+	lsb := byte(value)
+	msb := byte(value >> 8)
+	// Little endian - lsb stored first
+	m.buffer[address] = lsb
+	m.buffer[address+1] = msb
+
+	if address >= 0xE00 && address < 0xFE00 {
+		m.buffer[address-0x2000] = lsb
+		m.buffer[(address+1)-0x2000] = msb
+	}
+
+	m.log.Debug(fmt.Sprintf("[RAM: 0x%04X 0x%02X]", address+1, msb))
+	m.log.Debug(fmt.Sprintf("[RAM: 0x%04X 0x%02X]", address, lsb))
 }
 
 func (m *Memory) Write(address uint16, data []byte) error {
@@ -78,6 +129,10 @@ func (m *Memory) LoadBios(path string) error {
 }
 
 func (m *Memory) LoadRom(path string) error {
+	if len(path) == 0 {
+		return nil
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return errors.Join(errors.New("Failed to load ROM"), err)
