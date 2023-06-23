@@ -230,15 +230,17 @@ func (s *Screen) renderTiles() {
 			tileNum = uint16(s.memory.ReadByte(tileAddress))
 		}
 
+		// TODO - HACK
+		//		tileNum = 1
 		// TODO - temp hack to draw something
 		//tileNum = 5
 
 		tileLocation := tileData
 
 		if unsig {
-			tileLocation += tileNum * 16
+			tileLocation += tileNum * 0x10
 		} else {
-			tileLocation += (tileNum + 128) * 16
+			tileLocation += (tileNum + 128) * 0x10
 		}
 
 		line := yPos % 8
@@ -250,7 +252,7 @@ func (s *Screen) renderTiles() {
 		colourBit -= 7
 		colourBit = colourBit * -1
 
-		tile := s.memory.ReadShort(tileLocation + uint16(line))
+		tile := s.memory.ReadShort(uint16(tileLocation) + uint16(line))
 
 		color := s.colorForPixel(tile, byte(colourBit))
 
@@ -261,10 +263,12 @@ func (s *Screen) renderTiles() {
 
 		finalY := s.ly()
 		if finalY < 0 || finalY >= screenHeight || pixel < 0 || pixel >= screenWidth {
-			panic("Invalid pixel location")
+			panic(fmt.Sprintf("Invalid pixel location %d,%d", pixel, finalY))
 		}
 
-		s.buffer[pixel+(finalY*screenWidth)] = color
+		offset := (uint16(finalY) * uint16(screenWidth)) + uint16(pixel)
+
+		s.buffer[offset] = color
 	}
 }
 
@@ -342,7 +346,7 @@ func (s *Screen) Render() string {
 	output.Grow(101 * screenWidth)
 	for y := 0; y < screenHeight; y++ {
 		for x := 0; x < screenWidth; x++ {
-			output.WriteString(s.buffer[y*screenWidth+x].String())
+			output.WriteString(s.buffer[(y*screenWidth)+x].String())
 		}
 		output.WriteString("\n")
 	}
