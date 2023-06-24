@@ -835,13 +835,13 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		// Row 0x
 		chip.op_NOP,
 		chip.op_LD_BC_nn,
-		nil,
+		chip.op_LD_BC_A,
 		chip.op_INC_BC,
 		chip.op_INC_B,
 		chip.op_DEC_B,
 		chip.op_LD_B_n,
 		nil,
-		nil,
+		chip.op_LD_nn_SP,
 		nil,
 		nil,
 		chip.op_DEC_BC,
@@ -882,7 +882,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		chip.op_INC_L,
 		chip.op_DEC_L,
 		chip.op_LD_L_n,
-		nil,
+		chip.op_CPL,
 		// Row 3x
 		chip.op_JR_NC_e,
 		chip.op_LD_SP_nn,
@@ -899,7 +899,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		chip.op_INC_A,
 		chip.op_DEC_A,
 		chip.op_LD_A_n,
-		nil,
+		chip.op_CCF,
 		// Row 4x
 		chip.op_LD_B_B,
 		chip.op_LD_B_C,
@@ -1044,7 +1044,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		chip.op_CALL_NZ_nn,
 		chip.op_PUSH_BC,
 		chip.op_ADD_n,
-		nil,
+		chip.op_RST_0x00,
 		nil,
 		chip.op_RET,
 		nil,
@@ -1052,7 +1052,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		chip.op_CALL_Z_nn,
 		chip.op_CALL_nn,
 		nil,
-		nil,
+		chip.op_RST_0x08,
 		// Row Dx
 		nil,
 		chip.op_POP_DE,
@@ -1061,7 +1061,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		chip.op_CALL_NC_nn,
 		chip.op_PUSH_DE,
 		chip.op_SUB_n,
-		nil,
+		chip.op_RST_0x10,
 		nil,
 		nil,
 		nil,
@@ -1069,7 +1069,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		chip.op_CALL_C_nn,
 		nil, // No opcode
 		nil,
-		nil,
+		chip.op_RST_0x18,
 		// Row Ex
 		chip.op_LDH_n_A,
 		chip.op_POP_HL,
@@ -1078,7 +1078,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		nil, // No opcode
 		chip.op_PUSH_HL,
 		chip.op_AND_n,
-		nil,
+		chip.op_RST_0x20,
 		nil,
 		nil,
 		chip.op_LD_nn_A,
@@ -1086,7 +1086,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		nil, // No opcode
 		nil, // No opcode
 		nil,
-		nil,
+		chip.op_RST_0x28,
 		// Row Fx
 		chip.op_LDH_A_n,
 		chip.op_POP_AF,
@@ -1095,7 +1095,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		nil, // No opcode
 		chip.op_PUSH_AF,
 		nil,
-		nil,
+		chip.op_RST_0x30,
 		nil,
 		nil,
 		chip.op_LD_A_nn,
@@ -1103,7 +1103,7 @@ func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 		nil, // No opcode
 		nil, // No opcode
 		chip.op_CP_n,
-		nil,
+		chip.op_RST_0x38,
 	}
 
 	return &chip
@@ -1525,7 +1525,11 @@ func (c *CPU) op_LD_A_HL_plus() int {
 }
 func (c *CPU) op_LD_DE_A() int {
 	c.memory.WriteByte(c.getRegShort(DE), c.getRegByte(A))
-	return 1
+	return 2
+}
+func (c *CPU) op_LD_BC_A() int {
+	c.memory.WriteByte(c.getRegShort(BC), c.getRegByte(A))
+	return 2
 }
 func (c *CPU) op_LD_nn_A() int {
 	c.memory.WriteByte(c.regPC, c.getRegByte(A))
@@ -2173,4 +2177,44 @@ func (c *CPU) op_LD_HL_n() int {
 	c.setRegShort(PC, pc+1)
 	c.memory.WriteByte(c.getRegShort(HL), n)
 	return 1
+}
+
+func (c *CPU) op_CPL() int {
+	value := c.getRegByte(A)
+	// Flip all bits
+	value = value ^ 0xFF
+	c.setRegByte(A, value)
+	c.setFlagN(true)
+	c.setFlagH(true)
+	return 1
+}
+
+func (c *CPU) op_CCF() int {
+	c.setFlagN(false)
+	c.setFlagH(false)
+	c.setFlagC(!c.getFlagC())
+	return 1
+}
+
+func (c *CPU) op_RST_0x00() int { return c.RST_x(0x00) }
+func (c *CPU) op_RST_0x08() int { return c.RST_x(0x08) }
+func (c *CPU) op_RST_0x10() int { return c.RST_x(0x10) }
+func (c *CPU) op_RST_0x18() int { return c.RST_x(0x18) }
+func (c *CPU) op_RST_0x20() int { return c.RST_x(0x20) }
+func (c *CPU) op_RST_0x28() int { return c.RST_x(0x28) }
+func (c *CPU) op_RST_0x30() int { return c.RST_x(0x30) }
+func (c *CPU) op_RST_0x38() int { return c.RST_x(0x38) }
+
+func (c *CPU) RST_x(n byte) int {
+	c.push(PC)
+	c.setRegShort(PC, uint16(n))
+	return 4
+}
+
+func (c *CPU) op_LD_nn_SP() int {
+	pc := c.getRegShort(PC)
+	nn := c.memory.ReadShort(pc)
+	c.setRegShort(PC, pc+2)
+	c.memory.WriteShort(nn, c.getRegShort(SP))
+	return 5
 }
