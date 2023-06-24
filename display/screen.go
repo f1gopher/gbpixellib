@@ -224,14 +224,15 @@ func (s *Screen) renderTiles() {
 
 		// TODO - tileAddress is wrong??
 
-		if unsig {
-			tileNum = uint16(s.memory.ReadByte(tileAddress))
-		} else {
-			tileNum = uint16(s.memory.ReadByte(tileAddress))
-		}
+		// if unsig {
+		abc := s.memory.ReadByte(tileAddress)
+		tileNum = uint16(abc)
+		// } else {
+		// 	tileNum = uint16(s.memory.ReadByte(tileAddress))
+		// }
 
 		// TODO - HACK
-		//		tileNum = 1
+		// tileNum = 1
 		// TODO - temp hack to draw something
 		//tileNum = 5
 
@@ -252,7 +253,9 @@ func (s *Screen) renderTiles() {
 		colourBit -= 7
 		colourBit = colourBit * -1
 
-		tile := s.memory.ReadShort(uint16(tileLocation) + uint16(line))
+		tileAbc := uint16(tileLocation) + uint16(line)
+
+		tile := s.memory.ReadShort(tileAbc)
 
 		color := s.colorForPixel(tile, byte(colourBit))
 
@@ -425,6 +428,31 @@ func (s *Screen) drawTile(tileAddr uint16, firstPixelIndex int) {
 }
 
 func (s *Screen) colorForPixel(block uint16, index byte) screenColor {
+	// var paletteId byte = 0
+	// l1 := s.memory.ReadBit(block, 7-index)
+	// l2 := s.memory.ReadBit(block+1, 7-index)
+	// if l1 {
+	// 	paletteId = 1
+	// }
+	//
+	// if l2 {
+	// 	paletteId += 2
+	// }
+	//
+	// c := (byte(s.memory.ReadByte(0xFF47)) >> (paletteId * 2)) & 0x03
+	// switch c {
+	// case 0:
+	// 	return white
+	// case 1:
+	// 	return lightGray
+	// case 2:
+	// 	return darkGray
+	// case 3:
+	// 	return black
+	// default:
+	// 	panic("")
+	// }
+	//
 	highFlag := block >> (8 + index) & 0x0001
 	lowFlag := block >> index & 0x0001
 
