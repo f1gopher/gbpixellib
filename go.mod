@@ -1,3 +1,3 @@
-module go-boy
+module gbpixel
 
 go 1.20
