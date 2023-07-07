@@ -37,5 +37,7 @@ func main() {
 	//system := system.CreateTestSystem("./rom/test/06-ld r,r.gb")
 	system := system.CreateSystem("./bios/dmg.bin", "./rom/games/Tetris (World) (Rev 1).gb")
 	system.Start()
+	//ui.Main(system)
+	ui := ui.EbitenUI{}
 	ui.Main(system)
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go-boy/interupt"
 	"go-boy/memory"
-	"strings"
+	"os"
 )
 
 const screenWidth = 160
@@ -27,17 +27,17 @@ const (
 	transferringToController
 )
 
-type screenColor int
+type ScreenColor int
 
 const (
-	off screenColor = iota
-	white
-	lightGray
-	darkGray
-	black
+	Off ScreenColor = iota
+	White
+	LightGray
+	DarkGray
+	Black
 )
 
-func (s screenColor) String() string {
+func (s ScreenColor) String() string {
 	return [...]string{" ", " ", ".", "o", "#"}[s]
 }
 
@@ -46,19 +46,22 @@ type interuptHandler interface {
 }
 
 type Screen struct {
+	log             *os.File
 	memory          *memory.Memory
 	interuptHandler interuptHandler
 
-	buffer []screenColor
+	buffer []ScreenColor
 
 	currentCycleForScanline int
 }
 
 func CreateScreen(memory *memory.Memory, interuptHandler interuptHandler) *Screen {
+	f, _ := os.Create("./gpu-log.txt")
 	return &Screen{
+		log:             f,
 		memory:          memory,
 		interuptHandler: interuptHandler,
-		buffer:          make([]screenColor, screenWidth*screenHeight),
+		buffer:          make([]ScreenColor, screenWidth*screenHeight),
 	}
 }
 
@@ -255,6 +258,8 @@ func (s *Screen) renderTiles() {
 
 		tileAbc := uint16(tileLocation) + uint16(line)
 
+		//tileAbc = s.tileAddrForId(abc)
+
 		tile := s.memory.ReadShort(tileAbc)
 
 		color := s.colorForPixel(tile, byte(colourBit))
@@ -272,6 +277,10 @@ func (s *Screen) renderTiles() {
 		offset := (uint16(finalY) * uint16(screenWidth)) + uint16(pixel)
 
 		s.buffer[offset] = color
+
+		if pixel == 32 {
+			s.log.WriteString(fmt.Sprintf("Y: %d, tileid: %d, tile addr: 0x%04X, data: 0x%04X\n", tileRow, tileNum, tileAbc, tile))
+		}
 	}
 }
 
@@ -317,7 +326,7 @@ func (s *Screen) renderSprites() {
 				color := s.colorForPixel(dataAddress, byte(colorBit))
 
 				// White is transparent for sprites
-				if color == white {
+				if color == White {
 					continue
 				}
 
@@ -341,20 +350,21 @@ func (s *Screen) renderSprites() {
 	}
 }
 
-func (s *Screen) Render() string {
+func (s *Screen) Render(callback func(x int, y int, color ScreenColor)) {
 
 	//s.read()
 
-	var output strings.Builder
-	output.Grow(101 * screenWidth)
+	//var output strings.Builder
+	//output.Grow(101 * screenWidth)
 	for y := 0; y < screenHeight; y++ {
 		for x := 0; x < screenWidth; x++ {
-			output.WriteString(s.buffer[(y*screenWidth)+x].String())
+			//output.WriteString(s.buffer[(y*screenWidth)+x].String())
+			callback(x, y, s.buffer[(y*screenWidth)+x])
 		}
-		output.WriteString("\n")
+		//output.WriteString("\n")
 	}
 
-	return output.String()
+	//return output.String()
 }
 
 func (s *Screen) read() {
@@ -427,7 +437,7 @@ func (s *Screen) drawTile(tileAddr uint16, firstPixelIndex int) {
 	}
 }
 
-func (s *Screen) colorForPixel(block uint16, index byte) screenColor {
+func (s *Screen) colorForPixel(block uint16, index byte) ScreenColor {
 	// var paletteId byte = 0
 	// l1 := s.memory.ReadBit(block, 7-index)
 	// l2 := s.memory.ReadBit(block+1, 7-index)
@@ -453,16 +463,41 @@ func (s *Screen) colorForPixel(block uint16, index byte) screenColor {
 	// 	panic("")
 	// }
 	//
+
+	// bit 7 is for pixel 0
+	//switch index {
+	//case 0:
+	//	index = 7
+	//case 1:
+	//	index = 6
+	//case 2:
+	//	index = 5
+	//case 3:
+	//	index = 4
+	//case 4:
+	//	index = 3
+	//case 5:
+	//	index = 2
+	//case 6:
+	//	index = 1
+	//case 7:
+	//	index = 0
+	//default:
+	//	panic("")
+	//}
+
 	highFlag := block >> (8 + index) & 0x0001
 	lowFlag := block >> index & 0x0001
 
+	// TODO - check order of bytes
+
 	if highFlag == 0x00 && lowFlag == 0x00 {
-		return white
+		return White
 	} else if highFlag == 0x00 && lowFlag == 0x01 {
-		return lightGray
+		return LightGray
 	} else if highFlag == 0x01 && lowFlag == 0x00 {
-		return darkGray
+		return DarkGray
 	} else { // aFlag == 0x00 && bFlag == 0x00
-		return black
+		return Black
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"go-boy/memory"
 	"strings"
 	"sync"
-	"time"
 )
 
 type System struct {
@@ -36,7 +35,7 @@ func CreateSystem(bios string, rom string) *System {
 	system.cpu = cpu.CreateCPU(l, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.cpu)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
-	system.currentDisplay = system.screen.Render()
+	//	system.currentDisplay = system.screen.Render()
 
 	system.cpu.Init()
 
@@ -52,7 +51,7 @@ func CreateTestSystem(testRom string) *System {
 	system.cpu = cpu.CreateCPU(l, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.cpu)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
-	system.currentDisplay = system.screen.Render()
+	//	system.currentDisplay = system.screen.Render()
 
 	system.cpu.InitForTestROM()
 
@@ -70,52 +69,67 @@ func (s *System) Start() {
 		panic(err)
 	}
 
-	go s.loop()
+	// go s.loop()
 }
 
-func (s *System) Pixels() string {
+//func (s *System) Pixels() string {
+//	s.displayLock.Lock()
+//	defer s.displayLock.Unlock()
+//	return s.currentDisplay
+//}
+
+func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) {
 	s.displayLock.Lock()
 	defer s.displayLock.Unlock()
-	return s.currentDisplay
+
+	s.screen.Render(callback)
 }
 
-func (s *System) loop() {
-
-	const maxCycles = 69905
-
-	frameTime := (time.Millisecond * 1000) / 60
-
-	for {
-		start := time.Now().UTC()
-
-		currentCycles := 0
-
-		for currentCycles < maxCycles {
-			currentCycles += s.Tick()
-		}
-
-		s.displayLock.Lock()
-		s.currentDisplay = s.screen.Render()
-		s.displayLock.Unlock()
-
-		// TODO - need to sleep to force 60fps rate
-
-		elapsed := time.Now().UTC().Sub(start)
-
-		sleep := frameTime.Milliseconds() - elapsed.Milliseconds()
-
-		time.Sleep(time.Duration(sleep))
-	}
-}
+//func (s *System) loop() {
+//
+//	const maxCycles = 69905
+//
+//	frameTime := (time.Millisecond * 1000) / 60
+//
+//	for {
+//		start := time.Now().UTC()
+//
+//		currentCycles := 0
+//
+//		for currentCycles < maxCycles {
+//			currentCycles += s.Tick()
+//		}
+//
+//		//		s.displayLock.Lock()
+//		//		s.currentDisplay = s.screen.Render()
+//		//		s.displayLock.Unlock()
+//
+//		// TODO - need to sleep to force 60fps rate
+//
+//		elapsed := time.Now().UTC().Sub(start)
+//
+//		sleep := frameTime.Milliseconds() - elapsed.Milliseconds()
+//
+//		time.Sleep(time.Duration(sleep))
+//	}
+//}
 
 func (s *System) Tick() int {
-	cyclesCompleted := s.cpu.Tick()
 
-	// Update timers
-	s.screen.UpdateForCycles(cyclesCompleted)
-	s.interuptHandler.Update()
+	const maxCycles = 69905
+	currentCycles := 0
 
-	return cyclesCompleted
+	for currentCycles < maxCycles {
+		cyclesCompleted := s.cpu.Tick()
+
+		// Update timers
+		s.screen.UpdateForCycles(cyclesCompleted)
+		s.interuptHandler.Update()
+
+		currentCycles += cyclesCompleted
+	}
+
+	return currentCycles
 }
 
 func (s *System) State() string {

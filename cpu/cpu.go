@@ -1184,7 +1184,7 @@ func (c *CPU) PushAndReplacePC(newPC uint16) {
 }
 
 func (c *CPU) Tick() int {
-	c.debugLog()
+	//c.debugLog()
 
 	opcode := c.memory.ReadByte(c.regPC)
 

@@ -106,35 +106,35 @@ func (s *Screen) wx() byte {
 	return s.memory.ReadByte(0xFF4B)
 }
 
-func (s *Screen) bgpIndex3Color() screenColor {
+func (s *Screen) bgpIndex3Color() ScreenColor {
 	return s.bgpColor(6)
 }
 
-func (s *Screen) bgpIndex2Color() screenColor {
+func (s *Screen) bgpIndex2Color() ScreenColor {
 	return s.bgpColor(4)
 }
 
-func (s *Screen) bgpIndex1Color() screenColor {
+func (s *Screen) bgpIndex1Color() ScreenColor {
 	return s.bgpColor(2)
 }
 
-func (s *Screen) bgpIndex0Color() screenColor {
+func (s *Screen) bgpIndex0Color() ScreenColor {
 	return s.bgpColor(0)
 }
 
-func (s *Screen) bgpColor(offset byte) screenColor {
+func (s *Screen) bgpColor(offset byte) ScreenColor {
 	value := s.memory.ReadByte(0xFF47)
 
 	value = value >> offset
 
 	if value&0x00 == 0x00 {
-		return white
+		return White
 	} else if value&0x01 == 0x01 {
-		return lightGray
+		return LightGray
 	} else if value&0x02 == 0x02 {
-		return darkGray
+		return DarkGray
 	} else {
-		return black
+		return Black
 	}
 }
 
