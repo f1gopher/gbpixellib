@@ -3,7 +3,7 @@ package memory
 import (
 	"errors"
 	"fmt"
-	"github.com/f1gopher/gbpixel-lib/log"
+	"github.com/f1gopher/gbpixellib/log"
 	"os"
 )
 

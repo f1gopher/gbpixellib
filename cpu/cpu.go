@@ -2,8 +2,8 @@ package cpu
 
 import (
 	"fmt"
-	"github.com/f1gopher/gbpixel-lib/log"
-	"github.com/f1gopher/gbpixel-lib/memory"
+	"github.com/f1gopher/gbpixellib/log"
+	"github.com/f1gopher/gbpixellib/memory"
 	"os"
 )
 

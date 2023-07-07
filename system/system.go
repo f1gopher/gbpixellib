@@ -1,11 +1,11 @@
 package system
 
 import (
-	"github.com/f1gopher/gbpixel-lib/cpu"
-	"github.com/f1gopher/gbpixel-lib/display"
-	"github.com/f1gopher/gbpixel-lib/interupt"
-	"github.com/f1gopher/gbpixel-lib/log"
-	"github.com/f1gopher/gbpixel-lib/memory"
+	"github.com/f1gopher/gbpixellib/cpu"
+	"github.com/f1gopher/gbpixellib/display"
+	"github.com/f1gopher/gbpixellib/interupt"
+	"github.com/f1gopher/gbpixellib/log"
+	"github.com/f1gopher/gbpixellib/memory"
 	"strings"
 	"sync"
 )

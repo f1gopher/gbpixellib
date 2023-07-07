@@ -1,7 +1,7 @@
 package interupt
 
 import (
-	"github.com/f1gopher/gbpixel-lib/memory"
+	"github.com/f1gopher/gbpixellib/memory"
 )
 
 type Interupt int
