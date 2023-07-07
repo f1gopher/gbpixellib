@@ -2,8 +2,8 @@ package display
 
 import (
 	"fmt"
-	"go-boy/interupt"
-	"go-boy/memory"
+	"github.com/f1gopher/gbpixel-lib/interupt"
+	"github.com/f1gopher/gbpixel-lib/memory"
 	"os"
 )
 

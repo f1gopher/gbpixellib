@@ -1,11 +1,11 @@
 package system
 
 import (
-	"go-boy/cpu"
-	"go-boy/display"
-	"go-boy/interupt"
-	"go-boy/log"
-	"go-boy/memory"
+	"github.com/f1gopher/gbpixel-lib/cpu"
+	"github.com/f1gopher/gbpixel-lib/display"
+	"github.com/f1gopher/gbpixel-lib/interupt"
+	"github.com/f1gopher/gbpixel-lib/log"
+	"github.com/f1gopher/gbpixel-lib/memory"
 	"strings"
 	"sync"
 )

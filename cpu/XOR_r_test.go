@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	"go-boy/memory"
+	"github.com/f1gopher/gbpixel-lib/memory"
 	"testing"
 )
 
