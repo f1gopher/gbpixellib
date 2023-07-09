@@ -1,13 +1,15 @@
 package system
 
 import (
+	"errors"
+	"strings"
+	"sync"
+
 	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/display"
 	"github.com/f1gopher/gbpixellib/interupt"
 	"github.com/f1gopher/gbpixellib/log"
 	"github.com/f1gopher/gbpixellib/memory"
-	"strings"
-	"sync"
 )
 
 type System struct {
@@ -114,22 +116,36 @@ func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) 
 //	}
 //}
 
-func (s *System) Tick() int {
+func (s *System) Tick() (cyclesCompleted int, err error) {
 
 	const maxCycles = 69905
 	currentCycles := 0
 
 	for currentCycles < maxCycles {
-		cyclesCompleted := s.cpu.Tick()
-
-		// Update timers
-		s.screen.UpdateForCycles(cyclesCompleted)
-		s.interuptHandler.Update()
+		cyclesCompleted, err := s.SingleInstruction()
+		if err != nil {
+			return currentCycles, err
+		}
 
 		currentCycles += cyclesCompleted
 	}
 
-	return currentCycles
+	return currentCycles, nil
+}
+
+func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
+
+	cyclesCompleted, err = s.cpu.Tick()
+
+	if err != nil {
+		return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+	}
+
+	// Update timers
+	s.screen.UpdateForCycles(cyclesCompleted)
+	s.interuptHandler.Update()
+
+	return cyclesCompleted, nil
 }
 
 func (s *System) State() string {
