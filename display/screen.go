@@ -2,9 +2,10 @@ package display
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/f1gopher/gbpixellib/interupt"
 	"github.com/f1gopher/gbpixellib/memory"
-	"os"
 )
 
 const screenWidth = 160
@@ -65,15 +66,17 @@ func CreateScreen(memory *memory.Memory, interuptHandler interuptHandler) *Scree
 	}
 }
 
+// TODO - need to update/set LYC LY compare and LCD status interrupts?
+
 func (s *Screen) Debug() string {
 	return fmt.Sprintf("LCD On: %t\nScrollX: %d\nScrollY: %d\nWindow Enable: %t\nOBJ/Sprite Enabled: %t\nBG Display: %t\nScanline: %d\n",
-		s.lcdEnable(),
-		s.scx(),
-		s.scy(),
-		s.windowEnable(),
-		s.objEnable(),
-		s.bgWindowEnablePriority(),
-		s.ly(),
+		s.LCDEnable(),
+		s.SCX(),
+		s.SCY(),
+		s.WindowEnable(),
+		s.ObjEnable(),
+		s.BgWindowEnablePriority(),
+		s.LY(),
 	)
 }
 
@@ -81,7 +84,7 @@ func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 
 	s.setLcdStatus()
 
-	if !s.lcdEnable() {
+	if !s.LCDEnable() {
 		return
 	}
 
@@ -90,7 +93,7 @@ func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 	if s.currentCycleForScanline <= 0 {
 		s.currentCycleForScanline = cyclesToDrawScanline
 
-		currentScanline := s.ly() + 1
+		currentScanline := s.LY() + 1
 		s.memory.DisplaySetScanline(currentScanline)
 
 		if currentScanline == 144 {
@@ -106,7 +109,7 @@ func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 func (s *Screen) setLcdStatus() {
 	status := s.memory.ReadByte(lcdStatus)
 
-	if !s.lcdEnable() {
+	if !s.LCDEnable() {
 		s.currentCycleForScanline = 456
 		s.memory.DisplaySetScanline(0)
 		status = status & 252
@@ -152,7 +155,7 @@ func (s *Screen) setLcdStatus() {
 		s.interuptHandler.Request(interupt.LCD)
 	}
 
-	if s.ly() == s.memory.ReadByte(0xFF45) {
+	if s.LY() == s.memory.ReadByte(0xFF45) {
 		status = memory.SetBit(status, 2, true)
 
 		if memory.GetBit(status, 6) {
@@ -166,11 +169,11 @@ func (s *Screen) setLcdStatus() {
 }
 
 func (s *Screen) drawScanline() {
-	if s.bgWindowEnablePriority() {
+	if s.BgWindowEnablePriority() {
 		s.renderTiles()
 	}
 
-	if s.objEnable() {
+	if s.ObjEnable() {
 		s.renderSprites()
 	}
 }
@@ -179,34 +182,34 @@ func (s *Screen) renderTiles() {
 
 	var backgroundMemory uint16 = 0
 
-	scrollY := s.scy()
-	scrollX := s.scx()
-	windowY := s.wy()
-	windowX := s.wx() - 7
+	scrollY := s.SCY()
+	scrollX := s.SCX()
+	windowY := s.WY()
+	windowX := s.WX() - 7
 
 	usingWindow := false
 
 	s.memory.DumpTiles()
 
-	if s.windowEnable() {
-		usingWindow = windowY <= s.ly()
+	if s.WindowEnable() {
+		usingWindow = windowY <= s.LY()
 	}
 
-	tileData := s.bgWindowTileDataArea()
+	tileData := s.BgWindowTileDataArea()
 	unsig := tileData == 0x8000
 
 	if !usingWindow {
-		backgroundMemory = s.bgTileMapArea(3)
+		backgroundMemory = s.BgTileMapArea(3)
 	} else {
-		backgroundMemory = s.bgTileMapArea(6)
+		backgroundMemory = s.BgTileMapArea(6)
 	}
 
 	var yPos byte = 0
 
 	if !usingWindow {
-		yPos = scrollY + s.ly()
+		yPos = scrollY + s.LY()
 	} else {
-		yPos = s.ly() - windowY
+		yPos = s.LY() - windowY
 	}
 
 	tileRow := ((uint16(yPos) % 0x100) / 8) * 32
@@ -269,7 +272,7 @@ func (s *Screen) renderTiles() {
 
 		//color := s.bgpColor(colourNum)
 
-		finalY := s.ly()
+		finalY := s.LY()
 		if finalY < 0 || finalY >= screenHeight || pixel < 0 || pixel >= screenWidth {
 			panic(fmt.Sprintf("Invalid pixel location %d,%d", pixel, finalY))
 		}
@@ -298,8 +301,8 @@ func (s *Screen) renderSprites() {
 		//		yFlip := memory.GetBit(attributes, 6)
 		xFlip := memory.GetBit(attributes, 5)
 
-		ySize := s.objSize()
-		scanline := s.ly()
+		ySize := s.ObjSize()
+		scanline := s.LY()
 
 		if scanline >= yPos && scanline < (yPos+ySize) {
 
@@ -368,7 +371,7 @@ func (s *Screen) Render(callback func(x int, y int, color ScreenColor)) {
 }
 
 func (s *Screen) read() {
-	currentTileAddr := s.bgTileMapArea(0)
+	currentTileAddr := s.BgTileMapArea(0)
 
 	//	scrollY := s.scy()
 	//	scrollX := s.scx()

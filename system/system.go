@@ -30,6 +30,41 @@ type CPUState struct {
 	CFlag bool
 }
 
+type LCDControlState struct {
+	LCDEnabled        bool
+	WindowTileMapArea uint16
+	WindowEnabled     bool
+	BGWindowTileData  uint16
+	BGTileMap         uint16
+	OBJSize           byte
+	OBJEnabled        bool
+	BGWindowEnabled   bool
+
+	LCDY byte
+
+	LYLYCCompare byte
+
+	LCDStatus_LYCLYInterrupt       bool
+	LCDStatus_Mode2OAMInterrupt    bool
+	LCDStatus_Mode1VBlankInterrupt bool
+	LCDStatus_Mode0HBlankInterrupt bool
+	LCDStatus_LYCLY                bool
+	LCDStatus_Mode                 byte
+
+	SCY byte
+	SCX byte
+	WY  byte
+	WX  byte
+
+	BGP_Idx3 byte
+	BGP_Idx2 byte
+	BGP_Idx1 byte
+	BGP_Idx0 byte
+
+	OBP0 byte
+	OBP1 byte
+}
+
 type System struct {
 	bios string
 	rom  string
@@ -196,5 +231,34 @@ func (s *System) GetCPUState() *CPUState {
 		NFlag: s.cpu.GetFlagN(),
 		HFlag: s.cpu.GetFlagH(),
 		CFlag: s.cpu.GetFlagC(),
+	}
+}
+
+func (s *System) GetGPUState() *LCDControlState {
+	return &LCDControlState{
+		LCDEnabled:        s.screen.LCDEnable(),
+		WindowTileMapArea: s.screen.WindowTileMapStart(),
+		WindowEnabled:     s.screen.WindowEnable(),
+		BGWindowTileData:  s.screen.BgWindowTileDataArea(),
+		BGTileMap:         s.screen.BgTileMapArea(0), // TODO - is this right
+		OBJSize:           s.screen.ObjSize(),
+		OBJEnabled:        s.screen.ObjEnable(),
+		BGWindowEnabled:   s.screen.BgWindowEnablePriority(),
+
+		LCDY: s.screen.LY(),
+
+		LYLYCCompare: s.screen.LYC(),
+
+		LCDStatus_LYCLYInterrupt:       s.screen.LCDStatusStatInterruptLycLy(),
+		LCDStatus_Mode2OAMInterrupt:    s.screen.LCDStatusStatInterruptMode2Oam(),
+		LCDStatus_Mode1VBlankInterrupt: s.screen.LCDStatusStatInterruptMode1Vblank(),
+		LCDStatus_Mode0HBlankInterrupt: s.screen.LCDStatusStatInterruptMode0Hblank(),
+		LCDStatus_LYCLY:                s.screen.LCDStatusLycLy(),
+		LCDStatus_Mode:                 byte(s.screen.LCDStatusMode()),
+
+		SCY: s.screen.SCY(),
+		SCX: s.screen.SCX(),
+		WY:  s.screen.WY(),
+		WX:  s.screen.WX(),
 	}
 }

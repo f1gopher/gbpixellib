@@ -1,10 +1,10 @@
 package display
 
-func (s *Screen) lcdEnable() bool {
+func (s *Screen) LCDEnable() bool {
 	return s.memory.ReadBit(lcdcRegister, 7)
 }
 
-func (s *Screen) windowTileMapStart() uint16 {
+func (s *Screen) WindowTileMapStart() uint16 {
 	if s.memory.ReadBit(lcdcRegister, 6) {
 		return 0x9C00
 	}
@@ -12,11 +12,11 @@ func (s *Screen) windowTileMapStart() uint16 {
 	return 0x9800
 }
 
-func (s *Screen) windowEnable() bool {
+func (s *Screen) WindowEnable() bool {
 	return s.memory.ReadBit(lcdcRegister, 5)
 }
 
-func (s *Screen) bgWindowTileDataArea() uint16 {
+func (s *Screen) BgWindowTileDataArea() uint16 {
 	if s.memory.ReadBit(lcdcRegister, 4) {
 		return 0x8000
 	}
@@ -24,7 +24,7 @@ func (s *Screen) bgWindowTileDataArea() uint16 {
 	return 0x8800
 }
 
-func (s *Screen) bgTileMapArea(bit byte) uint16 {
+func (s *Screen) BgTileMapArea(bit byte) uint16 {
 	if s.memory.ReadBit(lcdcRegister, bit) {
 		return 0x9C00
 	}
@@ -32,7 +32,7 @@ func (s *Screen) bgTileMapArea(bit byte) uint16 {
 	return 0x9800
 }
 
-func (s *Screen) objSize() byte {
+func (s *Screen) ObjSize() byte {
 	if s.memory.ReadBit(lcdcRegister, 2) {
 		return 16
 	}
@@ -40,43 +40,43 @@ func (s *Screen) objSize() byte {
 	return 8
 }
 
-func (s *Screen) objEnable() bool {
+func (s *Screen) ObjEnable() bool {
 	return s.memory.ReadBit(lcdcRegister, 1)
 }
 
-func (s *Screen) bgWindowEnablePriority() bool {
+func (s *Screen) BgWindowEnablePriority() bool {
 	return s.memory.ReadBit(lcdcRegister, 0)
 }
 
-func (s *Screen) ly() byte {
+func (s *Screen) LY() byte {
 	return s.memory.ReadByte(lcdScanline)
 }
 
-func (s *Screen) lyc() byte {
+func (s *Screen) LYC() byte {
 	return s.memory.ReadByte(0xFF45)
 }
 
-func (s *Screen) lcdStatus_STAT_Interrupt_LYC_LY() bool {
+func (s *Screen) LCDStatusStatInterruptLycLy() bool {
 	return s.memory.ReadBit(lcdStatus, 6)
 }
 
-func (s *Screen) lcdStatus_STAT_Interrupt_Mode2_OAM() bool {
+func (s *Screen) LCDStatusStatInterruptMode2Oam() bool {
 	return s.memory.ReadBit(lcdStatus, 5)
 }
 
-func (s *Screen) lcdStatus_STAT_Interrupt_Mode1_VBlank() bool {
+func (s *Screen) LCDStatusStatInterruptMode1Vblank() bool {
 	return s.memory.ReadBit(lcdStatus, 4)
 }
 
-func (s *Screen) lcdStatus_STAT_Interrupt_Mode0_HBlank() bool {
+func (s *Screen) LCDStatusStatInterruptMode0Hblank() bool {
 	return s.memory.ReadBit(lcdStatus, 3)
 }
 
-func (s *Screen) lcdStatus_LYC_LY() bool {
+func (s *Screen) LCDStatusLycLy() bool {
 	return s.memory.ReadBit(lcdStatus, 2)
 }
 
-func (s *Screen) lcdStatus_Mode() lcdStatusMode {
+func (s *Screen) LCDStatusMode() lcdStatusMode {
 	value := s.memory.ReadByte(lcdStatus)
 
 	if value&0x0000 == 0x0000 {
@@ -90,19 +90,19 @@ func (s *Screen) lcdStatus_Mode() lcdStatusMode {
 	}
 }
 
-func (s *Screen) scy() byte {
+func (s *Screen) SCY() byte {
 	return s.memory.ReadByte(0xFF42)
 }
 
-func (s *Screen) scx() byte {
+func (s *Screen) SCX() byte {
 	return s.memory.ReadByte(0xFF43)
 }
 
-func (s *Screen) wy() byte {
+func (s *Screen) WY() byte {
 	return s.memory.ReadByte(0xFF4A)
 }
 
-func (s *Screen) wx() byte {
+func (s *Screen) WX() byte {
 	return s.memory.ReadByte(0xFF4B)
 }
 
