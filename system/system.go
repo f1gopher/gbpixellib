@@ -12,6 +12,24 @@ import (
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
+type CPUState struct {
+	A  uint8
+	F  uint8
+	B  uint8
+	C  uint8
+	D  uint8
+	E  uint8
+	H  uint8
+	L  uint8
+	SP uint16
+	PC uint16
+
+	ZFlag bool
+	NFlag bool
+	HFlag bool
+	CFlag bool
+}
+
 type System struct {
 	bios string
 	rom  string
@@ -160,4 +178,23 @@ func (s *System) State() string {
 
 func (s *System) OpcodesUsed() {
 	s.cpu.DumpOpcodesUsed()
+}
+
+func (s *System) GetCPUState() *CPUState {
+	return &CPUState{
+		A:     s.cpu.GetRegByte(cpu.A),
+		F:     s.cpu.GetRegByte(cpu.F),
+		B:     s.cpu.GetRegByte(cpu.B),
+		C:     s.cpu.GetRegByte(cpu.C),
+		D:     s.cpu.GetRegByte(cpu.D),
+		E:     s.cpu.GetRegByte(cpu.E),
+		H:     s.cpu.GetRegByte(cpu.H),
+		L:     s.cpu.GetRegByte(cpu.L),
+		SP:    s.cpu.GetRegShort(cpu.SP),
+		PC:    s.cpu.GetRegShort(cpu.PC),
+		ZFlag: s.cpu.GetFlagZ(),
+		NFlag: s.cpu.GetFlagN(),
+		HFlag: s.cpu.GetFlagH(),
+		CFlag: s.cpu.GetFlagC(),
+	}
 }

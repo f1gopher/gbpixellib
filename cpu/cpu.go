@@ -128,7 +128,7 @@ func (c *CPU) Init() {
 
 func (c *CPU) PushAndReplacePC(newPC uint16) {
 
-	currentPC := c.getRegShort(PC)
+	currentPC := c.GetRegShort(PC)
 
 	c.regSP -= 2
 	c.memory.WriteShort(c.regSP, currentPC)
@@ -175,7 +175,7 @@ func (c *CPU) getOpcode(opcode byte) (executer func() int, err error) {
 	return executor, nil
 }
 
-func (c *CPU) getRegShort(reg register) uint16 {
+func (c *CPU) GetRegShort(reg register) uint16 {
 	switch reg {
 	case AF:
 		return c.regAF
@@ -194,7 +194,7 @@ func (c *CPU) getRegShort(reg register) uint16 {
 	}
 }
 
-func (c *CPU) getRegByte(reg register) byte {
+func (c *CPU) GetRegByte(reg register) byte {
 	switch reg {
 	case A:
 		return getHighByte(c.regAF)
@@ -217,13 +217,13 @@ func (c *CPU) getRegByte(reg register) byte {
 	}
 }
 
-func (c *CPU) getFlagZ() bool { return c.getRegBit(F, 7) }
-func (c *CPU) getFlagN() bool { return c.getRegBit(F, 6) }
-func (c *CPU) getFlagH() bool { return c.getRegBit(F, 5) }
-func (c *CPU) getFlagC() bool { return c.getRegBit(F, 4) }
+func (c *CPU) GetFlagZ() bool { return c.getRegBit(F, 7) }
+func (c *CPU) GetFlagN() bool { return c.getRegBit(F, 6) }
+func (c *CPU) GetFlagH() bool { return c.getRegBit(F, 5) }
+func (c *CPU) GetFlagC() bool { return c.getRegBit(F, 4) }
 
 func (c *CPU) getRegBit(reg register, bit int) bool {
-	return memory.GetBit(c.getRegByte(reg), bit)
+	return memory.GetBit(c.GetRegByte(reg), bit)
 }
 
 func (c *CPU) setRegShort(reg register, value uint16) {
@@ -297,7 +297,7 @@ func (c *CPU) setRegBit(reg register, bit int, value bool) {
 		panic(fmt.Sprintf("Unexpected register for get set bit: %s", reg.String()))
 	}
 
-	c.setRegByte(reg, memory.SetBit(c.getRegByte(reg), bit, value))
+	c.setRegByte(reg, memory.SetBit(c.GetRegByte(reg), bit, value))
 }
 
 func (c *CPU) debugLog() {
@@ -312,16 +312,16 @@ func (c *CPU) debugLog() {
 
 	msg := fmt.Sprintf(
 		"[A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X]",
-		c.getRegByte(A),
-		c.getRegByte(F),
-		c.getRegByte(B),
-		c.getRegByte(C),
-		c.getRegByte(D),
-		c.getRegByte(E),
-		c.getRegByte(H),
-		c.getRegByte(L),
-		c.getRegShort(SP),
-		c.getRegShort(PC),
+		c.GetRegByte(A),
+		c.GetRegByte(F),
+		c.GetRegByte(B),
+		c.GetRegByte(C),
+		c.GetRegByte(D),
+		c.GetRegByte(E),
+		c.GetRegByte(H),
+		c.GetRegByte(L),
+		c.GetRegShort(SP),
+		c.GetRegShort(PC),
 		p1,
 		p2,
 		p3,
@@ -350,24 +350,24 @@ func (c *CPU) Debug() string {
 		c.count,
 		p1,
 		name,
-		c.getRegByte(A),
-		c.getRegByte(F),
-		c.getRegByte(B),
-		c.getRegByte(C),
-		c.getRegByte(D),
-		c.getRegByte(E),
-		c.getRegByte(H),
-		c.getRegByte(L),
-		c.getRegShort(SP),
-		c.getRegShort(PC),
+		c.GetRegByte(A),
+		c.GetRegByte(F),
+		c.GetRegByte(B),
+		c.GetRegByte(C),
+		c.GetRegByte(D),
+		c.GetRegByte(E),
+		c.GetRegByte(H),
+		c.GetRegByte(L),
+		c.GetRegShort(SP),
+		c.GetRegShort(PC),
 		p1,
 		p2,
 		p3,
 		p4,
-		c.getFlagZ(),
-		c.getFlagN(),
-		c.getFlagH(),
-		c.getFlagC())
+		c.GetFlagZ(),
+		c.GetFlagN(),
+		c.GetFlagH(),
+		c.GetFlagC())
 }
 
 func (c *CPU) DumpOpcodesUsed() {
@@ -433,7 +433,7 @@ func (c *CPU) op_LD_A_L() int { return c.loadByte(A, L) }
 func (c *CPU) op_LD_A_A() int { return c.loadByte(A, A) }
 
 func (c *CPU) loadByte(dest register, src register) int {
-	c.setRegByte(dest, c.getRegByte(src))
+	c.setRegByte(dest, c.GetRegByte(src))
 	return 1
 }
 
@@ -472,22 +472,22 @@ func (c *CPU) op_LD_SP_nn() int {
 	return 1
 }
 func (c *CPU) op_LD_A_HL_plus() int {
-	hl := c.getRegShort(HL)
+	hl := c.GetRegShort(HL)
 	c.setRegByte(A, c.memory.ReadByte(hl))
 	hl++
 	c.setRegShort(HL, hl)
 	return 1
 }
 func (c *CPU) op_LD_DE_A() int {
-	c.memory.WriteByte(c.getRegShort(DE), c.getRegByte(A))
+	c.memory.WriteByte(c.GetRegShort(DE), c.GetRegByte(A))
 	return 2
 }
 func (c *CPU) op_LD_BC_A() int {
-	c.memory.WriteByte(c.getRegShort(BC), c.getRegByte(A))
+	c.memory.WriteByte(c.GetRegShort(BC), c.GetRegByte(A))
 	return 2
 }
 func (c *CPU) op_LD_nn_A() int {
-	c.memory.WriteByte(c.regPC, c.getRegByte(A))
+	c.memory.WriteByte(c.regPC, c.GetRegByte(A))
 	c.regPC += 2
 	return 1
 }
@@ -495,7 +495,7 @@ func (c *CPU) op_LDH_n_A() int {
 	n := c.memory.ReadByte(c.regPC)
 	c.regPC++
 	var addr uint16 = 0xFF00 | uint16(n)
-	c.memory.WriteByte(addr, c.getRegByte(A))
+	c.memory.WriteByte(addr, c.GetRegByte(A))
 	return 1
 }
 
@@ -508,30 +508,30 @@ func (c *CPU) op_LD_HL_L() int { return c.LD_HL_x(L) }
 func (c *CPU) op_LD_HL_A() int { return c.LD_HL_x(A) }
 
 func (c *CPU) LD_HL_x(reg register) int {
-	c.memory.WriteByte(c.regHL, c.getRegByte(reg))
+	c.memory.WriteByte(c.regHL, c.GetRegByte(reg))
 	return 1
 }
 
 func (c *CPU) op_LD_A_DE() int {
-	c.setRegByte(A, c.memory.ReadByte(c.getRegShort(DE)))
+	c.setRegByte(A, c.memory.ReadByte(c.GetRegShort(DE)))
 	return 1
 }
 
 func (c *CPU) op_LD_HL_plus_A() int {
-	c.memory.WriteByte(c.regHL, c.getRegByte(A))
+	c.memory.WriteByte(c.regHL, c.GetRegByte(A))
 	c.regHL++
 	return 1
 }
 
 func (c *CPU) op_LD_HL_sub_A() int {
-	c.memory.WriteByte(c.regHL, c.getRegByte(A))
+	c.memory.WriteByte(c.regHL, c.GetRegByte(A))
 	c.regHL--
 	return 1
 }
 
 func (c *CPU) op_LDH_C_A() int {
-	addr := 0xFF00 | uint16(c.getRegByte(C))
-	c.memory.WriteByte(addr, c.getRegByte(A))
+	addr := 0xFF00 | uint16(c.GetRegByte(C))
+	c.memory.WriteByte(addr, c.GetRegByte(A))
 	return 1
 }
 
@@ -572,7 +572,7 @@ func (c *CPU) op_DEC_HL() int { return c.decrementShortRegister(HL) }
 func (c *CPU) op_DEC_SP() int { return c.decrementShortRegister(SP) }
 
 func (c *CPU) incrementByteRegister(reg register) int {
-	value := c.getRegByte(reg)
+	value := c.GetRegByte(reg)
 	current := value + 1
 	c.setFlagZ(current == 0)
 	c.setFlagN(false)
@@ -585,7 +585,7 @@ func (c *CPU) incrementByteRegister(reg register) int {
 }
 
 func (c *CPU) decrementByteRegister(reg register) int {
-	value := c.getRegByte(reg)
+	value := c.GetRegByte(reg)
 	current := value - 1
 	c.setFlagZ(current == 0)
 	c.setFlagN(true)
@@ -597,7 +597,7 @@ func (c *CPU) decrementByteRegister(reg register) int {
 }
 
 func (c *CPU) incrementShortRegister(reg register) int {
-	current := c.getRegShort(reg) + 1
+	current := c.GetRegShort(reg) + 1
 	//	c.setFlagZ(current == 0)
 	//	c.setFlagN(true) // TODO - why?
 	//	c.setFlagH(current&0x10 == 0x10)
@@ -607,7 +607,7 @@ func (c *CPU) incrementShortRegister(reg register) int {
 }
 
 func (c *CPU) decrementShortRegister(reg register) int {
-	current := c.getRegShort(reg) + 1
+	current := c.GetRegShort(reg) + 1
 	//	c.setFlagZ(current == 0)
 	//	c.setFlagN(true)
 	//	c.setFlagH(current&0x10 == 0x10)
@@ -623,7 +623,7 @@ func (c *CPU) op_ADD_n() int {
 }
 
 func (c *CPU) op_ADD(n byte) int {
-	a := c.getRegByte(A)
+	a := c.GetRegByte(A)
 	result := a + n
 	c.setRegByte(A, result)
 	c.setFlagZ(result == 0)
@@ -641,7 +641,7 @@ func (c *CPU) op_SUB_n() int {
 }
 
 func (c *CPU) op_SUB(n byte) int {
-	a := c.getRegByte(A)
+	a := c.GetRegByte(A)
 	result := a - n
 	c.setRegByte(A, result)
 	c.setFlagZ(result == 0)
@@ -670,19 +670,19 @@ func (c *CPU) op_JR_e() int {
 }
 
 func (c *CPU) op_JR_NZ_e() int {
-	return c.conditionalJumpToOffset(!c.getFlagZ())
+	return c.conditionalJumpToOffset(!c.GetFlagZ())
 }
 
 func (c *CPU) op_JR_NC_e() int {
-	return c.conditionalJumpToOffset(!c.getFlagC())
+	return c.conditionalJumpToOffset(!c.GetFlagC())
 }
 
 func (c *CPU) op_JR_Z_e() int {
-	return c.conditionalJumpToOffset(c.getFlagZ())
+	return c.conditionalJumpToOffset(c.GetFlagZ())
 }
 
 func (c *CPU) op_JR_C_e() int {
-	return c.conditionalJumpToOffset(c.getFlagC())
+	return c.conditionalJumpToOffset(c.GetFlagC())
 }
 
 func (c *CPU) conditionalJumpToOffset(condition bool) int {
@@ -709,10 +709,10 @@ func (c *CPU) op_CALL_nn() int {
 	return 1
 }
 
-func (c *CPU) op_CALL_NZ_nn() int { return c.callCondition(!c.getFlagZ()) }
-func (c *CPU) op_CALL_Z_nn() int  { return c.callCondition(c.getFlagZ()) }
-func (c *CPU) op_CALL_NC_nn() int { return c.callCondition(!c.getFlagC()) }
-func (c *CPU) op_CALL_C_nn() int  { return c.callCondition(c.getFlagC()) }
+func (c *CPU) op_CALL_NZ_nn() int { return c.callCondition(!c.GetFlagZ()) }
+func (c *CPU) op_CALL_Z_nn() int  { return c.callCondition(c.GetFlagZ()) }
+func (c *CPU) op_CALL_NC_nn() int { return c.callCondition(!c.GetFlagC()) }
+func (c *CPU) op_CALL_C_nn() int  { return c.callCondition(c.GetFlagC()) }
 
 func (c *CPU) callCondition(condition bool) int {
 	nn := c.memory.ReadShort(c.regPC)
@@ -728,7 +728,7 @@ func (c *CPU) callCondition(condition bool) int {
 
 func (c *CPU) op_RET() int {
 
-	c.setRegShort(PC, c.memory.ReadShort(c.getRegShort(SP)))
+	c.setRegShort(PC, c.memory.ReadShort(c.GetRegShort(SP)))
 	c.regSP += 2
 	return 1
 }
@@ -744,7 +744,7 @@ func (c *CPU) op_POP_AF() int  { return c.pop(AF) }
 
 func (c *CPU) push(reg register) int {
 	c.regSP -= 2
-	c.memory.WriteShort(c.regSP, c.getRegShort(reg))
+	c.memory.WriteShort(c.regSP, c.GetRegShort(reg))
 	return 1
 }
 
@@ -763,7 +763,7 @@ func (c *CPU) op_OR_L() int { return c.or(L) }
 func (c *CPU) op_OR_A() int { return c.or(A) }
 
 func (c *CPU) or(reg register) int {
-	result := c.getRegByte(A) | c.getRegByte(reg)
+	result := c.GetRegByte(A) | c.GetRegByte(reg)
 	c.setRegByte(A, result)
 	c.setFlagZ(result == 0)
 	c.setFlagN(false)
@@ -781,7 +781,7 @@ func (c *CPU) op_AND_L() int { return c.and(L) }
 func (c *CPU) op_AND_A() int { return c.and(A) }
 
 func (c *CPU) and(reg register) int {
-	result := c.getRegByte(A) & c.getRegByte(reg)
+	result := c.GetRegByte(A) & c.GetRegByte(reg)
 	c.setRegByte(A, result)
 	c.setFlagZ(result == 0)
 	c.setFlagN(false)
@@ -799,7 +799,7 @@ func (c *CPU) op_XOR_L() int { return c.xor(L) }
 func (c *CPU) op_XOR_A() int { return c.xor(A) }
 
 func (c *CPU) xor(reg register) int {
-	result := c.getRegByte(A) ^ c.getRegByte(reg)
+	result := c.GetRegByte(A) ^ c.GetRegByte(reg)
 	c.setRegByte(A, result)
 	c.setFlagZ(result == 0)
 	c.setFlagN(false)
@@ -809,8 +809,8 @@ func (c *CPU) xor(reg register) int {
 }
 
 func (c *CPU) op_XOR_HL() int {
-	data := c.memory.ReadByte(c.getRegShort(HL))
-	result := c.getRegByte(A) ^ data
+	data := c.memory.ReadByte(c.GetRegShort(HL))
+	result := c.GetRegByte(A) ^ data
 	c.setRegByte(A, result)
 	c.setFlagZ(result == 0)
 	c.setFlagN(false)
@@ -827,7 +827,7 @@ func (c *CPU) op_CP_n() int {
 }
 
 func (c *CPU) op_CP(n byte) int {
-	a := c.getRegByte(A)
+	a := c.GetRegByte(A)
 	result := a - n
 	c.setFlagZ(result == 0)
 	c.setFlagN(true)
@@ -853,7 +853,7 @@ func (c *CPU) op_LD_A_nn() int {
 func (c *CPU) op_AND_n() int {
 	n := c.memory.ReadByte(c.regPC)
 	c.regPC++
-	result := c.getRegByte(A) & n
+	result := c.GetRegByte(A) & n
 	c.setRegByte(A, n)
 	c.setFlagZ(result == 0)
 	c.setFlagN(false)
@@ -1013,7 +1013,7 @@ func (c *CPU) op_SWAP(op byte) int {
 		panic(fmt.Sprintf("Unknown reg op for SWAP: 0x%02X", op))
 	}
 
-	n := c.getRegByte(reg)
+	n := c.GetRegByte(reg)
 	// TODO - swap upper and lower nibbles
 	c.setRegByte(reg, n)
 
@@ -1050,7 +1050,7 @@ func (c *CPU) op_RL(op byte) int {
 	//oldBit7 := c.getRegBit(reg, 7)
 
 	c.rotateLeft(reg)
-	//value := c.getRegByte(reg)
+	//value := c.GetRegByte(reg)
 
 	//c.setFlagZ(value == 0)
 	//c.setFlagN(false)
@@ -1060,7 +1060,7 @@ func (c *CPU) op_RL(op byte) int {
 }
 
 func (c *CPU) op_RL_A() int {
-	result := c.getRegByte(A)
+	result := c.GetRegByte(A)
 
 	carry := result & 0x80
 	//carry = carry >> 7
@@ -1068,7 +1068,7 @@ func (c *CPU) op_RL_A() int {
 	//result = result & 0xFE
 	//result = result | carry
 
-	if c.getFlagC() {
+	if c.GetFlagC() {
 		result = result ^ 0x01
 	}
 
@@ -1081,14 +1081,14 @@ func (c *CPU) op_RL_A() int {
 }
 
 func (c *CPU) rotateLeft(reg register) {
-	result := c.getRegByte(reg)
+	result := c.GetRegByte(reg)
 
 	carry := result & 0x80
 	//carry = carry >> 7
 	result = result << 1
 	//result = result & 0xFE
 	//result = result | carry
-	if c.getFlagC() {
+	if c.GetFlagC() {
 		result = result ^ 0x01
 	}
 
@@ -1099,43 +1099,43 @@ func (c *CPU) rotateLeft(reg register) {
 	c.setFlagC(carry == 0x80) //carry&0x01 == 0x01)
 }
 
-func (c *CPU) op_SUB_B() int  { return c.op_SUB(c.getRegByte(B)) }
-func (c *CPU) op_SUB_C() int  { return c.op_SUB(c.getRegByte(C)) }
-func (c *CPU) op_SUB_D() int  { return c.op_SUB(c.getRegByte(D)) }
-func (c *CPU) op_SUB_E() int  { return c.op_SUB(c.getRegByte(E)) }
-func (c *CPU) op_SUB_H() int  { return c.op_SUB(c.getRegByte(H)) }
-func (c *CPU) op_SUB_L() int  { return c.op_SUB(c.getRegByte(L)) }
-func (c *CPU) op_SUB_HL() int { return c.op_SUB(c.memory.ReadByte(c.getRegShort(HL))) }
-func (c *CPU) op_SUB_A() int  { return c.op_SUB(c.getRegByte(A)) }
+func (c *CPU) op_SUB_B() int  { return c.op_SUB(c.GetRegByte(B)) }
+func (c *CPU) op_SUB_C() int  { return c.op_SUB(c.GetRegByte(C)) }
+func (c *CPU) op_SUB_D() int  { return c.op_SUB(c.GetRegByte(D)) }
+func (c *CPU) op_SUB_E() int  { return c.op_SUB(c.GetRegByte(E)) }
+func (c *CPU) op_SUB_H() int  { return c.op_SUB(c.GetRegByte(H)) }
+func (c *CPU) op_SUB_L() int  { return c.op_SUB(c.GetRegByte(L)) }
+func (c *CPU) op_SUB_HL() int { return c.op_SUB(c.memory.ReadByte(c.GetRegShort(HL))) }
+func (c *CPU) op_SUB_A() int  { return c.op_SUB(c.GetRegByte(A)) }
 
-func (c *CPU) op_CP_B() int  { return c.op_CP(c.getRegByte(B)) }
-func (c *CPU) op_CP_C() int  { return c.op_CP(c.getRegByte(C)) }
-func (c *CPU) op_CP_D() int  { return c.op_CP(c.getRegByte(D)) }
-func (c *CPU) op_CP_E() int  { return c.op_CP(c.getRegByte(E)) }
-func (c *CPU) op_CP_H() int  { return c.op_CP(c.getRegByte(H)) }
-func (c *CPU) op_CP_L() int  { return c.op_CP(c.getRegByte(L)) }
-func (c *CPU) op_CP_HL() int { return c.op_CP(c.memory.ReadByte(c.getRegShort(HL))) }
-func (c *CPU) op_CP_A() int  { return c.op_CP(c.getRegByte(A)) }
+func (c *CPU) op_CP_B() int  { return c.op_CP(c.GetRegByte(B)) }
+func (c *CPU) op_CP_C() int  { return c.op_CP(c.GetRegByte(C)) }
+func (c *CPU) op_CP_D() int  { return c.op_CP(c.GetRegByte(D)) }
+func (c *CPU) op_CP_E() int  { return c.op_CP(c.GetRegByte(E)) }
+func (c *CPU) op_CP_H() int  { return c.op_CP(c.GetRegByte(H)) }
+func (c *CPU) op_CP_L() int  { return c.op_CP(c.GetRegByte(L)) }
+func (c *CPU) op_CP_HL() int { return c.op_CP(c.memory.ReadByte(c.GetRegShort(HL))) }
+func (c *CPU) op_CP_A() int  { return c.op_CP(c.GetRegByte(A)) }
 
-func (c *CPU) op_ADD_B() int  { return c.op_ADD(c.getRegByte(B)) }
-func (c *CPU) op_ADD_C() int  { return c.op_ADD(c.getRegByte(C)) }
-func (c *CPU) op_ADD_D() int  { return c.op_ADD(c.getRegByte(D)) }
-func (c *CPU) op_ADD_E() int  { return c.op_ADD(c.getRegByte(E)) }
-func (c *CPU) op_ADD_H() int  { return c.op_ADD(c.getRegByte(H)) }
-func (c *CPU) op_ADD_L() int  { return c.op_ADD(c.getRegByte(L)) }
-func (c *CPU) op_ADD_HL() int { return c.op_ADD(c.memory.ReadByte(c.getRegShort(HL))) }
-func (c *CPU) op_ADD_A() int  { return c.op_ADD(c.getRegByte(A)) }
+func (c *CPU) op_ADD_B() int  { return c.op_ADD(c.GetRegByte(B)) }
+func (c *CPU) op_ADD_C() int  { return c.op_ADD(c.GetRegByte(C)) }
+func (c *CPU) op_ADD_D() int  { return c.op_ADD(c.GetRegByte(D)) }
+func (c *CPU) op_ADD_E() int  { return c.op_ADD(c.GetRegByte(E)) }
+func (c *CPU) op_ADD_H() int  { return c.op_ADD(c.GetRegByte(H)) }
+func (c *CPU) op_ADD_L() int  { return c.op_ADD(c.GetRegByte(L)) }
+func (c *CPU) op_ADD_HL() int { return c.op_ADD(c.memory.ReadByte(c.GetRegShort(HL))) }
+func (c *CPU) op_ADD_A() int  { return c.op_ADD(c.GetRegByte(A)) }
 
 func (c *CPU) op_LD_HL_n() int {
-	pc := c.getRegShort(PC)
+	pc := c.GetRegShort(PC)
 	n := c.memory.ReadByte(pc)
 	c.setRegShort(PC, pc+1)
-	c.memory.WriteByte(c.getRegShort(HL), n)
+	c.memory.WriteByte(c.GetRegShort(HL), n)
 	return 1
 }
 
 func (c *CPU) op_CPL() int {
-	value := c.getRegByte(A)
+	value := c.GetRegByte(A)
 	// Flip all bits
 	value = value ^ 0xFF
 	c.setRegByte(A, value)
@@ -1147,7 +1147,7 @@ func (c *CPU) op_CPL() int {
 func (c *CPU) op_CCF() int {
 	c.setFlagN(false)
 	c.setFlagH(false)
-	c.setFlagC(!c.getFlagC())
+	c.setFlagC(!c.GetFlagC())
 	return 1
 }
 
@@ -1167,9 +1167,9 @@ func (c *CPU) RST_x(n byte) int {
 }
 
 func (c *CPU) op_LD_nn_SP() int {
-	pc := c.getRegShort(PC)
+	pc := c.GetRegShort(PC)
 	nn := c.memory.ReadShort(pc)
 	c.setRegShort(PC, pc+2)
-	c.memory.WriteShort(nn, c.getRegShort(SP))
+	c.memory.WriteShort(nn, c.GetRegShort(SP))
 	return 5
 }
