@@ -2,10 +2,14 @@ package display
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
 	"os"
 
 	"github.com/f1gopher/gbpixellib/interupt"
 	"github.com/f1gopher/gbpixellib/memory"
+	"golang.org/x/image/colornames"
 )
 
 const screenWidth = 160
@@ -67,6 +71,145 @@ func CreateScreen(memory *memory.Memory, interuptHandler interuptHandler) *Scree
 }
 
 // TODO - need to update/set LYC LY compare and LCD status interrupts?
+
+func (s *Screen) DumpTileset() image.Image {
+	// A tileset contains 255 tiles each 8x8 pixels
+	//
+	// Split into two blocks one for 0-127 and one for 128-255 tiles
+	// Four rows for each tiles set and a blank line surrounding each tile
+	// 10 rows padding between blocks
+	// width = 32 * (8 + 1) + 1 =
+	// height = 8 * (8 + 1) + 1 + 10 =
+	//
+	// 0 --------
+	// 1
+	// 2
+	// 3
+	// 4
+	// 5  1
+	// 6
+	// 7
+	// 8
+	// 9 -------
+	// 10
+	// 17  2
+	// 18 -----
+	// 19
+	// 26  3
+	// 27 ------
+	// 28
+	// 35   4
+	// 36 ------
+	// 37 ------
+	// 45 ------
+	// 46  1
+	// 53
+	// 54 -----
+	// 55   2
+	// 62 -----
+	// 63  3
+	// 70
+	// 71 -----
+	// 72
+	// 79   4
+	// 80 -----
+
+	img := image.NewRGBA(image.Rect(
+		0,
+		0,
+		32*(8+1)+1,
+		(8*8)+18))
+
+	// Border lines are red
+	draw.Draw(img, img.Bounds(), &image.Uniform{colornames.Red}, image.Point{X: 0, Y: 0}, draw.Src)
+
+	//currentAddr := s.BgWindowTileDataArea()
+	tileData := s.BgWindowTileDataArea()
+	unsig := tileData == 0x8000
+	tileX := 0
+	tileY := 0
+	var tileNum uint16 = 0
+	var tileRow uint16 = 0
+
+	for y := 1; y < img.Bounds().Max.Y-1; y++ {
+
+		// Skip tile seperation rows
+		if y == 9 ||
+			y == 18 ||
+			y == 27 ||
+			(y >= 36 && y <= 45) ||
+			y == 54 ||
+			y == 62 ||
+			y == 71 {
+
+			tileY = 0
+			tileRow++
+			continue
+		}
+
+		tileNum = 32 * tileRow
+		tileX = 0
+
+		for x := 1; x < img.Bounds().Max.X-1; x++ {
+
+			// Leave a border between tiles
+			if tileX == 8 {
+				tileX = 0
+				tileNum++
+				continue
+			}
+
+			tileLocation := tileData
+
+			if unsig {
+				tileLocation += tileNum * 0x10
+			} else {
+				tileLocation += (tileNum + 128) * 0x10
+			}
+
+			line := tileY % 8
+			line = line * 2
+			//data1 := s.memory.ReadByte(tileLocation + line)
+			//data2 := s.memory.ReadByte(tileLocation + line + 1)
+
+			var colourBit int = int(tileX % 8)
+			colourBit -= 7
+			colourBit = colourBit * -1
+
+			tileAbc := uint16(tileLocation) + uint16(line)
+
+			//tileAbc = s.tileAddrForId(abc)
+
+			tile := s.memory.ReadShort(tileAbc)
+
+			co := s.colorForPixel(tile, byte(colourBit))
+
+			var c color.RGBA
+			switch co {
+			case Off:
+				c = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+			case White:
+				c = color.RGBA{R: 155, G: 188, B: 15, A: 255}
+			case LightGray:
+				c = color.RGBA{R: 139, G: 172, B: 15, A: 255}
+			case DarkGray:
+				c = color.RGBA{R: 48, G: 98, B: 48, A: 255}
+			case Black:
+				c = color.RGBA{R: 15, G: 56, B: 15, A: 255}
+			default:
+				panic("")
+			}
+
+			img.Set(x, y, c)
+
+			tileX++
+		}
+
+		tileY++
+	}
+
+	return img
+}
 
 func (s *Screen) Debug() string {
 	return fmt.Sprintf("LCD On: %t\nScrollX: %d\nScrollY: %d\nWindow Enable: %t\nOBJ/Sprite Enabled: %t\nBG Display: %t\nScanline: %d\n",

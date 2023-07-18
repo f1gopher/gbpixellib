@@ -2,6 +2,7 @@ package system
 
 import (
 	"errors"
+	"image"
 	"strings"
 	"sync"
 
@@ -261,4 +262,8 @@ func (s *System) GetGPUState() *LCDControlState {
 		WY:  s.screen.WY(),
 		WX:  s.screen.WX(),
 	}
+}
+
+func (s *System) DumpTileset() image.Image {
+	return s.screen.DumpTileset()
 }
