@@ -267,3 +267,7 @@ func (s *System) GetGPUState() *LCDControlState {
 func (s *System) DumpTileset() image.Image {
 	return s.screen.DumpTileset()
 }
+
+func (s *System) DumpTileMap() *[1024]byte {
+	return s.screen.DumpTileMap()
+}

@@ -211,6 +211,21 @@ func (s *Screen) DumpTileset() image.Image {
 	return img
 }
 
+func (s *Screen) DumpTileMap() *[1024]byte {
+	tileMap := [1024]byte{}
+
+	// Background tilemap
+	backgroundMemory := s.BgTileMapArea(6)
+
+	for x := 0; x < 1024; x++ {
+		tileNum := s.memory.ReadByte(backgroundMemory + uint16(x))
+
+		tileMap[x] = tileNum
+	}
+
+	return &tileMap
+}
+
 func (s *Screen) Debug() string {
 	return fmt.Sprintf("LCD On: %t\nScrollX: %d\nScrollY: %d\nWindow Enable: %t\nOBJ/Sprite Enabled: %t\nBG Display: %t\nScanline: %d\n",
 		s.LCDEnable(),
