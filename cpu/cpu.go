@@ -48,18 +48,34 @@ type CPU struct {
 
 	log *log.Log
 
-	count int
+	count      int
+	previousPC uint16
 }
 
 func CreateCPU(log *log.Log, memory *memory.Memory) *CPU {
 	chip := CPU{
-		log:    log,
-		memory: memory,
-		count:  0,
+		log:        log,
+		memory:     memory,
+		count:      0,
+		previousPC: 0,
 	}
 	chip.opcodes = opcodes(&chip)
 
 	return &chip
+}
+
+func (c *CPU) Reset() {
+	c.count = 0
+	c.previousPC = 0
+	for x := 0; x < len(c.opcodesUsed); x++ {
+		c.opcodesUsed[x] = false
+	}
+	c.regAF = 0x0000
+	c.regBC = 0x0000
+	c.regDE = 0x0000
+	c.regHL = 0x0000
+	c.regSP = 0x0000
+	c.regPC = 0x0000
 }
 
 func (c *CPU) InitForTestROM() {
@@ -126,6 +142,25 @@ func (c *CPU) Init() {
 //	return nil
 //}
 
+func (c *CPU) GetCount() int {
+	return c.count
+}
+
+func (c *CPU) GetPreviousPC() uint16 {
+	return c.previousPC
+}
+
+func (c *CPU) GetNextOpcode() string {
+	opcode := c.memory.ReadByte(c.regPC)
+
+	name := OpcodeNames[opcode]
+	if opcode == 0xCB {
+		cbOpcode := c.memory.ReadByte(c.regPC + 1)
+		name = name + " - " + cbNames[cbOpcode]
+	}
+	return name
+}
+
 func (c *CPU) PushAndReplacePC(newPC uint16) {
 
 	currentPC := c.GetRegShort(PC)
@@ -138,6 +173,8 @@ func (c *CPU) PushAndReplacePC(newPC uint16) {
 
 func (c *CPU) Tick() (cycles int, err error) {
 	//c.debugLog()
+
+	c.previousPC = c.regPC
 
 	opcode := c.memory.ReadByte(c.regPC)
 
@@ -164,12 +201,13 @@ func (c *CPU) getOpcode(opcode byte) (executer func() int, err error) {
 
 	executor := c.opcodes[opcode]
 	if executor == nil {
-		return nil, errors.New(fmt.Sprintf("Unsupported opcode: 0x%02X %s", opcode, opcodeNames[opcode]))
+		return nil, errors.New(fmt.Sprintf("Unsupported opcode: 0x%02X %s", opcode, OpcodeNames[opcode]))
 	}
 
-	name := opcodeNames[opcode]
+	name := OpcodeNames[opcode]
 	if opcode == 0xCB {
-		name = name + " - " + cbNames[0]
+		cbOpcode := c.memory.ReadByte(c.regPC + 1)
+		name = name + " - " + cbNames[cbOpcode]
 	}
 
 	return executor, nil
@@ -339,7 +377,7 @@ func (c *CPU) Debug() string {
 	p3 := c.memory.ReadByte(c.regPC + 2)
 	p4 := c.memory.ReadByte(c.regPC + 3)
 
-	name := opcodeNames[p1]
+	name := OpcodeNames[p1]
 	if p1 == 0xCB {
 		// TODO - is p2 right?1
 		name = name + " - " + cbNames[p2]
@@ -377,7 +415,7 @@ func (c *CPU) DumpOpcodesUsed() {
 			continue
 		}
 
-		f.WriteString(fmt.Sprintf("0x%02X\n - %s", x, opcodeNames[x]))
+		f.WriteString(fmt.Sprintf("0x%02X\n - %s", x, OpcodeNames[x]))
 	}
 	f.Close()
 }
@@ -487,7 +525,8 @@ func (c *CPU) op_LD_BC_A() int {
 	return 2
 }
 func (c *CPU) op_LD_nn_A() int {
-	c.memory.WriteByte(c.regPC, c.GetRegByte(A))
+	nn := c.memory.ReadShort(c.regPC)
+	c.memory.WriteByte(nn, c.GetRegByte(A))
 	c.regPC += 2
 	return 1
 }
@@ -686,18 +725,26 @@ func (c *CPU) op_JR_C_e() int {
 }
 
 func (c *CPU) conditionalJumpToOffset(condition bool) int {
-	offset := c.memory.ReadByte((c.regPC))
+	offset := c.memory.ReadByte(c.regPC)
 	c.regPC++
 
 	if !condition {
-		return 1
+		return 2
 	}
 
 	//	fmt.Printf("JMP PC: 0x%04X, offset: %d, signed: %d", c.regPC, offset, int8(offset))
 
 	// TODO - is this right?
-	c.regPC = uint16(int16(c.regPC) + int16(int8(offset)))
-	return 1
+	signedOffset := int8(offset)
+	if signedOffset >= 0 {
+		c.regPC = c.regPC + uint16(offset)
+	} else {
+		c.regPC = c.regPC - uint16(-offset)
+	}
+
+	// TODO - is this right?
+	//c.regPC = uint16(int16(c.regPC) + int16(int8(offset)))
+	return 3
 }
 
 func (c *CPU) op_CALL_nn() int {
@@ -805,7 +852,7 @@ func (c *CPU) xor(reg register) int {
 	c.setFlagN(false)
 	c.setFlagH(false)
 	c.setFlagC(false)
-	return 1
+	return 2
 }
 
 func (c *CPU) op_XOR_HL() int {
@@ -816,7 +863,7 @@ func (c *CPU) op_XOR_HL() int {
 	c.setFlagN(false)
 	c.setFlagH(false)
 	c.setFlagC(false)
-	return 1
+	return 2
 }
 
 func (c *CPU) op_CP_n() int {
@@ -840,7 +887,7 @@ func (c *CPU) op_LDH_A_n() int {
 	n := c.memory.ReadByte(c.regPC)
 	c.regPC++
 	c.setRegByte(A, c.memory.ReadByte(0xFF00|uint16(n)))
-	return 1
+	return 3
 }
 
 func (c *CPU) op_LD_A_nn() int {
@@ -1131,7 +1178,7 @@ func (c *CPU) op_LD_HL_n() int {
 	n := c.memory.ReadByte(pc)
 	c.setRegShort(PC, pc+1)
 	c.memory.WriteByte(c.GetRegShort(HL), n)
-	return 1
+	return 3
 }
 
 func (c *CPU) op_CPL() int {

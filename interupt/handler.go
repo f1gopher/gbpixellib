@@ -30,9 +30,14 @@ type Handler struct {
 
 func CreateHandler(memory *memory.Memory, cpu cpuHandler) *Handler {
 	return &Handler{
-		memory: memory,
-		cpu:    cpu,
+		memory:         memory,
+		cpu:            cpu,
+		interuptMaster: false,
 	}
+}
+
+func (h *Handler) Reset() {
+	h.interuptMaster = false
 }
 
 func (h *Handler) Request(i Interupt) {

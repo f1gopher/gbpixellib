@@ -1,6 +1,6 @@
 package cpu
 
-var opcodeNames = [...]string{
+var OpcodeNames = [...]string{
 	"NOP",
 	"LB BC,nn",
 	"LD (BC),A",

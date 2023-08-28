@@ -3,8 +3,9 @@ package memory
 import (
 	"errors"
 	"fmt"
-	"github.com/f1gopher/gbpixellib/log"
 	"os"
+
+	"github.com/f1gopher/gbpixellib/log"
 )
 
 const memorySize = 0xFFFF
@@ -14,13 +15,26 @@ type Memory struct {
 	log    *log.Log
 
 	abc []byte
+
+	breakAddress uint16
 }
 
 func CreateMemory(log *log.Log) *Memory {
 	return &Memory{
-		log:    log,
-		buffer: make([]byte, memorySize+1),
-		abc:    make([]byte, 256),
+		log:          log,
+		buffer:       make([]byte, memorySize+1),
+		abc:          make([]byte, 256),
+		breakAddress: 0x0000,
+	}
+}
+
+func (m *Memory) Reset() {
+	for x := 0; x < len(m.buffer); x++ {
+		m.buffer[x] = 0x00
+	}
+
+	for x := 0; x < len(m.abc); x++ {
+		m.abc[x] = 0x00
 	}
 }
 
@@ -60,32 +74,38 @@ func (m *Memory) WriteByte(address uint16, value byte) {
 	// If the CPU tries to write to the address (regardless of value) we
 	// set the value to zero
 	if address == 0xFF44 {
-		m.buffer[address] = 0
+		//m.buffer[address] = 0
+		m.write(address, value)
 		return
 	}
 
 	// Trigger DMA transfer
 	if address == 0xFF46 {
-		dmaAddress := uint16(value << 8)
+		// TODO - this needs to take 160 cycles
+		dmaAddress := uint16(value) << 8
 		var i uint16 = 0
-		for i = 0; i < 0xA0; i++ {
-			m.WriteByte(0xFE00+i, m.ReadByte(dmaAddress+i))
+		for i = 0; i < 0x9F; i++ {
+			//m.WriteByte(0xFE00+i, m.ReadByte(dmaAddress+i))
+			m.write(0xFE00+i, m.ReadByte(dmaAddress+i))
 		}
 
 		// TODO - is this right?
 		return
 	}
 
-	m.buffer[address] = value
+	//m.buffer[address] = value
+	m.write(address, value)
 
 	if address >= 0xE00 && address < 0xFE00 {
-		m.buffer[address-0x2000] = value
+		//m.buffer[address-0x2000] = value
+		m.write(address-0x2000, value)
 	}
 }
 
 func (m *Memory) DisplaySetScanline(value byte) {
 	// Only used by the display
-	m.buffer[0xFF44] = value
+	//m.buffer[0xFF44] = value
+	m.write(0xFF44, value)
 }
 
 func (m *Memory) DumpTiles() {
@@ -96,12 +116,16 @@ func (m *Memory) WriteShort(address uint16, value uint16) {
 	lsb := byte(value)
 	msb := byte(value >> 8)
 	// Little endian - lsb stored first
-	m.buffer[address] = lsb
-	m.buffer[address+1] = msb
+	//m.buffer[address] = lsb
+	//m.buffer[address+1] = msb
+	m.write(address, lsb)
+	m.write(address+1, msb)
 
 	if address >= 0xE00 && address < 0xFE00 {
-		m.buffer[address-0x2000] = lsb
-		m.buffer[(address+1)-0x2000] = msb
+		//m.buffer[address-0x2000] = lsb
+		//m.buffer[(address+1)-0x2000] = msb
+		m.write(address-0x2000, lsb)
+		m.write((address+1)-0x2000, msb)
 	}
 
 	m.log.Debug(fmt.Sprintf("[RAM: 0x%04X 0x%02X]", address+1, msb))
@@ -113,10 +137,28 @@ func (m *Memory) Write(address uint16, data []byte) error {
 		return errors.New("Write buffer will exceed memory range")
 	}
 
+	if address >= m.breakAddress && address+uint16(len(data)) <= m.breakAddress {
+		panic("breakpoint")
+	}
+
 	copy(m.buffer[address:len(data)], data)
 
 	return nil
 
+}
+
+func (m *Memory) write(address uint16, value byte) error {
+	if address > memorySize {
+		return errors.New("Write buffer will exceed memory range")
+	}
+
+	//if address == m.breakAddress && value != 0 {
+	//	panic("breakpoint")
+	//}
+
+	m.buffer[address] = value
+
+	return nil
 }
 
 func (m *Memory) LoadBios(path string) error {
@@ -165,6 +207,12 @@ func (m *Memory) DumpBios() {
 			dumpChar(m.buffer[x+6]),
 			dumpChar(m.buffer[x+7]))
 	}
+}
+
+func (m *Memory) DumpCode() []byte {
+	code := make([]byte, 0x8000)
+	copy(code, m.buffer[:0x8000])
+	return code
 }
 
 func dumpChar(value byte) string {

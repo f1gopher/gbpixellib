@@ -70,6 +70,13 @@ func CreateScreen(memory *memory.Memory, interuptHandler interuptHandler) *Scree
 	}
 }
 
+func (s *Screen) Reset() {
+	for x := 0; x < len(s.buffer); x++ {
+		s.buffer[x] = Off
+	}
+	s.currentCycleForScanline = 0
+}
+
 // TODO - need to update/set LYC LY compare and LCD status interrupts?
 
 func (s *Screen) DumpTileset() image.Image {

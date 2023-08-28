@@ -2,6 +2,7 @@ package system
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"strings"
 	"sync"
@@ -12,6 +13,11 @@ import (
 	"github.com/f1gopher/gbpixellib/log"
 	"github.com/f1gopher/gbpixellib/memory"
 )
+
+type DebugState struct {
+	InstructionCount int
+	NextInstruction  string
+}
 
 type CPUState struct {
 	A  uint8
@@ -78,15 +84,18 @@ type System struct {
 
 	currentDisplay string
 	displayLock    sync.Mutex
+
+	pcBreakpoint uint16
 }
 
 func CreateSystem(bios string, rom string) *System {
 	l := log.CreateLog("./log.txt")
 	system := System{
-		log:    l,
-		bios:   bios,
-		rom:    rom,
-		memory: memory.CreateMemory(l),
+		log:          l,
+		bios:         bios,
+		rom:          rom,
+		memory:       memory.CreateMemory(l),
+		pcBreakpoint: 0x0000,
 	}
 	system.cpu = cpu.CreateCPU(l, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.cpu)
@@ -126,6 +135,15 @@ func (s *System) Start() {
 	}
 
 	// go s.loop()
+}
+
+func (s *System) Reset() {
+	s.memory.Reset()
+	s.cpu.Reset()
+	s.interuptHandler.Reset()
+	s.screen.Reset()
+	s.cpu.Init()
+	s.Start()
 }
 
 //func (s *System) Pixels() string {
@@ -170,7 +188,7 @@ func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) 
 //	}
 //}
 
-func (s *System) Tick() (cyclesCompleted int, err error) {
+func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 
 	const maxCycles = 69905
 	currentCycles := 0
@@ -178,13 +196,18 @@ func (s *System) Tick() (cyclesCompleted int, err error) {
 	for currentCycles < maxCycles {
 		cyclesCompleted, err := s.SingleInstruction()
 		if err != nil {
-			return currentCycles, err
+			return false, currentCycles, err
 		}
 
 		currentCycles += cyclesCompleted
+
+		// Stop if we hit the prgoram counter breakpoint
+		if s.pcBreakpoint != 0x0000 && s.cpu.GetRegShort(cpu.PC) == s.pcBreakpoint {
+			return true, currentCycles, nil
+		}
 	}
 
-	return currentCycles, nil
+	return false, currentCycles, nil
 }
 
 func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
@@ -264,10 +287,55 @@ func (s *System) GetGPUState() *LCDControlState {
 	}
 }
 
+func (s *System) GetDebugState() *DebugState {
+	return &DebugState{
+		InstructionCount: s.cpu.GetCount(),
+		NextInstruction:  s.cpu.GetNextOpcode(),
+	}
+}
+
 func (s *System) DumpTileset() image.Image {
 	return s.screen.DumpTileset()
 }
 
 func (s *System) DumpTileMap() *[1024]byte {
 	return s.screen.DumpTileMap()
+}
+
+func (s *System) DumpCode() (instructions []string, previousPCIndex int, currentPCIndex int) {
+	bios := s.memory.DumpCode()
+	current := int(s.cpu.GetRegShort(cpu.PC))
+	previous := int(s.cpu.GetPreviousPC())
+
+	instructions = make([]string, 0)
+	currentIndex := 0
+	previousIndex := 0
+
+	for x := 0; x < len(bios); {
+		opcode := bios[x]
+		opcodeLength := cpu.OpcodeLengths[opcode]
+		extraInfo := ""
+
+		for y := 1; y < opcodeLength; y++ {
+			extraInfo += fmt.Sprintf(" %02X", bios[x+y])
+		}
+
+		instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s\n", x, cpu.OpcodeNames[opcode], extraInfo))
+
+		if x == current {
+			currentIndex = len(instructions) - 1
+		}
+
+		if x == previous {
+			previousIndex = len(instructions) - 1
+		}
+
+		x += cpu.OpcodeLengths[opcode]
+	}
+
+	return instructions, previousIndex, currentIndex
+}
+
+func (s *System) SetBreakpoint(pcAddress uint16) {
+	s.pcBreakpoint = pcAddress
 }
