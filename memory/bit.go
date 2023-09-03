@@ -28,3 +28,15 @@ func GetBit(input byte, bit int) bool {
 
 	return false
 }
+
+func GetBitForShort(input uint16, bit int) bool {
+	if bit > 15 || bit < 0 {
+		panic(fmt.Sprintf("Invalid bit for getRegBit: %d", bit))
+	}
+
+	if (input>>bit)&0x01 == 0x01 {
+		return true
+	}
+
+	return false
+}
