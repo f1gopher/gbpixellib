@@ -2,7 +2,7 @@ package memory
 
 import "fmt"
 
-func SetBit(input byte, bit int, value bool) byte {
+func SetBit(input byte, bit uint8, value bool) byte {
 
 	if bit > 7 || bit < 0 {
 		panic(fmt.Sprintf("Invalid bit for setRegBit: %d", bit))

@@ -1,6 +1,7 @@
 package interupt
 
 import (
+	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
@@ -17,33 +18,25 @@ func (i Interupt) String() string {
 	return [...]string{"V-Blank", "LCD", "Timer", "Joypad"}[i]
 }
 
-type cpuHandler interface {
-	PushAndReplacePC(newPC uint16)
-}
-
 type Handler struct {
 	memory *memory.Memory
-	cpu    cpuHandler
-
-	interuptMaster bool
+	regs   *cpu.Registers
 }
 
-func CreateHandler(memory *memory.Memory, cpu cpuHandler) *Handler {
+func CreateHandler(memory *memory.Memory, registers *cpu.Registers) *Handler {
 	return &Handler{
-		memory:         memory,
-		cpu:            cpu,
-		interuptMaster: false,
+		memory: memory,
+		regs:   registers,
 	}
 }
 
 func (h *Handler) Reset() {
-	h.interuptMaster = false
 }
 
 func (h *Handler) Request(i Interupt) {
 	value := h.memory.ReadByte(0xFF0F)
 
-	bit := 0
+	var bit uint8 = 0
 	switch i {
 	case VBlank:
 		bit = 0
@@ -62,7 +55,7 @@ func (h *Handler) Request(i Interupt) {
 }
 
 func (h *Handler) Update() {
-	if h.interuptMaster {
+	if h.regs.GetIME() {
 		req := h.memory.ReadByte(0xFF0F)
 		enabled := h.memory.ReadByte(0xFFFF)
 
@@ -70,7 +63,7 @@ func (h *Handler) Update() {
 			for i := 0; i < 5; i++ {
 				if memory.GetBit(req, i) {
 					if memory.GetBit(enabled, i) {
-						h.serviceInterupt(i)
+						h.serviceInterupt(uint8(i))
 					}
 				}
 			}
@@ -78,8 +71,8 @@ func (h *Handler) Update() {
 	}
 }
 
-func (h *Handler) serviceInterupt(interupt int) {
-	h.interuptMaster = false
+func (h *Handler) serviceInterupt(interupt uint8) {
+	h.regs.SetIME(false)
 	req := h.memory.ReadByte(0xFF0F)
 	req = memory.SetBit(req, interupt, false)
 	h.memory.WriteByte(0xFF0F, req)
@@ -101,5 +94,6 @@ func (h *Handler) serviceInterupt(interupt int) {
 	}
 
 	// TODO - set PC
-	h.cpu.PushAndReplacePC(programCounter)
+	//h.cpu.PushAndReplacePC(programCounter)
+	h.regs.SetPC(programCounter)
 }

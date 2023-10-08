@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"strings"
 	"sync"
 
 	"github.com/f1gopher/gbpixellib/cpu"
@@ -15,8 +14,8 @@ import (
 )
 
 type DebugState struct {
-	InstructionCount int
-	NextInstruction  string
+	NextInstruction     string
+	ValueReferencedByPC uint8
 }
 
 type CPUState struct {
@@ -35,6 +34,18 @@ type CPUState struct {
 	NFlag bool
 	HFlag bool
 	CFlag bool
+}
+
+type InterruptState struct {
+	IME             bool
+	VBlankRequested bool
+	VBlankEnabled   bool
+	LCDRequested    bool
+	LCDEnabled      bool
+	TimeRequested   bool
+	TimeEnabled     bool
+	JoypadRequested bool
+	JoypadEnabled   bool
 }
 
 type LCDControlState struct {
@@ -79,7 +90,8 @@ type System struct {
 	log             *log.Log
 	screen          *display.Screen
 	memory          *memory.Memory
-	cpu             *cpu.CPU
+	regs            *cpu.Registers
+	cpu             *cpu.CPU2
 	interuptHandler *interupt.Handler
 
 	currentDisplay string
@@ -95,10 +107,11 @@ func CreateSystem(bios string, rom string) *System {
 		bios:         bios,
 		rom:          rom,
 		memory:       memory.CreateMemory(l),
+		regs:         &cpu.Registers{},
 		pcBreakpoint: 0x0000,
 	}
-	system.cpu = cpu.CreateCPU(l, system.memory)
-	system.interuptHandler = interupt.CreateHandler(system.memory, system.cpu)
+	system.cpu = cpu.CreateCPU2(l, system.regs, system.memory)
+	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	//	system.currentDisplay = system.screen.Render()
 
@@ -112,9 +125,10 @@ func CreateTestSystem(testRom string) *System {
 	system := System{
 		bios:   testRom,
 		memory: memory.CreateMemory(l),
+		regs:   &cpu.Registers{},
 	}
-	system.cpu = cpu.CreateCPU(l, system.memory)
-	system.interuptHandler = interupt.CreateHandler(system.memory, system.cpu)
+	system.cpu = cpu.CreateCPU2(l, system.regs, system.memory)
+	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	//	system.currentDisplay = system.screen.Render()
 
@@ -191,70 +205,135 @@ func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) 
 func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 
 	const maxCycles = 69905
-	currentCycles := 0
+	//	currentCycles := 0
 
-	for currentCycles < maxCycles {
-		cyclesCompleted, err := s.SingleInstruction()
+	for x := 0; x < maxCycles; x++ {
+		breakpoint, completed, err := s.cpu.ExecuteCycle()
+
 		if err != nil {
-			return false, currentCycles, err
+			return false, x, err
 		}
 
-		currentCycles += cyclesCompleted
+		if breakpoint {
+			return true, x, nil
+		}
 
-		// Stop if we hit the prgoram counter breakpoint
-		if s.pcBreakpoint != 0x0000 && s.cpu.GetRegShort(cpu.PC) == s.pcBreakpoint {
-			return true, currentCycles, nil
+		if s.cpu.GetOpcodePC() == s.pcBreakpoint {
+			return true, x, nil
+		}
+
+		if completed {
+			//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
+
+			// Update timers
+			s.screen.UpdateForCycles(1 * 4)
+			s.interuptHandler.Update()
 		}
 	}
 
-	return false, currentCycles, nil
+	//	for currentCycles < maxCycles {
+	//		cyclesCompleted, err := s.SingleInstruction()
+	//		if err != nil {
+	//			return false, currentCycles, err
+	//		}
+
+	//		currentCycles += cyclesCompleted
+
+	// Stop if we hit the prgoram counter breakpoint
+	//		if s.pcBreakpoint != 0x0000 && s.cpu.GetRegShort(cpu.PC) == s.pcBreakpoint {
+	//			return true, currentCycles, nil
+	//		}
+	//	}
+
+	return false, maxCycles, nil
 }
 
 func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 
-	cyclesCompleted, err = s.cpu.Tick()
+	cyclesCompleted = 0
 
-	if err != nil {
-		return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+	for {
+		_, completed, err := s.cpu.ExecuteCycle()
+
+		cyclesCompleted++
+
+		if err != nil {
+			return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+		}
+
+		if completed {
+			//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
+			break
+		}
 	}
 
 	// Update timers
-	s.screen.UpdateForCycles(cyclesCompleted)
+	s.screen.UpdateForCycles(cyclesCompleted * 4)
 	s.interuptHandler.Update()
+
+	//cyclesCompleted, err = s.cpu.Tick()
+
+	//if err != nil {
+	//	return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+	//}
 
 	return cyclesCompleted, nil
 }
 
 func (s *System) State() string {
-	info := s.cpu.Debug()
+	//info := s.cpu.Debug()
 
-	parts := strings.Split(info, "->")
-	cpu := strings.ReplaceAll(parts[1], " ", "\n")
-	ppu := s.screen.Debug()
+	//parts := strings.Split(info, "->")
+	//cpu := strings.ReplaceAll(parts[1], " ", "\n")
+	//ppu := s.screen.Debug()
 
-	return parts[0] + "\n" + cpu + "\n" + ppu
+	//return parts[0] + "\n" + cpu + "\n" + ppu
+	return "<Not implemented>"
 }
 
 func (s *System) OpcodesUsed() {
-	s.cpu.DumpOpcodesUsed()
+	// s.cpu.DumpOpcodesUsed()
 }
 
-func (s *System) GetCPUState() *CPUState {
+func (s *System) PreviousPC() uint16 {
+	return s.cpu.GetPrevOpcodePC()
+}
+
+func (s *System) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
+	_, isCB = s.cpu.GetNextOpcode()
+
 	return &CPUState{
-		A:     s.cpu.GetRegByte(cpu.A),
-		F:     s.cpu.GetRegByte(cpu.F),
-		B:     s.cpu.GetRegByte(cpu.B),
-		C:     s.cpu.GetRegByte(cpu.C),
-		D:     s.cpu.GetRegByte(cpu.D),
-		E:     s.cpu.GetRegByte(cpu.E),
-		H:     s.cpu.GetRegByte(cpu.H),
-		L:     s.cpu.GetRegByte(cpu.L),
-		SP:    s.cpu.GetRegShort(cpu.SP),
-		PC:    s.cpu.GetRegShort(cpu.PC),
-		ZFlag: s.cpu.GetFlagZ(),
-		NFlag: s.cpu.GetFlagN(),
-		HFlag: s.cpu.GetFlagH(),
-		CFlag: s.cpu.GetFlagC(),
+		A:     s.regs.Get8(cpu.A),
+		F:     s.regs.Get8(cpu.F),
+		B:     s.regs.Get8(cpu.B),
+		C:     s.regs.Get8(cpu.C),
+		D:     s.regs.Get8(cpu.D),
+		E:     s.regs.Get8(cpu.E),
+		H:     s.regs.Get8(cpu.H),
+		L:     s.regs.Get8(cpu.L),
+		SP:    s.regs.Get16(cpu.SP),
+		PC:    s.regs.Get16(cpu.PC),
+		ZFlag: s.regs.GetFlag(cpu.ZFlag),
+		NFlag: s.regs.GetFlag(cpu.NFlag),
+		HFlag: s.regs.GetFlag(cpu.HFlag),
+		CFlag: s.regs.GetFlag(cpu.CFlag),
+	}, s.cpu.GetPrevOpcode(), isCB
+}
+
+func (s *System) GetInterruptState() *InterruptState {
+	requested := s.memory.ReadByte(0xFF0F)
+	enabled := s.memory.ReadByte(0xFFFF)
+
+	return &InterruptState{
+		IME:             s.regs.GetIME(),
+		VBlankRequested: memory.GetBit(requested, 0),
+		VBlankEnabled:   memory.GetBit(enabled, 0),
+		LCDRequested:    memory.GetBit(requested, 1),
+		LCDEnabled:      memory.GetBit(enabled, 1),
+		TimeRequested:   memory.GetBit(requested, 2),
+		TimeEnabled:     memory.GetBit(enabled, 2),
+		JoypadRequested: memory.GetBit(requested, 4),
+		JoypadEnabled:   memory.GetBit(enabled, 4),
 	}
 }
 
@@ -289,8 +368,8 @@ func (s *System) GetGPUState() *LCDControlState {
 
 func (s *System) GetDebugState() *DebugState {
 	return &DebugState{
-		InstructionCount: s.cpu.GetCount(),
-		NextInstruction:  s.cpu.GetNextOpcode(),
+		NextInstruction:     s.cpu.GetOpcode(),
+		ValueReferencedByPC: s.memory.ReadByte(s.regs.Get16(cpu.PC)),
 	}
 }
 
@@ -304,23 +383,37 @@ func (s *System) DumpTileMap() *[1024]byte {
 
 func (s *System) DumpCode() (instructions []string, previousPCIndex int, currentPCIndex int) {
 	bios := s.memory.DumpCode()
-	current := int(s.cpu.GetRegShort(cpu.PC))
-	previous := int(s.cpu.GetPreviousPC())
+	current := s.cpu.GetOpcodePC()
+	previous := s.cpu.GetPrevOpcodePC()
+
+	//// If we are executing then subtract one because we will inc the PC after getting the opcocde and so will point past
+	//// the current instruction
+	//if current != 0 {
+	//	current--
+	//}
 
 	instructions = make([]string, 0)
 	currentIndex := 0
 	previousIndex := 0
 
-	for x := 0; x < len(bios); {
+	for x := uint16(0); x < uint16(len(bios)); {
 		opcode := bios[x]
-		opcodeLength := cpu.OpcodeLengths[opcode]
+		var cbOpcode uint8 = 0
+		if x+1 < uint16(len(bios)) {
+			cbOpcode = bios[x+1]
+		}
+		name, opcodeLength := s.cpu.GetOpcodeInfo(opcode, cbOpcode)
 		extraInfo := ""
 
-		for y := 1; y < opcodeLength; y++ {
+		for y := uint16(1); y < uint16(opcodeLength); y++ {
 			extraInfo += fmt.Sprintf(" %02X", bios[x+y])
 		}
 
-		instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s\n", x, cpu.OpcodeNames[opcode], extraInfo))
+		if x == s.pcBreakpoint {
+			instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s **** BREAKPOINT ****\n", x, name, extraInfo))
+		} else {
+			instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s\n", x, name, extraInfo))
+		}
 
 		if x == current {
 			currentIndex = len(instructions) - 1
@@ -330,7 +423,7 @@ func (s *System) DumpCode() (instructions []string, previousPCIndex int, current
 			previousIndex = len(instructions) - 1
 		}
 
-		x += cpu.OpcodeLengths[opcode]
+		x += uint16(opcodeLength)
 	}
 
 	return instructions, previousIndex, currentIndex
