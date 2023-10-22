@@ -431,6 +431,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x43, 0, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x44, 0, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x45, 0, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x46, 0))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x47, 0, A))
 
 	opcodes = append(opcodes, createCB_BIT_b_r(0x48, 1, B))
@@ -439,6 +440,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x4B, 1, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x4C, 1, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x4D, 1, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x4E, 1))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x4F, 1, A))
 
 	opcodes = append(opcodes, createCB_BIT_b_r(0x50, 2, B))
@@ -447,6 +449,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x53, 2, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x54, 2, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x55, 2, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x56, 2))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x57, 2, A))
 
 	opcodes = append(opcodes, createCB_BIT_b_r(0x58, 3, B))
@@ -455,6 +458,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x5B, 3, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x5C, 3, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x5D, 3, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x5E, 3))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x5F, 3, A))
 
 	opcodes = append(opcodes, createCB_BIT_b_r(0x60, 4, B))
@@ -463,6 +467,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x63, 4, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x64, 4, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x65, 4, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x66, 4))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x67, 4, A))
 
 	opcodes = append(opcodes, createCB_BIT_b_r(0x68, 5, B))
@@ -471,6 +476,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x6B, 5, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x6C, 5, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x6D, 5, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x6E, 5))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x6F, 5, A))
 
 	opcodes = append(opcodes, createCB_BIT_b_r(0x70, 6, B))
@@ -479,6 +485,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x73, 6, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x74, 6, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x75, 6, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x76, 6))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x77, 6, A))
 
 	opcodes = append(opcodes, createCB_BIT_b_r(0x78, 7, B))
@@ -487,6 +494,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_BIT_b_r(0x7B, 7, E))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x7C, 7, H))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x7D, 7, L))
+	opcodes = append(opcodes, createCB_BIT_b_HL(0x7E, 7))
 	opcodes = append(opcodes, createCB_BIT_b_r(0x7F, 7, A))
 
 	// RES b,r
@@ -496,6 +504,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0x83, 0, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0x84, 0, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0x85, 0, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0x86, 0))
 	opcodes = append(opcodes, createCB_RES_b_r(0x87, 0, A))
 
 	opcodes = append(opcodes, createCB_RES_b_r(0x88, 1, B))
@@ -504,6 +513,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0x8B, 1, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0x8C, 1, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0x8D, 1, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0x8E, 1))
 	opcodes = append(opcodes, createCB_RES_b_r(0x8F, 1, A))
 
 	opcodes = append(opcodes, createCB_RES_b_r(0x90, 2, B))
@@ -512,6 +522,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0x93, 2, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0x94, 2, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0x95, 2, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0x96, 2))
 	opcodes = append(opcodes, createCB_RES_b_r(0x97, 2, A))
 
 	opcodes = append(opcodes, createCB_RES_b_r(0x98, 3, B))
@@ -520,6 +531,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0x9B, 3, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0x9C, 3, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0x9D, 3, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0x9E, 3))
 	opcodes = append(opcodes, createCB_RES_b_r(0x9F, 3, A))
 
 	opcodes = append(opcodes, createCB_RES_b_r(0xA0, 4, B))
@@ -528,6 +540,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0xA3, 4, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0xA4, 4, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0xA5, 4, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0xA6, 4))
 	opcodes = append(opcodes, createCB_RES_b_r(0xA7, 4, A))
 
 	opcodes = append(opcodes, createCB_RES_b_r(0xA8, 5, B))
@@ -536,6 +549,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0xAB, 5, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0xAC, 5, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0xAD, 5, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0xAE, 5))
 	opcodes = append(opcodes, createCB_RES_b_r(0xAF, 5, A))
 
 	opcodes = append(opcodes, createCB_RES_b_r(0xB0, 6, B))
@@ -544,6 +558,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0xB3, 6, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0xB4, 6, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0xB5, 6, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0xB6, 6))
 	opcodes = append(opcodes, createCB_RES_b_r(0xB7, 6, A))
 
 	opcodes = append(opcodes, createCB_RES_b_r(0xB8, 7, B))
@@ -552,6 +567,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RES_b_r(0xBB, 7, E))
 	opcodes = append(opcodes, createCB_RES_b_r(0xBC, 7, H))
 	opcodes = append(opcodes, createCB_RES_b_r(0xBD, 7, L))
+	opcodes = append(opcodes, createCB_RES_b_HL(0xBE, 7))
 	opcodes = append(opcodes, createCB_RES_b_r(0xBF, 7, A))
 
 	// Populate the opcodes table according to the opcode value set on each opcode

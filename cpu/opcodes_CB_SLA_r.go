@@ -1,7 +1,10 @@
 package cpu
 
 import (
+	"errors"
 	"fmt"
+
+	"github.com/f1gopher/gbpixellib/memory"
 )
 
 type opcode_CB_SLA_r struct {
@@ -23,11 +26,22 @@ func createCB_SLA_r(opcode uint8, reg Register) *opcode_CB_SLA_r {
 
 func (o *opcode_CB_SLA_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
-	if cycleNumber != 1 {
-		panic("Invalid cycle")
+	if cycleNumber == 1 {
+		value := reg.Get8(o.target)
+		bit7 := memory.GetBit(value, 7)
+		value = value << 1
+		reg.Set8(o.target, value)
+
+		reg.SetFlag(ZFlag, value == 0)
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, false)
+		reg.SetFlag(CFlag, bit7)
+		return false, nil
 	}
 
-	panic("Not implemented")
+	if cycleNumber == 2 {
+		return true, nil
+	}
 
-	return true, nil
+	return false, errors.New("Invalid cycle")
 }

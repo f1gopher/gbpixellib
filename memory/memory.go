@@ -39,6 +39,9 @@ func (m *Memory) Reset() {
 	for x := 0; x < len(m.abc); x++ {
 		m.abc[x] = 0x00
 	}
+
+	// For controller
+	m.buffer[0xFF00] = 0x3F
 }
 
 func (m *Memory) ReadBit(address uint16, bit uint8) bool {
@@ -67,6 +70,16 @@ func (m *Memory) ReadShort(address uint16) uint16 {
 	result = result << 8
 	result = result | uint16(lsb)
 	return result
+}
+
+func (m *Memory) WriteBit(address uint16, bit uint8, value bool) {
+	if bit < 0 || bit > 7 {
+		panic(fmt.Sprintf("Invalid bit: %d", bit))
+	}
+
+	currentByte := m.ReadByte(address)
+	SetBit(currentByte, bit, value)
+	m.WriteByte(address, currentByte)
 }
 
 func (m *Memory) WriteByte(address uint16, value byte) {
@@ -98,6 +111,14 @@ func (m *Memory) WriteByte(address uint16, value byte) {
 		//}
 		//
 		//// TODO - is this right?
+		return
+	}
+
+	// Controller
+	if address == 0xFF00 {
+		current := m.ReadByte(address)
+		current = (current & 0xCF) | (value & 0x30)
+		m.write(address, current)
 		return
 	}
 

@@ -40,7 +40,7 @@ func (o *opcode_JP_cc_nn) doCycle(cycleNumber int, reg registersInterface, mem m
 	}
 
 	if cycleNumber == 2 {
-		o.msb = readAndIncSP(reg, mem)
+		o.msb = readAndIncPC(reg, mem)
 		return false, nil
 	}
 

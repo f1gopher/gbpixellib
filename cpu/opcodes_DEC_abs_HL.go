@@ -28,7 +28,7 @@ func (o *opcode_DEC_abs_HL) doCycle(cycleNumber int, reg registersInterface, mem
 	}
 
 	if cycleNumber == 2 {
-		result, carryBit3, _ := add8BitWithCarry(o.data, 1)
+		result, carryBit3, _ := subtract8BitWithCarry(o.data, 1)
 
 		mem.WriteByte(reg.Get16(HL), result)
 		reg.SetFlag(ZFlag, result == 0)

@@ -20,7 +20,7 @@ func (o *opcode_CPL) doCycle(cycleNumber int, reg registersInterface, mem memory
 
 	if cycleNumber == 1 {
 		a := reg.Get8(A)
-		a = a ^ a
+		a = ^a
 		reg.Set8(A, a)
 		reg.SetFlag(NFlag, true)
 		reg.SetFlag(HFlag, true)

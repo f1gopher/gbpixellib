@@ -9,6 +9,7 @@ import (
 	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/debugger"
 	"github.com/f1gopher/gbpixellib/display"
+	"github.com/f1gopher/gbpixellib/input"
 	"github.com/f1gopher/gbpixellib/interupt"
 	"github.com/f1gopher/gbpixellib/log"
 	"github.com/f1gopher/gbpixellib/memory"
@@ -99,6 +100,7 @@ type System struct {
 	regs            *cpu.Registers
 	cpu             *cpu.Cpu
 	interuptHandler *interupt.Handler
+	controller      *input.Input
 
 	currentDisplay string
 	displayLock    sync.Mutex
@@ -121,9 +123,10 @@ func CreateSystem(bios string, rom string) *System {
 	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
+	system.controller = input.CreateInput(system.memory)
 	//	system.currentDisplay = system.screen.Render()
 
-	system.cpu.Init()
+	system.Reset()
 
 	return &system
 }
@@ -165,6 +168,7 @@ func (s *System) Reset() {
 	s.interuptHandler.Reset()
 	s.screen.Reset()
 	s.cpu.Init()
+	s.controller.Reset()
 	s.Start()
 }
 
@@ -257,9 +261,9 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 			}
 		}
 
-		if s.cpu.GetOpcodePC() == s.pcBreakpoint {
-			return true, x, nil
-		}
+		//if s.cpu.GetOpcodePC() == s.pcBreakpoint {
+		//	return true, x, nil
+		//}
 
 		//if completed {
 		//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
@@ -501,4 +505,36 @@ func (s *System) DumpCode() (instructions []string, previousPCIndex int, current
 
 func (s *System) SetBreakpoint(pcAddress uint16) {
 	s.pcBreakpoint = pcAddress
+}
+
+func (s *System) PressStart() {
+	s.controller.InputStart(true)
+}
+
+func (s *System) PressSelect() {
+	s.controller.InputSelect(true)
+}
+
+func (s *System) PressA() {
+	s.controller.InputA(true)
+}
+
+func (s *System) PressB() {
+	s.controller.InputB(true)
+}
+
+func (s *System) PressUp() {
+	s.controller.InputUp(true)
+}
+
+func (s *System) PressDown() {
+	s.controller.InputDown(true)
+}
+
+func (s *System) PressLeft() {
+	s.controller.InputLeft(true)
+}
+
+func (s *System) PressRight() {
+	s.controller.InputRight(true)
 }

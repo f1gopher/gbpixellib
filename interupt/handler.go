@@ -84,13 +84,15 @@ func (h *Handler) serviceInterupt(interupt uint8) {
 
 	var programCounter uint16 = 0
 	switch interupt {
-	case 0:
+	case 0: // Vertical Blank
 		programCounter = 0x0040
-	case 1:
+	case 1: // LCDC Status
 		programCounter = 0x0048
-	case 2:
+	case 2: // Timer Overflow
 		programCounter = 0x0050
-	case 4:
+	case 3: // Serial Transfer
+		programCounter = 0x0058
+	case 4: // Joypad
 		programCounter = 0x0060
 	default:
 		panic("Unhandled service interupt")
