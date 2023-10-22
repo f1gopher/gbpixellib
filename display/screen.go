@@ -63,10 +63,11 @@ type Screen struct {
 func CreateScreen(memory *memory.Memory, interuptHandler interuptHandler) *Screen {
 	f, _ := os.Create("./gpu-log.txt")
 	return &Screen{
-		log:             f,
-		memory:          memory,
-		interuptHandler: interuptHandler,
-		buffer:          make([]ScreenColor, screenWidth*screenHeight),
+		log:                     f,
+		memory:                  memory,
+		interuptHandler:         interuptHandler,
+		buffer:                  make([]ScreenColor, screenWidth*screenHeight),
+		currentCycleForScanline: 0,
 	}
 }
 
@@ -249,17 +250,14 @@ func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 
 	s.setLcdStatus()
 
+	s.currentCycleForScanline += cyclesCompleted
+
 	if !s.LCDEnable() {
 		return
 	}
 
-	s.currentCycleForScanline -= cyclesCompleted
-
-	if s.currentCycleForScanline <= 0 {
-		s.currentCycleForScanline = cyclesToDrawScanline
-
-		currentScanline := s.LY() + 1
-		s.memory.DisplaySetScanline(currentScanline)
+	if s.currentCycleForScanline >= cyclesToDrawScanline {
+		currentScanline := s.LY()
 
 		if currentScanline == 144 {
 			s.interuptHandler.Request(interupt.VBlank)
@@ -268,20 +266,29 @@ func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 		} else if currentScanline < 144 {
 			s.drawScanline()
 		}
+
+		s.currentCycleForScanline -= cyclesToDrawScanline
+
+		currentScanline = s.LY() + 1
+		s.memory.DisplaySetScanline(currentScanline)
 	}
+}
+
+func (s *Screen) Cycles() int {
+	return s.currentCycleForScanline
 }
 
 func (s *Screen) setLcdStatus() {
 	status := s.memory.ReadByte(lcdStatus)
 
-	if !s.LCDEnable() {
-		s.currentCycleForScanline = 456
-		s.memory.DisplaySetScanline(0)
-		status = status & 252
-		status = memory.SetBit(status, 0, true)
-		s.memory.WriteByte(lcdStatus, status)
-		return
-	}
+	//if !s.LCDEnable() {
+	//	s.currentCycleForScanline = 0
+	//	s.memory.DisplaySetScanline(0)
+	//	status = status & 252
+	//	status = memory.SetBit(status, 0, true)
+	//	s.memory.WriteByte(lcdStatus, status)
+	//	return
+	//}
 
 	currentLine := s.memory.ReadByte(lcdScanline)
 	currentMode := status & 0x3

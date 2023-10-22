@@ -51,7 +51,7 @@ func (o *opcode_JP_cc_nn) doCycle(cycleNumber int, reg registersInterface, mem m
 		} else {
 			o.condition = !reg.GetFlag(o.flag)
 		}
-		return o.condition, nil
+		return !o.condition, nil
 	}
 
 	if !o.condition {
@@ -59,7 +59,7 @@ func (o *opcode_JP_cc_nn) doCycle(cycleNumber int, reg registersInterface, mem m
 	}
 
 	if cycleNumber == 4 {
-		reg.set16(PC, combineBytes(o.msb, o.lsb))
+		reg.Set16(PC, combineBytes(o.msb, o.lsb))
 		return true, nil
 	}
 

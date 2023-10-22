@@ -48,7 +48,7 @@ func Benchmark_DEC(b *testing.B) {
 
 type decTestSuite struct {
 	suite.Suite
-	reg register
+	reg Register
 }
 
 func (i *decTestSuite) test(initial uint8, expected uint8, carry bool) {
@@ -61,7 +61,7 @@ func (i *decTestSuite) test(initial uint8, expected uint8, carry bool) {
 	}
 	mem := &testMemory_NoAccess{test: i.Suite.T()}
 
-	regs.set8(i.reg, initial)
+	regs.Set8(i.reg, initial)
 
 	completed, err := opcode.doCycle(1, regs, mem)
 

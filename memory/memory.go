@@ -17,6 +17,9 @@ type Memory struct {
 	abc []uint8
 
 	breakAddress uint16
+
+	dmaPending bool
+	dmaAddress uint16
 }
 
 func CreateMemory(log *log.Log) *Memory {
@@ -79,27 +82,55 @@ func (m *Memory) WriteByte(address uint16, value byte) {
 		return
 	}
 
+	// TODO - Probably should be handled haigher up in the system code
+
 	// Trigger DMA transfer
 	if address == 0xFF46 {
-		// TODO - this needs to take 160 cycles
-		dmaAddress := uint16(value) << 8
-		var i uint16 = 0
-		for i = 0; i < 0x9F; i++ {
-			//m.Writeuint8(0xFE00+i, m.ReadByte(dmaAddress+i))
-			m.write(0xFE00+i, m.ReadByte(dmaAddress+i))
-		}
+		m.dmaPending = true
+		m.dmaAddress = uint16(value) << 8
 
-		// TODO - is this right?
+		//// TODO - this needs to take 160 cycles
+		//dmaAddress := uint16(value) << 8
+		//var i uint16 = 0
+		//for i = 0; i < 0x9F; i++ {
+		//	//m.Writeuint8(0xFE00+i, m.ReadByte(dmaAddress+i))
+		//	m.write(0xFE00+i, m.ReadByte(dmaAddress+i))
+		//}
+		//
+		//// TODO - is this right?
 		return
 	}
 
 	//m.buffer[address] = value
 	m.write(address, value)
 
-	if address >= 0xE00 && address < 0xFE00 {
-		//m.buffer[address-0x2000] = value
-		m.write(address-0x2000, value)
+	// Echo RAM - might not need this
+	//
+	// 0xE000 - 0xFDFF: Echo RAM
+	//This section of memory directly mirrors the working RAM section - meaning if you write into the first address of working RAM (0xC000), the same value will appear in the first spot of echo RAM (0xE000). Nintendo actively discouraged developers from using this area of memory and as such we can just pretend it doesn't exist.
+	//if address >= 0xC000 && address <= 0xDFFF {
+	//	m.write(address+0x2000, value)
+	//}
+}
+
+func (m *Memory) ExecuteDMAIfPending() bool {
+	if !m.dmaPending {
+		return false
 	}
+
+	// TODO - this needs to take 160 cycles
+	//dmaAddress := uint16(value) << 8
+	var i uint16 = 0
+	for i = 0; i < 0x9F; i++ {
+		//m.Writeuint8(0xFE00+i, m.ReadByte(dmaAddress+i))
+		m.write(0xFE00+i, m.ReadByte(m.dmaAddress+i))
+	}
+
+	// TODO - is this right?
+
+	m.dmaPending = false
+
+	return true
 }
 
 func (m *Memory) DisplaySetScanline(value uint8) {

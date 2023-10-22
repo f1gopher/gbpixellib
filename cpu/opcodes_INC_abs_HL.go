@@ -31,9 +31,9 @@ func (o *opcode_INC_abs_HL) doCycle(cycleNumber int, reg registersInterface, mem
 		result, carryBit3, _ := add8BitWithCarry(o.data, 1)
 
 		mem.WriteByte(reg.Get16(HL), result)
-		reg.setFlag(ZFlag, result == 0)
-		reg.setFlag(NFlag, false)
-		reg.setFlag(HFlag, carryBit3)
+		reg.SetFlag(ZFlag, result == 0)
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, carryBit3)
 		return false, nil
 	}
 

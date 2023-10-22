@@ -1,16 +1,17 @@
 package cpu
 
 import (
+	"errors"
 	"fmt"
 )
 
 type opcode_CB_RL_r struct {
 	opcodeBase
 
-	target register
+	target Register
 }
 
-func createCB_RL_r(opcode uint8, reg register) *opcode_CB_RL_r {
+func createCB_RL_r(opcode uint8, reg Register) *opcode_CB_RL_r {
 	return &opcode_CB_RL_r{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -23,22 +24,26 @@ func createCB_RL_r(opcode uint8, reg register) *opcode_CB_RL_r {
 
 func (o *opcode_CB_RL_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
-	if cycleNumber != 1 {
-		panic("Invalid cycle")
+	if cycleNumber == 1 {
+		value := reg.Get8(o.target)
+		carry := value & 0x80
+		result := value << 1
+		if reg.GetFlag(CFlag) {
+			result = result ^ 0x01
+		}
+		reg.Set8(o.target, result)
+
+		reg.SetFlag(ZFlag, result == 0)
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, false)
+		reg.SetFlag(CFlag, carry == 0x80)
+
+		return false, nil
 	}
 
-	value := reg.Get8(o.target)
-	carry := value & 0x80
-	result := value << 1
-	if reg.GetFlag(CFlag) {
-		result = result ^ 0x01
+	if cycleNumber == 2 {
+		return true, nil
 	}
-	reg.set8(o.target, result)
 
-	reg.setFlag(ZFlag, result == 0)
-	reg.setFlag(NFlag, false)
-	reg.setFlag(HFlag, false)
-	reg.setFlag(CFlag, carry == 0x80)
-
-	return true, nil
+	return false, errors.New("Invalid cycle")
 }

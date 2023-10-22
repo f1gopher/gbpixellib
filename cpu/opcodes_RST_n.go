@@ -30,19 +30,19 @@ func (o *opcode_RST_n) doCycle(cycleNumber int, reg registersInterface, mem memo
 	}
 
 	if cycleNumber == 2 {
-		mem.WriteByte(reg.Get16(SP), msb(reg.Get16(PC)))
+		mem.WriteByte(reg.Get16(SP), Msb(reg.Get16(PC)))
 		decSP(reg)
 		return false, nil
 	}
 
 	if cycleNumber == 3 {
-		mem.WriteByte(reg.Get16(SP), lsb(reg.Get16(PC)))
+		mem.WriteByte(reg.Get16(SP), Lsb(reg.Get16(PC)))
 		return false, nil
 	}
 
 	if cycleNumber == 4 {
 		// TODO - is o.value right?
-		reg.set16(PC, combineBytes(0x00, o.value))
+		reg.Set16(PC, combineBytes(0x00, o.value))
 		return true, nil
 	}
 

@@ -19,7 +19,7 @@ func createJP_HL(opcode uint8) *opcode_JP_HL {
 func (o *opcode_JP_HL) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
-		reg.set16(PC, reg.Get16(HL))
+		reg.Set16(PC, reg.Get16(HL))
 		return true, nil
 	}
 

@@ -8,11 +8,11 @@ import (
 type opcode_LD_rr_nn struct {
 	opcodeBase
 
-	target register
+	target Register
 	lsb    uint8
 }
 
-func createLD_rr_nn(opcode uint8, reg register) *opcode_LD_rr_nn {
+func createLD_rr_nn(opcode uint8, reg Register) *opcode_LD_rr_nn {
 	return &opcode_LD_rr_nn{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -32,7 +32,7 @@ func (o *opcode_LD_rr_nn) doCycle(cycleNumber int, reg registersInterface, mem m
 
 	if cycleNumber == 2 {
 		msb := readAndIncPC(reg, mem)
-		reg.set16(o.target, combineBytes(msb, o.lsb))
+		reg.Set16(o.target, combineBytes(msb, o.lsb))
 		return false, nil
 	}
 

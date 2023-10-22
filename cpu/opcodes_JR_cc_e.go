@@ -53,7 +53,7 @@ func (o *opcode_JR_cc_e) doCycle(cycleNumber int, reg registersInterface, mem me
 	}
 
 	if cycleNumber == 3 {
-		reg.set16(PC, adds8Tou16(reg.Get16(PC), o.e))
+		reg.Set16(PC, adds8Tou16(reg.Get16(PC), o.e))
 		return true, nil
 	}
 

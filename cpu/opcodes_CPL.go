@@ -21,9 +21,10 @@ func (o *opcode_CPL) doCycle(cycleNumber int, reg registersInterface, mem memory
 	if cycleNumber == 1 {
 		a := reg.Get8(A)
 		a = a ^ a
-		reg.set8(A, a)
-		reg.setFlag(NFlag, true)
-		reg.setFlag(HFlag, true)
+		reg.Set8(A, a)
+		reg.SetFlag(NFlag, true)
+		reg.SetFlag(HFlag, true)
+		return true, nil
 	}
 
 	return false, errors.New("Invalid cycle")

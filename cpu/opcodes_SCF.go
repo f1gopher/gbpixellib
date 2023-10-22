@@ -19,9 +19,9 @@ func createSCF(opcode uint8) *opcode_SCF {
 func (o *opcode_SCF) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
-		reg.setFlag(NFlag, false)
-		reg.setFlag(HFlag, false)
-		reg.setFlag(CFlag, true)
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, false)
+		reg.SetFlag(CFlag, true)
 	}
 
 	return false, errors.New("Invalid cycle")

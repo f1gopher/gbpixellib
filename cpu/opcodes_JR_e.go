@@ -35,7 +35,7 @@ func (o *opcode_JR_e) doCycle(cycleNumber int, reg registersInterface, mem memor
 		} else {
 			pc = pc - uint16(-o.e)
 		}
-		reg.set16(PC, pc)
+		reg.Set16(PC, pc)
 		return false, nil
 	}
 

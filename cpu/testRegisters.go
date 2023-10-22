@@ -11,11 +11,11 @@ type testRegisters_UseOneRegister struct {
 
 	test *testing.T
 
-	allowedReg   register
+	allowedReg   Register
 	allowedFlags []registerFlags
 }
 
-func (t *testRegisters_UseOneRegister) Get8(source register) uint8 {
+func (t *testRegisters_UseOneRegister) Get8(source Register) uint8 {
 	if source != t.allowedReg {
 		t.test.FailNow()
 	}
@@ -23,7 +23,7 @@ func (t *testRegisters_UseOneRegister) Get8(source register) uint8 {
 	return t.Registers.Get8(source)
 }
 
-func (t *testRegisters_UseOneRegister) Get16(source register) uint16 {
+func (t *testRegisters_UseOneRegister) Get16(source Register) uint16 {
 	if source != t.allowedReg {
 		t.test.FailNow()
 	}
@@ -31,36 +31,36 @@ func (t *testRegisters_UseOneRegister) Get16(source register) uint16 {
 	return t.Registers.Get16(source)
 }
 
-func (t *testRegisters_UseOneRegister) get16Msb(source register) uint8 {
+func (t *testRegisters_UseOneRegister) Get16Msb(source Register) uint8 {
 	if source != t.allowedReg {
 		t.test.FailNow()
 	}
 
-	return t.Registers.get16Msb(source)
+	return t.Registers.Get16Msb(source)
 }
 
-func (t *testRegisters_UseOneRegister) get16Lsb(source register) uint8 {
+func (t *testRegisters_UseOneRegister) Get16Lsb(source Register) uint8 {
 	if source != t.allowedReg {
 		t.test.FailNow()
 	}
 
-	return t.Registers.get16Lsb(source)
+	return t.Registers.Get16Lsb(source)
 }
 
-func (t *testRegisters_UseOneRegister) set8(target register, value uint8) {
+func (t *testRegisters_UseOneRegister) Set8(target Register, value uint8) {
 	if target != t.allowedReg {
 		t.test.FailNow()
 	}
 
-	t.Registers.set8(target, value)
+	t.Registers.Set8(target, value)
 }
 
-func (t *testRegisters_UseOneRegister) set16(target register, value uint16) {
+func (t *testRegisters_UseOneRegister) Set16(target Register, value uint16) {
 	if target != t.allowedReg {
 		t.test.FailNow()
 	}
 
-	t.Registers.set16(target, value)
+	t.Registers.Set16(target, value)
 }
 
 func (t *testRegisters_UseOneRegister) GetFlag(flag registerFlags) bool {
@@ -71,10 +71,10 @@ func (t *testRegisters_UseOneRegister) GetFlag(flag registerFlags) bool {
 	return t.Registers.GetFlag(flag)
 }
 
-func (t *testRegisters_UseOneRegister) setFlag(flag registerFlags, value bool) {
+func (t *testRegisters_UseOneRegister) SetFlag(flag registerFlags, value bool) {
 	if !slices.Contains(t.allowedFlags, flag) {
 		t.test.FailNow()
 	}
 
-	t.Registers.setFlag(flag, value)
+	t.Registers.SetFlag(flag, value)
 }

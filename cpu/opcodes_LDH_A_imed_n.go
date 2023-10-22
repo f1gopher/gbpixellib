@@ -28,7 +28,7 @@ func (o *opcode_LDH_A_imed_n) doCycle(cycleNumber int, reg registersInterface, m
 	}
 
 	if cycleNumber == 2 {
-		reg.set8(A, mem.ReadByte(combineBytes(0xFF, o.n)))
+		reg.Set8(A, mem.ReadByte(combineBytes(0xFF, o.n)))
 		return false, nil
 	}
 

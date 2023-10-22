@@ -7,10 +7,10 @@ import (
 type opcode_DEC_r struct {
 	opcodeBase
 
-	target register
+	target Register
 }
 
-func createDEC_r(opcode uint8, reg register) *opcode_DEC_r {
+func createDEC_r(opcode uint8, reg Register) *opcode_DEC_r {
 	return &opcode_DEC_r{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -31,10 +31,10 @@ func (o *opcode_DEC_r) doCycle(cycleNumber int, reg registersInterface, mem memo
 
 	result, carryBit3, _ := subtract8BitWithCarry(original, 1)
 
-	reg.set8(o.target, result)
-	reg.setFlag(ZFlag, result == 0)
-	reg.setFlag(NFlag, true)
-	reg.setFlag(HFlag, carryBit3)
+	reg.Set8(o.target, result)
+	reg.SetFlag(ZFlag, result == 0)
+	reg.SetFlag(NFlag, true)
+	reg.SetFlag(HFlag, carryBit3)
 
 	return true, nil
 }

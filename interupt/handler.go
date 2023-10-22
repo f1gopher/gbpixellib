@@ -54,7 +54,7 @@ func (h *Handler) Request(i Interupt) {
 	h.memory.WriteByte(0xFF0F, value)
 }
 
-func (h *Handler) Update() {
+func (h *Handler) Update() bool {
 	if h.regs.GetIME() {
 		req := h.memory.ReadByte(0xFF0F)
 		enabled := h.memory.ReadByte(0xFFFF)
@@ -64,11 +64,14 @@ func (h *Handler) Update() {
 				if memory.GetBit(req, i) {
 					if memory.GetBit(enabled, i) {
 						h.serviceInterupt(uint8(i))
+						return true
 					}
 				}
 			}
 		}
 	}
+
+	return false
 }
 
 func (h *Handler) serviceInterupt(interupt uint8) {
@@ -95,5 +98,11 @@ func (h *Handler) serviceInterupt(interupt uint8) {
 
 	// TODO - set PC
 	//h.cpu.PushAndReplacePC(programCounter)
+
+	// TODO - -1 for PC because we fetch the next opcode but we shouldn't???
+
+	currentPC := h.regs.Get16(cpu.PC) - 1
+	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Msb(currentPC))
+	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Lsb(currentPC))
 	h.regs.SetPC(programCounter)
 }

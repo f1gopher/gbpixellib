@@ -1,16 +1,17 @@
 package cpu
 
 import (
+	"errors"
 	"fmt"
 )
 
 type opcode_DEC_rr struct {
 	opcodeBase
 
-	target register
+	target Register
 }
 
-func createDEC_rr(opcode uint8, reg register) *opcode_DEC_rr {
+func createDEC_rr(opcode uint8, reg Register) *opcode_DEC_rr {
 	return &opcode_DEC_rr{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -23,13 +24,16 @@ func createDEC_rr(opcode uint8, reg register) *opcode_DEC_rr {
 
 func (o *opcode_DEC_rr) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
-	if cycleNumber != 1 {
-		panic("Invalid cycle")
+	if cycleNumber == 1 {
+		original := reg.Get16(o.target)
+		result := subtract16Bit(original, 1)
+		reg.Set16(o.target, result)
+		return false, nil
 	}
 
-	original := reg.Get16(o.target)
-	result := subtract16Bit(original, 1)
-	reg.set16(o.target, result)
+	if cycleNumber == 2 {
+		return true, nil
+	}
 
-	return true, nil
+	return false, errors.New("Invalid cycle")
 }

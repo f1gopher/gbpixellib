@@ -27,13 +27,13 @@ func (o *opcode_XOR_n) doCycle(cycleNumber int, reg registersInterface, mem memo
 		return false, nil
 	}
 
-	if cycleNumber == 1 {
+	if cycleNumber == 2 {
 		result := reg.Get8(A) ^ o.n
-		reg.set8(A, result)
-		reg.setFlag(ZFlag, result == 0)
-		reg.setFlag(NFlag, false)
-		reg.setFlag(HFlag, false)
-		reg.setFlag(CFlag, false)
+		reg.Set8(A, result)
+		reg.SetFlag(ZFlag, result == 0)
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, false)
+		reg.SetFlag(CFlag, false)
 		return true, nil
 	}
 

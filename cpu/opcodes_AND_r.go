@@ -8,10 +8,10 @@ import (
 type opcode_AND_r struct {
 	opcodeBase
 
-	src register
+	src Register
 }
 
-func createAND_r(opcode uint8, reg register) *opcode_AND_r {
+func createAND_r(opcode uint8, reg Register) *opcode_AND_r {
 	return &opcode_AND_r{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -26,11 +26,11 @@ func (o *opcode_AND_r) doCycle(cycleNumber int, reg registersInterface, mem memo
 
 	if cycleNumber == 1 {
 		result := reg.Get8(A) & reg.Get8(o.src)
-		reg.set8(A, result)
-		reg.setFlag(ZFlag, result == 0)
-		reg.setFlag(NFlag, false)
-		reg.setFlag(HFlag, true)
-		reg.setFlag(CFlag, false)
+		reg.Set8(A, result)
+		reg.SetFlag(ZFlag, result == 0)
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, true)
+		reg.SetFlag(CFlag, false)
 		return true, nil
 	}
 

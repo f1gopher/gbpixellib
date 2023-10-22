@@ -29,10 +29,10 @@ func (o *opcode_CP_abs_HL) doCycle(cycleNumber int, reg registersInterface, mem 
 
 	if cycleNumber == 2 {
 		result, bit3Carry, bit7Carry := subtract8BitWithCarry(reg.Get8(A), o.n)
-		reg.setFlag(ZFlag, result == 0)
-		reg.setFlag(NFlag, true)
-		reg.setFlag(HFlag, bit3Carry)
-		reg.setFlag(CFlag, bit7Carry)
+		reg.SetFlag(ZFlag, result == 0)
+		reg.SetFlag(NFlag, true)
+		reg.SetFlag(HFlag, bit3Carry)
+		reg.SetFlag(CFlag, bit7Carry)
 		return true, nil
 	}
 

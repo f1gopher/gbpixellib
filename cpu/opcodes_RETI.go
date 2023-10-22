@@ -34,12 +34,13 @@ func (o *opcode_RETI) doCycle(cycleNumber int, reg registersInterface, mem memor
 	}
 
 	if cycleNumber == 3 {
-		reg.set16(PC, combineBytes(o.msb, o.lsb))
+		reg.Set16(PC, combineBytes(o.msb, o.lsb))
 		return false, nil
 	}
 
 	if cycleNumber == 4 {
-		mem.WriteByte(0xFFFF, 0x01)
+		//mem.WriteByte(0xFFFF, 0x01)
+		reg.SetIME(true)
 		return true, nil
 	}
 

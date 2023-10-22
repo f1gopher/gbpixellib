@@ -8,10 +8,10 @@ import (
 type opcode_LD_A_abs_rr struct {
 	opcodeBase
 
-	target register
+	target Register
 }
 
-func createLD_A_abs_rr(opcode uint8, reg register) *opcode_LD_A_abs_rr {
+func createLD_A_abs_rr(opcode uint8, reg Register) *opcode_LD_A_abs_rr {
 	return &opcode_LD_A_abs_rr{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -25,7 +25,7 @@ func createLD_A_abs_rr(opcode uint8, reg register) *opcode_LD_A_abs_rr {
 func (o *opcode_LD_A_abs_rr) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
-		reg.set8(A, mem.ReadByte(reg.Get16(o.target)))
+		reg.Set8(A, mem.ReadByte(reg.Get16(o.target)))
 		return false, nil
 	}
 

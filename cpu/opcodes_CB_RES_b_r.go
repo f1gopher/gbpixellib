@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -8,10 +9,10 @@ type opcode_CB_RES_b_r struct {
 	opcodeBase
 
 	bit    uint8
-	target register
+	target Register
 }
 
-func createCB_RES_b_r(opcode uint8, bit uint8, reg register) *opcode_CB_RES_b_r {
+func createCB_RES_b_r(opcode uint8, bit uint8, reg Register) *opcode_CB_RES_b_r {
 	return &opcode_CB_RES_b_r{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -25,11 +26,14 @@ func createCB_RES_b_r(opcode uint8, bit uint8, reg register) *opcode_CB_RES_b_r 
 
 func (o *opcode_CB_RES_b_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
-	if cycleNumber != 1 {
-		panic("Invalid cycle")
+	if cycleNumber == 1 {
+		reg.SetRegBit(o.target, o.bit, false)
+		return false, nil
 	}
 
-	reg.setRegBit(o.target, o.bit, false)
+	if cycleNumber == 2 {
+		return true, nil
+	}
 
-	return true, nil
+	return false, errors.New("Invalid cycle")
 }

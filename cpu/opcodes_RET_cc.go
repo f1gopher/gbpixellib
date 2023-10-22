@@ -45,7 +45,7 @@ func (o *opcode_RET_cc) doCycle(cycleNumber int, reg registersInterface, mem mem
 	}
 
 	if cycleNumber == 2 {
-		return o.condition, nil
+		return !o.condition, nil
 	}
 
 	if !o.condition {
@@ -63,7 +63,7 @@ func (o *opcode_RET_cc) doCycle(cycleNumber int, reg registersInterface, mem mem
 	}
 
 	if cycleNumber == 5 {
-		reg.set16(PC, combineBytes(o.msb, o.lsb))
+		reg.Set16(PC, combineBytes(o.msb, o.lsb))
 		return true, nil
 	}
 

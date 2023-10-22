@@ -8,10 +8,10 @@ import (
 type opcode_ADC_r struct {
 	opcodeBase
 
-	src register
+	src Register
 }
 
-func createADC_r(opcode uint8, reg register) *opcode_ADC_r {
+func createADC_r(opcode uint8, reg Register) *opcode_ADC_r {
 	return &opcode_ADC_r{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -26,11 +26,11 @@ func (o *opcode_ADC_r) doCycle(cycleNumber int, reg registersInterface, mem memo
 
 	if cycleNumber == 1 {
 		result, bit3Carry, bit7Carry := add8BitAndCarryWithCarry(reg.Get8(A), reg.Get8(o.src), reg.GetFlag(CFlag))
-		reg.set8(A, result)
-		reg.setFlag(ZFlag, result == 0)
-		reg.setFlag(NFlag, false)
-		reg.setFlag(HFlag, bit3Carry)
-		reg.setFlag(CFlag, bit7Carry)
+		reg.Set8(A, result)
+		reg.SetFlag(ZFlag, result == 0)
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, bit3Carry)
+		reg.SetFlag(CFlag, bit7Carry)
 		return true, nil
 	}
 

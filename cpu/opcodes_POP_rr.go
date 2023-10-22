@@ -8,11 +8,11 @@ import (
 type opcode_POP_rr struct {
 	opcodeBase
 
-	target register
+	target Register
 	lsb    uint8
 }
 
-func createPOP_rr(opcode uint8, reg register) *opcode_POP_rr {
+func createPOP_rr(opcode uint8, reg Register) *opcode_POP_rr {
 	return &opcode_POP_rr{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -31,7 +31,7 @@ func (o *opcode_POP_rr) doCycle(cycleNumber int, reg registersInterface, mem mem
 
 	if cycleNumber == 2 {
 		msb := readAndIncSP(reg, mem)
-		reg.set16FromTwoBytes(o.target, msb, o.lsb)
+		reg.Set16FromTwoBytes(o.target, msb, o.lsb)
 		return false, nil
 	}
 

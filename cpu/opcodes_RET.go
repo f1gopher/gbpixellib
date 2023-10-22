@@ -34,7 +34,7 @@ func (o *opcode_RET) doCycle(cycleNumber int, reg registersInterface, mem memory
 	}
 
 	if cycleNumber == 3 {
-		reg.set16(PC, combineBytes(o.msb, o.lsb))
+		reg.Set16(PC, combineBytes(o.msb, o.lsb))
 		return false, nil
 	}
 

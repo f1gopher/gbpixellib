@@ -8,11 +8,11 @@ import (
 type opcode_LD_abs_rr_r struct {
 	opcodeBase
 
-	src  register
-	dest register
+	src  Register
+	dest Register
 }
 
-func createLD_abs_rr_r(opcode uint8, dest register, src register) *opcode_LD_abs_rr_r {
+func createLD_abs_rr_r(opcode uint8, dest Register, src Register) *opcode_LD_abs_rr_r {
 	return &opcode_LD_abs_rr_r{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,

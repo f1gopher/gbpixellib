@@ -8,11 +8,11 @@ import (
 type opcode_PUSH_rr struct {
 	opcodeBase
 
-	target register
+	target Register
 	msb    uint8
 }
 
-func createPUSH_rr(opcode uint8, reg register) *opcode_PUSH_rr {
+func createPUSH_rr(opcode uint8, reg Register) *opcode_PUSH_rr {
 	return &opcode_PUSH_rr{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
@@ -30,13 +30,13 @@ func (o *opcode_PUSH_rr) doCycle(cycleNumber int, reg registersInterface, mem me
 	}
 
 	if cycleNumber == 2 {
-		mem.WriteByte(reg.Get16(SP), reg.get16Msb(o.target))
+		mem.WriteByte(reg.Get16(SP), reg.Get16Msb(o.target))
 		decSP(reg)
 		return false, nil
 	}
 
 	if cycleNumber == 3 {
-		mem.WriteByte(reg.Get16(SP), reg.get16Lsb(o.target))
+		mem.WriteByte(reg.Get16(SP), reg.Get16Lsb(o.target))
 		return false, nil
 	}
 

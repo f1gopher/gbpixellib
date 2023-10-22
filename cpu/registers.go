@@ -6,10 +6,10 @@ import (
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
-type register int
+type Register int
 
 const (
-	AF register = iota
+	AF Register = iota
 	BC
 	DE
 	HL
@@ -25,7 +25,7 @@ const (
 	L
 )
 
-func (r register) String() string {
+func (r Register) String() string {
 	return [...]string{"AF", "BC", "DE", "HL", "SP", "PC", "A", "F", "B", "C", "D", "E", "H", "L"}[r]
 }
 
@@ -76,7 +76,7 @@ func (r *Registers) GetIME() bool {
 	return r.imeEnabled
 }
 
-func (r *Registers) Get8(source register) uint8 {
+func (r *Registers) Get8(source Register) uint8 {
 	switch source {
 	case A:
 		return getHigh(&r.regAF)
@@ -99,7 +99,7 @@ func (r *Registers) Get8(source register) uint8 {
 	}
 }
 
-func (r *Registers) get16Msb(source register) uint8 {
+func (r *Registers) Get16Msb(source Register) uint8 {
 	switch source {
 	case AF:
 		return r.Get8(A)
@@ -110,15 +110,15 @@ func (r *Registers) get16Msb(source register) uint8 {
 	case HL:
 		return r.Get8(H)
 	case SP:
-		return msb(r.Get16(SP))
+		return Msb(r.Get16(SP))
 	case PC:
-		return msb(r.Get16(PC))
+		return Msb(r.Get16(PC))
 	default:
 		panic(fmt.Sprintf("Not a valid 16bit register for reading MSB: %s", source.String()))
 	}
 }
 
-func (r *Registers) get16Lsb(source register) uint8 {
+func (r *Registers) Get16Lsb(source Register) uint8 {
 	switch source {
 	case AF:
 		return r.Get8(F)
@@ -129,15 +129,15 @@ func (r *Registers) get16Lsb(source register) uint8 {
 	case HL:
 		return r.Get8(L)
 	case SP:
-		return lsb(r.Get16(SP))
+		return Lsb(r.Get16(SP))
 	case PC:
-		return lsb(r.Get16(PC))
+		return Lsb(r.Get16(PC))
 	default:
 		panic(fmt.Sprintf("Not a valid 16bit register for reading LSB: %s", source.String()))
 	}
 }
 
-func (r *Registers) Get16(source register) uint16 {
+func (r *Registers) Get16(source Register) uint16 {
 	switch source {
 	case AF:
 		return r.regAF
@@ -156,7 +156,7 @@ func (r *Registers) Get16(source register) uint16 {
 	}
 }
 
-func (r *Registers) set8(target register, value uint8) {
+func (r *Registers) Set8(target Register, value uint8) {
 	switch target {
 	case A:
 		setHigh(&r.regAF, value)
@@ -179,15 +179,15 @@ func (r *Registers) set8(target register, value uint8) {
 	}
 }
 
-func (r *Registers) set16FromTwoBytes(target register, msb uint8, lsb uint8) {
-	r.set16(target, combineBytes(msb, lsb))
+func (r *Registers) Set16FromTwoBytes(target Register, msb uint8, lsb uint8) {
+	r.Set16(target, combineBytes(msb, lsb))
 }
 
 func (r *Registers) SetPC(value uint16) {
-	r.set16(PC, value)
+	r.Set16(PC, value)
 }
 
-func (r *Registers) set16(target register, value uint16) {
+func (r *Registers) Set16(target Register, value uint16) {
 	switch target {
 	case AF:
 		r.regAF = value
@@ -221,24 +221,24 @@ func (r *Registers) GetFlag(flag registerFlags) bool {
 	}
 }
 
-func (r *Registers) setFlag(flag registerFlags, value bool) {
+func (r *Registers) SetFlag(flag registerFlags, value bool) {
 	switch flag {
 	case ZFlag:
-		r.setRegBit(F, zFlagBit, value)
+		r.SetRegBit(F, zFlagBit, value)
 	case NFlag:
-		r.setRegBit(F, nFlagBit, value)
+		r.SetRegBit(F, nFlagBit, value)
 	case HFlag:
-		r.setRegBit(F, hFlagBit, value)
+		r.SetRegBit(F, hFlagBit, value)
 	case CFlag:
-		r.setRegBit(F, cFlagBit, value)
+		r.SetRegBit(F, cFlagBit, value)
 	default:
 		panic("Unhandled flag for set")
 	}
 }
 
-func (r *Registers) setRegBit(reg register, bit uint8, value bool) {
+func (r *Registers) SetRegBit(reg Register, bit uint8, value bool) {
 	result := memory.SetBit(r.Get8(reg), bit, value)
-	r.set8(reg, result)
+	r.Set8(reg, result)
 }
 
 func getHigh(value *uint16) uint8 {

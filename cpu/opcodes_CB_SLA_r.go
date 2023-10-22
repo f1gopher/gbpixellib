@@ -7,10 +7,10 @@ import (
 type opcode_CB_SLA_r struct {
 	opcodeBase
 
-	target register
+	target Register
 }
 
-func createCB_SLA_r(opcode uint8, reg register) *opcode_CB_SLA_r {
+func createCB_SLA_r(opcode uint8, reg Register) *opcode_CB_SLA_r {
 	return &opcode_CB_SLA_r{
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,

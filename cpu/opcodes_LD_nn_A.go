@@ -4,6 +4,9 @@ import "errors"
 
 type opcode_LD_nn_A struct {
 	opcodeBase
+
+	msb uint8
+	lsb uint8
 }
 
 func createLD_nn_A(opcode uint8) *opcode_LD_nn_A {
@@ -19,10 +22,22 @@ func createLD_nn_A(opcode uint8) *opcode_LD_nn_A {
 func (o *opcode_LD_nn_A) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
-		lsb := readAndIncPC(reg, mem)
-		msb := readAndIncPC(reg, mem)
-		nn := combineBytes(msb, lsb)
+		o.lsb = readAndIncPC(reg, mem)
+		return false, nil
+	}
+
+	if cycleNumber == 2 {
+		o.msb = readAndIncPC(reg, mem)
+		return false, nil
+	}
+
+	if cycleNumber == 3 {
+		nn := combineBytes(o.msb, o.lsb)
 		mem.WriteByte(nn, reg.Get8(A))
+		return false, nil
+	}
+
+	if cycleNumber == 4 {
 		return true, nil
 	}
 

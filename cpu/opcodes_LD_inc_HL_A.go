@@ -7,8 +7,8 @@ import (
 type opcode_LD_inc_HL_A struct {
 	opcodeBase
 
-	src  register
-	dest register
+	src  Register
+	dest Register
 }
 
 func createLD_inc_HL_A(opcode uint8) *opcode_LD_inc_HL_A {
@@ -25,7 +25,7 @@ func (o *opcode_LD_inc_HL_A) doCycle(cycleNumber int, reg registersInterface, me
 
 	if cycleNumber == 1 {
 		mem.WriteByte(reg.Get16(HL), reg.Get8(A))
-		reg.set16(HL, reg.Get16(HL)+1)
+		reg.Set16(HL, reg.Get16(HL)+1)
 		return false, nil
 	}
 

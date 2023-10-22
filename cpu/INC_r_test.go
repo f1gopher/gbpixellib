@@ -48,7 +48,7 @@ func Benchmark_INC(b *testing.B) {
 
 type incTestSuite struct {
 	suite.Suite
-	reg register
+	reg Register
 }
 
 func (i *incTestSuite) test(initial uint8, expected uint8, carry bool) {

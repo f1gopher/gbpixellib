@@ -3,7 +3,8 @@ package cpu
 func add8BitWithCarry(original uint8, add uint8) (result uint8, bit3Carry bool, bit7carry bool) {
 	result = original + add
 
-	abc := result ^ 0x01 ^ original
+	//abc := result ^ 0x01 ^ original
+	abc := result ^ add ^ original
 	bit3Carry = abc&0x10 == 0x10
 	bit7carry = result < original
 	return
@@ -53,12 +54,12 @@ func subtract8BitAndCarryWithCarry(original uint8, subtract uint8, carry bool) (
 	return
 }
 
-func add16BitWithCarry(original uint16, add uint16) (result uint16, bit3Carry bool, bit7carry bool) {
+func add16BitWithCarry(original uint16, add uint16) (result uint16, bit11Carry bool, bit15carry bool) {
 	result = original + add
 
-	abc := result ^ 0x01 ^ original
-	bit3Carry = abc&0x10 == 0x10
-	bit7carry = result < original
+	abc := result ^ original ^ add
+	bit11Carry = abc&0x1000 == 0x1000
+	bit15carry = result < original
 	return
 }
 
@@ -85,7 +86,7 @@ func readAndIncPC(reg registersInterface, mem memoryInterface) uint8 {
 	pc := reg.Get16(PC)
 	result := mem.ReadByte(pc)
 	pc++
-	reg.set16(PC, pc)
+	reg.Set16(PC, pc)
 
 	return result
 }
@@ -94,7 +95,7 @@ func readAndIncSP(reg registersInterface, mem memoryInterface) uint8 {
 	sp := reg.Get16(SP)
 	result := mem.ReadByte(sp)
 	sp++
-	reg.set16(SP, sp)
+	reg.Set16(SP, sp)
 
 	return result
 }
@@ -103,19 +104,26 @@ func readAndDecSP(reg registersInterface, mem memoryInterface) uint8 {
 	sp := reg.Get16(SP)
 	result := mem.ReadByte(sp)
 	sp--
-	reg.set16(SP, sp)
+	reg.Set16(SP, sp)
 
 	return result
 }
 
+func DecAndWriteSP(reg registersInterface, mem memoryInterface, value uint8) {
+	sp := reg.Get16(SP)
+	sp--
+	mem.WriteByte(sp, value)
+	reg.Set16(SP, sp)
+}
+
 func incPC(reg registersInterface) {
 	pc := reg.Get16(PC)
-	reg.set16(PC, pc+1)
+	reg.Set16(PC, pc+1)
 }
 
 func decSP(reg registersInterface) {
 	sp := reg.Get16(SP)
-	reg.set16(SP, sp-1)
+	reg.Set16(SP, sp-1)
 }
 
 func combineBytes(msb uint8, lsb uint8) uint16 {
@@ -125,11 +133,11 @@ func combineBytes(msb uint8, lsb uint8) uint16 {
 	return value
 }
 
-func msb(value uint16) uint8 {
+func Msb(value uint16) uint8 {
 	return uint8(value >> 8)
 }
 
-func lsb(value uint16) uint8 {
+func Lsb(value uint16) uint8 {
 	return uint8(value)
 }
 

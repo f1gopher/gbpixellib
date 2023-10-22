@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/f1gopher/gbpixellib/cpu"
+	"github.com/f1gopher/gbpixellib/debugger"
 	"github.com/f1gopher/gbpixellib/display"
 	"github.com/f1gopher/gbpixellib/interupt"
 	"github.com/f1gopher/gbpixellib/log"
@@ -34,6 +35,8 @@ type CPUState struct {
 	NFlag bool
 	HFlag bool
 	CFlag bool
+
+	SPMem uint16
 }
 
 type InterruptState struct {
@@ -81,17 +84,20 @@ type LCDControlState struct {
 
 	OBP0 byte
 	OBP1 byte
+
+	Clock int
 }
 
 type System struct {
 	bios string
 	rom  string
 
+	debugger        *debugger.Debugger
 	log             *log.Log
 	screen          *display.Screen
 	memory          *memory.Memory
 	regs            *cpu.Registers
-	cpu             *cpu.CPU2
+	cpu             *cpu.Cpu
 	interuptHandler *interupt.Handler
 
 	currentDisplay string
@@ -102,15 +108,17 @@ type System struct {
 
 func CreateSystem(bios string, rom string) *System {
 	l := log.CreateLog("./log.txt")
+	debugger, registers, memory := debugger.CreateDebugger(l)
 	system := System{
+		debugger:     debugger,
 		log:          l,
 		bios:         bios,
 		rom:          rom,
-		memory:       memory.CreateMemory(l),
-		regs:         &cpu.Registers{},
+		memory:       memory,
+		regs:         registers,
 		pcBreakpoint: 0x0000,
 	}
-	system.cpu = cpu.CreateCPU2(l, system.regs, system.memory)
+	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	//	system.currentDisplay = system.screen.Render()
@@ -127,7 +135,7 @@ func CreateTestSystem(testRom string) *System {
 		memory: memory.CreateMemory(l),
 		regs:   &cpu.Registers{},
 	}
-	system.cpu = cpu.CreateCPU2(l, system.regs, system.memory)
+	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	//	system.currentDisplay = system.screen.Render()
@@ -206,29 +214,60 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 
 	const maxCycles = 69905
 	//	currentCycles := 0
+	prevCompleted := false
+	didDMA := false
 
 	for x := 0; x < maxCycles; x++ {
-		breakpoint, completed, err := s.cpu.ExecuteCycle()
-
-		if err != nil {
-			return false, x, err
+		// Once BIOS has completed load cartridge and overwrite BIOS
+		if s.regs.Get16(cpu.PC) == 0x0101 {
+			err := s.memory.LoadRom(s.rom)
+			if err != nil {
+				panic(err)
+			}
 		}
 
-		if breakpoint {
-			return true, x, nil
+		if prevCompleted {
+			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
+				cyclesCompleted = 162
+			} else {
+				// If handled an interrupt don't process any instructions this cycle
+				if s.interuptHandler.Update() {
+					if err := s.cpu.DoInterruptCycle(); err != nil {
+						return false, cyclesCompleted, err
+					}
+					s.screen.UpdateForCycles(1 * 4)
+					prevCompleted = false
+					continue
+				}
+			}
+
+			s.screen.UpdateForCycles(1 * 4)
+			prevCompleted = false
+		}
+
+		if !didDMA {
+			breakpoint, prevCompleted, err = s.cpu.ExecuteCycle()
+
+			if err != nil {
+				return false, x, err
+			}
+
+			if breakpoint {
+				return true, x, nil
+			}
 		}
 
 		if s.cpu.GetOpcodePC() == s.pcBreakpoint {
 			return true, x, nil
 		}
 
-		if completed {
-			//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
+		//if completed {
+		//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
 
-			// Update timers
-			s.screen.UpdateForCycles(1 * 4)
-			s.interuptHandler.Update()
-		}
+		// Update timers
+		//s.screen.UpdateForCycles(1 * 4)
+
+		//}
 	}
 
 	//	for currentCycles < maxCycles {
@@ -252,24 +291,46 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 
 	cyclesCompleted = 0
 
-	for {
-		_, completed, err := s.cpu.ExecuteCycle()
-
-		cyclesCompleted++
-
+	// Once BIOS has completed load cartridge and overwrite BIOS
+	if s.regs.Get16(cpu.PC) == 0x0101 {
+		err := s.memory.LoadRom(s.rom)
 		if err != nil {
-			return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+			panic(err)
+		}
+	}
+
+	if s.memory.ExecuteDMAIfPending() {
+		cyclesCompleted = 162
+	} else {
+		// If handled an interrupt don't process any instructions this cycle
+		if s.interuptHandler.Update() {
+			if err := s.cpu.DoInterruptCycle(); err != nil {
+				return cyclesCompleted, err
+			}
+			cyclesCompleted = 1
+			s.screen.UpdateForCycles(cyclesCompleted * 4)
+
+			return cyclesCompleted, nil
 		}
 
-		if completed {
-			//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
-			break
+		for {
+			_, completed, err := s.cpu.ExecuteCycle()
+
+			cyclesCompleted++
+
+			if err != nil {
+				return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+			}
+
+			if completed {
+				//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
+				break
+			}
 		}
 	}
 
 	// Update timers
 	s.screen.UpdateForCycles(cyclesCompleted * 4)
-	s.interuptHandler.Update()
 
 	//cyclesCompleted, err = s.cpu.Tick()
 
@@ -302,6 +363,12 @@ func (s *System) PreviousPC() uint16 {
 func (s *System) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
 	_, isCB = s.cpu.GetNextOpcode()
 
+	lsb := s.memory.ReadByte(s.regs.Get16(cpu.SP))
+	msb := s.memory.ReadByte(s.regs.Get16(cpu.SP) + 1)
+	spMem := uint16(msb)
+	spMem = spMem << 8
+	spMem = spMem | uint16(lsb)
+
 	return &CPUState{
 		A:     s.regs.Get8(cpu.A),
 		F:     s.regs.Get8(cpu.F),
@@ -317,6 +384,7 @@ func (s *System) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
 		NFlag: s.regs.GetFlag(cpu.NFlag),
 		HFlag: s.regs.GetFlag(cpu.HFlag),
 		CFlag: s.regs.GetFlag(cpu.CFlag),
+		SPMem: spMem,
 	}, s.cpu.GetPrevOpcode(), isCB
 }
 
@@ -363,6 +431,8 @@ func (s *System) GetGPUState() *LCDControlState {
 		SCX: s.screen.SCX(),
 		WY:  s.screen.WY(),
 		WX:  s.screen.WX(),
+
+		Clock: s.screen.Cycles(),
 	}
 }
 

@@ -19,9 +19,9 @@ func createCCF(opcode uint8) *opcode_CCF {
 func (o *opcode_CCF) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
-		reg.setFlag(NFlag, false)
-		reg.setFlag(HFlag, false)
-		reg.setFlag(CFlag, !reg.GetFlag(CFlag))
+		reg.SetFlag(NFlag, false)
+		reg.SetFlag(HFlag, false)
+		reg.SetFlag(CFlag, !reg.GetFlag(CFlag))
 		return true, nil
 	}
 
