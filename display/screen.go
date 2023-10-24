@@ -490,6 +490,8 @@ func (s *Screen) renderSprites() {
 			//data1 := s.memory.ReadByte(dataAddress)
 			//data2 := s.memory.ReadByte(dataAddress + 1)
 
+			tile := s.memory.ReadShort(dataAddress)
+
 			for tilePixel := 7; tilePixel >= 0; tilePixel-- {
 
 				colorBit := tilePixel
@@ -498,7 +500,7 @@ func (s *Screen) renderSprites() {
 					colorBit *= -1
 				}
 
-				color := s.colorForPixel(dataAddress, byte(colorBit))
+				color := s.colorForPixel(tile, byte(colorBit))
 
 				// White is transparent for sprites
 				if color == White {
@@ -507,7 +509,7 @@ func (s *Screen) renderSprites() {
 
 				xPix := 0 - tilePixel
 				xPix += 7
-				pixel := xPos + byte(xPix)
+				pixel := uint16(xPos) + uint16(xPix)
 
 				//colourNum := memory.GetBit(data2, int(colourBit))
 				//colourNum = colourNum || memory.GetBit(data1, int(colourBit))
@@ -518,7 +520,7 @@ func (s *Screen) renderSprites() {
 					panic("Invalid pixel location")
 				}
 
-				s.buffer[pixel+(scanline*screenWidth)] = color
+				s.buffer[pixel+(uint16(scanline)*uint16(screenWidth))] = color
 			}
 		}
 

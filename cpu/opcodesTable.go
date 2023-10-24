@@ -51,6 +51,9 @@ func createOpcodesTable() [256]opcode {
 	// LD (nn),SP
 	opcodes = append(opcodes, createLD_abs_nn_SP(0x08))
 
+	// RLCA
+	opcodes = append(opcodes, createRLCA(0x07))
+
 	// RLA
 	opcodes = append(opcodes, createRLA(0x17))
 
@@ -62,6 +65,9 @@ func createOpcodesTable() [256]opcode {
 
 	// RRA
 	opcodes = append(opcodes, createRRA(0x1F))
+
+	// DAA
+	opcodes = append(opcodes, createDAA(0x27))
 
 	// INC r
 	opcodes = append(opcodes, createINC_r(0x04, B))

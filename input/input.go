@@ -1,5 +1,7 @@
 package input
 
+import "github.com/f1gopher/gbpixellib/interupt"
+
 const P15 = 5
 const P14 = 4
 const P13 = 3
@@ -12,13 +14,19 @@ type inputMemory interface {
 	WriteByte(address uint16, value uint8)
 }
 
-type Input struct {
-	memory inputMemory
+type inputInterupt interface {
+	Request(i interupt.Interupt)
 }
 
-func CreateInput(memory inputMemory) *Input {
+type Input struct {
+	memory   inputMemory
+	interupt inputInterupt
+}
+
+func CreateInput(memory inputMemory, interrupt inputInterupt) *Input {
 	return &Input{
-		memory: memory,
+		memory:   memory,
+		interupt: interrupt,
 	}
 }
 
@@ -27,38 +35,38 @@ func (i *Input) Reset() {
 }
 
 func (i *Input) InputStart(value bool) {
-	i.setInput(P13, P15, value)
+	i.setInput(P13)
 }
 
 func (i *Input) InputSelect(value bool) {
-	i.setInput(P12, P15, value)
+	i.setInput(P12)
 }
 
 func (i *Input) InputA(value bool) {
-	i.setInput(P10, P15, value)
+	i.setInput(P10)
 }
 
 func (i *Input) InputB(value bool) {
-	i.setInput(P11, P15, value)
+	i.setInput(P11)
 }
 
 func (i *Input) InputUp(value bool) {
-	i.setInput(P12, P14, value)
+	i.setInput(P11)
 }
 
 func (i *Input) InputDown(value bool) {
-	i.setInput(P13, P14, value)
+	i.setInput(P13)
 }
 
 func (i *Input) InputLeft(value bool) {
-	i.setInput(P11, P14, value)
+	i.setInput(P11)
 }
 
 func (i *Input) InputRight(value bool) {
-	i.setInput(P10, P14, value)
+	i.setInput(P10)
 }
 
-func (i *Input) setInput(port1 uint8, port2 uint8, value bool) {
-	i.memory.WriteBit(0xFF00, port1, value)
-	i.memory.WriteBit(0xFF00, port2, value)
+func (i *Input) setInput(port1 uint8) {
+	i.memory.WriteBit(0xFF00, port1, false)
+	i.interupt.Request(interupt.Joypad)
 }

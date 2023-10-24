@@ -77,15 +77,20 @@ func (m *Memory) WriteBit(address uint16, bit uint8, value bool) {
 		panic(fmt.Sprintf("Invalid bit: %d", bit))
 	}
 
+	if address == 0xFFFF {
+		fmt.Println("asd")
+	}
+
 	currentByte := m.ReadByte(address)
 	SetBit(currentByte, bit, value)
 	m.WriteByte(address, currentByte)
 }
 
 func (m *Memory) WriteByte(address uint16, value byte) {
-	//if address != 0xFF41 {
-	//	m.log.Debug(fmt.Sprintf("[RAM: 0x%04X 0x%02X]", address, value))
-	//}
+	// This is cartridge ROM and we can't write to it
+	if address <= 0x7FFF {
+		return
+	}
 
 	// If the CPU tries to write to the address (regardless of value) we
 	// set the value to zero
@@ -200,13 +205,17 @@ func (m *Memory) Write(address uint16, data []uint8) error {
 }
 
 func (m *Memory) write(address uint16, value uint8) error {
-	if address > memorySize {
-		return errors.New("Write buffer will exceed memory range")
-	}
+	//if address > memorySize {
+	//	return errors.New("Write buffer will exceed memory range")
+	//}
 
 	//if address == m.breakAddress && value != 0 {
 	//	panic("breakpoint")
 	//}
+
+	if address == 0xFFFF {
+		fmt.Println("asd")
+	}
 
 	m.buffer[address] = value
 

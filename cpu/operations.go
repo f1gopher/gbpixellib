@@ -10,7 +10,7 @@ func add8BitWithCarry(original uint8, add uint8) (result uint8, bit3Carry bool, 
 	return
 }
 
-func add8BitAndCarryWithCarry(original uint8, add uint8, carry bool) (result uint8, bit3Carry bool, bit7carry bool) {
+func add8BitAndCarryWithCarry(original uint8, add uint8, carry bool) (result uint8, bit3Carry bool, bit7Carry bool) {
 
 	if !carry {
 		return add8BitWithCarry(original, add)
@@ -18,9 +18,12 @@ func add8BitAndCarryWithCarry(original uint8, add uint8, carry bool) (result uin
 
 	result = original + add + 1
 
-	abc := result ^ 0x01 ^ original
-	bit3Carry = abc&0x10 == 0x10
-	bit7carry = result < original
+	//abc := result ^ 0x01 ^ original
+
+	bit3Carry = (original&0xF)+(add&0xF)+0x1 > 0xF
+	bit7Carry = uint16(original&0xFF)+(uint16(add)&0xFF)+0x01 > 0xFF
+	//bit3Carry = abc&0x10 == 0x10
+	//bit7carry = result < original
 	return
 }
 

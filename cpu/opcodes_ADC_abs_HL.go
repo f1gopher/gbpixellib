@@ -27,7 +27,7 @@ func (o *opcode_ADC_abs_HL) doCycle(cycleNumber int, reg registersInterface, mem
 		return false, nil
 	}
 
-	if cycleNumber == 1 {
+	if cycleNumber == 2 {
 		result, bit3Carry, bit7Carry := add8BitAndCarryWithCarry(reg.Get8(A), o.n, reg.GetFlag(CFlag))
 		reg.Set8(A, result)
 		reg.SetFlag(ZFlag, result == 0)

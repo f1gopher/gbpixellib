@@ -123,7 +123,7 @@ func CreateSystem(bios string, rom string) *System {
 	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
-	system.controller = input.CreateInput(system.memory)
+	system.controller = input.CreateInput(system.memory, system.interuptHandler)
 	//	system.currentDisplay = system.screen.Render()
 
 	system.Reset()
