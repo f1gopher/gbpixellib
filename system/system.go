@@ -13,6 +13,7 @@ import (
 	"github.com/f1gopher/gbpixellib/interupt"
 	"github.com/f1gopher/gbpixellib/log"
 	"github.com/f1gopher/gbpixellib/memory"
+	"github.com/f1gopher/gbpixellib/timer"
 )
 
 type DebugState struct {
@@ -101,6 +102,7 @@ type System struct {
 	cpu             *cpu.Cpu
 	interuptHandler *interupt.Handler
 	controller      *input.Input
+	timer           *timer.Timer
 
 	currentDisplay string
 	displayLock    sync.Mutex
@@ -124,6 +126,8 @@ func CreateSystem(bios string, rom string) *System {
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	system.controller = input.CreateInput(system.memory, system.interuptHandler)
+	system.memory.SetIO(system.controller)
+	system.timer = timer.CreateTimer(system.memory)
 	//	system.currentDisplay = system.screen.Render()
 
 	system.Reset()
@@ -220,6 +224,7 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 	//	currentCycles := 0
 	prevCompleted := false
 	didDMA := false
+	cyclesCompleted = 0
 
 	for x := 0; x < maxCycles; x++ {
 		// Once BIOS has completed load cartridge and overwrite BIOS
@@ -232,7 +237,7 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 
 		if prevCompleted {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
-				cyclesCompleted = 162
+				cyclesCompleted += 162
 			} else {
 				// If handled an interrupt don't process any instructions this cycle
 				if s.interuptHandler.Update() {
@@ -260,6 +265,10 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 				return true, x, nil
 			}
 		}
+
+		s.timer.Update(uint8(cyclesCompleted))
+
+		cyclesCompleted++
 
 		//if s.cpu.GetOpcodePC() == s.pcBreakpoint {
 		//	return true, x, nil
@@ -335,6 +344,8 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 
 	// Update timers
 	s.screen.UpdateForCycles(cyclesCompleted * 4)
+
+	s.timer.Update(uint8(cyclesCompleted))
 
 	//cyclesCompleted, err = s.cpu.Tick()
 
@@ -511,30 +522,56 @@ func (s *System) PressStart() {
 	s.controller.InputStart(true)
 }
 
+func (s *System) ReleaseStart() {
+	s.controller.InputStart(false)
+}
+
 func (s *System) PressSelect() {
 	s.controller.InputSelect(true)
 }
 
+func (s *System) ReleaseSelect() {
+	s.controller.InputSelect(false)
+}
 func (s *System) PressA() {
 	s.controller.InputA(true)
 }
 
+func (s *System) ReleaseA() {
+	s.controller.InputA(false)
+}
 func (s *System) PressB() {
 	s.controller.InputB(true)
 }
 
+func (s *System) ReleaseB() {
+	s.controller.InputB(false)
+}
 func (s *System) PressUp() {
 	s.controller.InputUp(true)
 }
 
+func (s *System) ReleaseUp() {
+	s.controller.InputUp(false)
+}
 func (s *System) PressDown() {
 	s.controller.InputDown(true)
+}
+
+func (s *System) ReleaseDown() {
+	s.controller.InputDown(false)
 }
 
 func (s *System) PressLeft() {
 	s.controller.InputLeft(true)
 }
 
+func (s *System) ReleaseLeft() {
+	s.controller.InputLeft(false)
+}
 func (s *System) PressRight() {
 	s.controller.InputRight(true)
+}
+func (s *System) ReleaseRight() {
+	s.controller.InputRight(false)
 }

@@ -1,9 +1,10 @@
 package input
 
-import "github.com/f1gopher/gbpixellib/interupt"
+import (
+	"github.com/f1gopher/gbpixellib/interupt"
+	"github.com/f1gopher/gbpixellib/memory"
+)
 
-const P15 = 5
-const P14 = 4
 const P13 = 3
 const P12 = 2
 const P11 = 1
@@ -12,6 +13,7 @@ const P10 = 0
 type inputMemory interface {
 	WriteBit(address uint16, bit uint8, value bool)
 	WriteByte(address uint16, value uint8)
+	ReadBit(address uint16, bit uint8) bool
 }
 
 type inputInterupt interface {
@@ -21,6 +23,9 @@ type inputInterupt interface {
 type Input struct {
 	memory   inputMemory
 	interupt inputInterupt
+
+	directional uint8
+	standard    uint8
 }
 
 func CreateInput(memory inputMemory, interrupt inputInterupt) *Input {
@@ -31,42 +36,73 @@ func CreateInput(memory inputMemory, interrupt inputInterupt) *Input {
 }
 
 func (i *Input) Reset() {
-	// i.memory.WriteByte(0xFF00, 0x3F)
+	i.directional = 0x0F
+	i.standard = 0x0F
 }
 
-func (i *Input) InputStart(value bool) {
-	i.setInput(P13)
+func (i *Input) ReadDirectional() uint8 {
+	return i.directional
 }
 
-func (i *Input) InputSelect(value bool) {
-	i.setInput(P12)
+func (i *Input) ReadStandard() uint8 {
+	return i.standard
 }
 
-func (i *Input) InputA(value bool) {
-	i.setInput(P10)
+// NOTE: 0 is the button is pressed and 1 means not pressed
+
+func (i *Input) InputStart(pressed bool) {
+	i.standard = memory.SetBit(i.standard, P13, !pressed)
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
 }
 
-func (i *Input) InputB(value bool) {
-	i.setInput(P11)
+func (i *Input) InputSelect(pressed bool) {
+	i.standard = memory.SetBit(i.standard, P12, !pressed)
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
 }
 
-func (i *Input) InputUp(value bool) {
-	i.setInput(P11)
+func (i *Input) InputA(pressed bool) {
+	i.standard = memory.SetBit(i.standard, P10, !pressed)
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
 }
 
-func (i *Input) InputDown(value bool) {
-	i.setInput(P13)
+func (i *Input) InputB(pressed bool) {
+	i.standard = memory.SetBit(i.standard, P11, !pressed)
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
 }
 
-func (i *Input) InputLeft(value bool) {
-	i.setInput(P11)
+func (i *Input) InputUp(pressed bool) {
+	i.directional = memory.SetBit(i.directional, P11, !pressed)
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
 }
 
-func (i *Input) InputRight(value bool) {
-	i.setInput(P10)
+func (i *Input) InputDown(pressed bool) {
+	i.directional = memory.SetBit(i.directional, P13, !pressed)
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
 }
 
-func (i *Input) setInput(port1 uint8) {
-	i.memory.WriteBit(0xFF00, port1, false)
-	i.interupt.Request(interupt.Joypad)
+func (i *Input) InputLeft(pressed bool) {
+	i.directional = memory.SetBit(i.directional, P11, !pressed)
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
+}
+
+func (i *Input) InputRight(pressed bool) {
+	i.directional = memory.SetBit(i.directional, P10, !pressed)
+
+	if !pressed {
+		i.interupt.Request(interupt.Joypad)
+	}
 }

@@ -11,8 +11,12 @@ const (
 	VBlank Interupt = iota
 	LCD
 	Time
+	Serial
 	Joypad
 )
+
+const InteruptEnableRegister = 0xFFFF
+const InteruptFlag = 0xFF0F
 
 func (i Interupt) String() string {
 	return [...]string{"V-Blank", "LCD", "Timer", "Joypad"}[i]
@@ -34,7 +38,9 @@ func (h *Handler) Reset() {
 }
 
 func (h *Handler) Request(i Interupt) {
-	value := h.memory.ReadByte(0xFF0F)
+	value := h.memory.ReadByte(InteruptFlag)
+	// Todo - why??
+	value = value | 0xE0
 
 	var bit uint8 = 0
 	switch i {
@@ -44,6 +50,8 @@ func (h *Handler) Request(i Interupt) {
 		bit = 1
 	case Time:
 		bit = 2
+	case Serial:
+		bit = 3
 	case Joypad:
 		bit = 4
 	default:
@@ -51,13 +59,13 @@ func (h *Handler) Request(i Interupt) {
 	}
 
 	value = memory.SetBit(value, bit, true)
-	h.memory.WriteByte(0xFF0F, value)
+	h.memory.WriteByte(InteruptFlag, value)
 }
 
 func (h *Handler) Update() bool {
 	if h.regs.GetIME() {
-		req := h.memory.ReadByte(0xFF0F)
-		enabled := h.memory.ReadByte(0xFFFF)
+		req := h.memory.ReadByte(InteruptFlag)
+		enabled := h.memory.ReadByte(InteruptEnableRegister)
 
 		if req > 0 {
 			for i := 0; i < 5; i++ {
@@ -76,9 +84,9 @@ func (h *Handler) Update() bool {
 
 func (h *Handler) serviceInterupt(interupt uint8) {
 	h.regs.SetIME(false)
-	req := h.memory.ReadByte(0xFF0F)
+	req := h.memory.ReadByte(InteruptFlag)
 	req = memory.SetBit(req, interupt, false)
-	h.memory.WriteByte(0xFF0F, req)
+	h.memory.WriteByte(InteruptFlag, req)
 
 	// TODO - push PC onto stack
 

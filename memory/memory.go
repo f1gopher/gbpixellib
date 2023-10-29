@@ -10,6 +10,11 @@ import (
 
 const memorySize = 0xFFFF
 
+type inputOutput interface {
+	ReadDirectional() uint8
+	ReadStandard() uint8
+}
+
 type Memory struct {
 	buffer []uint8
 	log    *log.Log
@@ -20,6 +25,8 @@ type Memory struct {
 
 	dmaPending bool
 	dmaAddress uint16
+
+	io inputOutput
 }
 
 func CreateMemory(log *log.Log) *Memory {
@@ -28,7 +35,12 @@ func CreateMemory(log *log.Log) *Memory {
 		buffer:       make([]uint8, memorySize+1),
 		abc:          make([]uint8, 256),
 		breakAddress: 0x0000,
+		io:           nil,
 	}
+}
+
+func (m *Memory) SetIO(io inputOutput) {
+	m.io = io
 }
 
 func (m *Memory) Reset() {
@@ -106,25 +118,33 @@ func (m *Memory) WriteByte(address uint16, value byte) {
 	if address == 0xFF46 {
 		m.dmaPending = true
 		m.dmaAddress = uint16(value) << 8
-
-		//// TODO - this needs to take 160 cycles
-		//dmaAddress := uint16(value) << 8
-		//var i uint16 = 0
-		//for i = 0; i < 0x9F; i++ {
-		//	//m.Writeuint8(0xFE00+i, m.ReadByte(dmaAddress+i))
-		//	m.write(0xFE00+i, m.ReadByte(dmaAddress+i))
-		//}
-		//
-		//// TODO - is this right?
 		return
 	}
 
 	// Controller
 	if address == 0xFF00 {
-		current := m.ReadByte(address)
-		current = (current & 0xCF) | (value & 0x30)
+		P14 := (value >> 4) & 0x01
+		P15 := (value >> 5) & 0x01
+
+		current := 0xFF & (value | 0b11001111)
+
+		if P14 == 0 {
+			current &= m.io.ReadDirectional()
+		}
+
+		if P15 == 0 {
+			current &= m.io.ReadStandard()
+		}
+
 		m.write(address, current)
 		return
+	}
+
+	// Timer register
+	if address == 0xFF05 {
+		// When timer overflow from FF to 00 triogger interrupt
+		if m.ReadByte(address) == 0xFF && value == 0x00 {
+		}
 	}
 
 	//m.buffer[address] = value
@@ -205,20 +225,7 @@ func (m *Memory) Write(address uint16, data []uint8) error {
 }
 
 func (m *Memory) write(address uint16, value uint8) error {
-	//if address > memorySize {
-	//	return errors.New("Write buffer will exceed memory range")
-	//}
-
-	//if address == m.breakAddress && value != 0 {
-	//	panic("breakpoint")
-	//}
-
-	if address == 0xFFFF {
-		fmt.Println("asd")
-	}
-
 	m.buffer[address] = value
-
 	return nil
 }
 
