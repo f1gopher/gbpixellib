@@ -23,6 +23,9 @@ type registersInterface interface {
 	SetIME(enabled bool)
 	GetIME() bool
 
+	SetHALT(enabled bool)
+	GetHALT() bool
+
 	reset()
 }
 

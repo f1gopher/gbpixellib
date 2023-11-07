@@ -55,7 +55,8 @@ type Registers struct {
 	regSP uint16
 	regPC uint16
 
-	imeEnabled bool
+	imeEnabled  bool
+	haltEnabled bool
 }
 
 func (r *Registers) reset() {
@@ -66,6 +67,7 @@ func (r *Registers) reset() {
 	r.regSP = 0x0000
 	r.regPC = 0x0000
 	r.imeEnabled = false
+	r.haltEnabled = false
 }
 
 func (r *Registers) SetIME(enabled bool) {
@@ -74,6 +76,14 @@ func (r *Registers) SetIME(enabled bool) {
 
 func (r *Registers) GetIME() bool {
 	return r.imeEnabled
+}
+
+func (r *Registers) SetHALT(enabled bool) {
+	r.haltEnabled = enabled
+}
+
+func (r *Registers) GetHALT() bool {
+	return r.haltEnabled
 }
 
 func (r *Registers) Get8(source Register) uint8 {

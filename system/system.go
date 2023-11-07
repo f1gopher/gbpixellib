@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"os"
 	"sync"
 
 	"github.com/f1gopher/gbpixellib/cpu"
@@ -103,6 +104,7 @@ type System struct {
 	interuptHandler *interupt.Handler
 	controller      *input.Input
 	timer           *timer.Timer
+	cartridgeHeader *CartridgeHeader
 
 	currentDisplay string
 	displayLock    sync.Mutex
@@ -152,18 +154,32 @@ func CreateTestSystem(testRom string) *System {
 	return &system
 }
 
+func (s *System) IsCartridgeSupported() bool {
+	return s.cartridgeHeader.CartridgeType == 0x00
+}
+
 func (s *System) Start() {
-	err := s.memory.LoadRom(s.rom)
+	data, err := os.ReadFile(s.rom)
+	if err != nil {
+		panic(errors.New("Failed to load ROM"))
+	}
+
+	s.cartridgeHeader = readHeader(&data)
+
+	err = s.memory.LoadRom(&data)
 	if err != nil {
 		panic(err)
 	}
 
-	err = s.memory.LoadBios(s.bios)
+	data, err = os.ReadFile(s.bios)
+	if err != nil {
+		panic(errors.New("Failed to load bios"))
+	}
+
+	err = s.memory.LoadBios(&data)
 	if err != nil {
 		panic(err)
 	}
-
-	// go s.loop()
 }
 
 func (s *System) Reset() {
@@ -225,11 +241,16 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 	prevCompleted := false
 	didDMA := false
 	cyclesCompleted = 0
+	wasHalted := false
 
 	for x := 0; x < maxCycles; x++ {
 		// Once BIOS has completed load cartridge and overwrite BIOS
 		if s.regs.Get16(cpu.PC) == 0x0101 {
-			err := s.memory.LoadRom(s.rom)
+			data, err := os.ReadFile(s.rom)
+			if err != nil {
+				panic(err)
+			}
+			err = s.memory.LoadRom(&data)
 			if err != nil {
 				panic(err)
 			}
@@ -239,14 +260,21 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
 				cyclesCompleted += 162
 			} else {
-				// If handled an interrupt don't process any instructions this cycle
-				if s.interuptHandler.Update() {
-					if err := s.cpu.DoInterruptCycle(); err != nil {
-						return false, cyclesCompleted, err
+				wasHalted = s.regs.GetHALT()
+				if s.regs.GetHALT() {
+					if s.interuptHandler.HasInterrupt() {
+						s.regs.SetHALT(false)
 					}
-					s.screen.UpdateForCycles(1 * 4)
-					prevCompleted = false
-					continue
+				} else {
+					// If handled an interrupt don't process any instructions this cycle
+					if s.interuptHandler.Update() {
+						if err := s.cpu.DoInterruptCycle(); err != nil {
+							return false, cyclesCompleted, err
+						}
+						s.screen.UpdateForCycles(1 * 4)
+						prevCompleted = false
+						continue
+					}
 				}
 			}
 
@@ -254,7 +282,7 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 			prevCompleted = false
 		}
 
-		if !didDMA {
+		if !didDMA && !wasHalted {
 			breakpoint, prevCompleted, err = s.cpu.ExecuteCycle()
 
 			if err != nil {
@@ -306,7 +334,11 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 
 	// Once BIOS has completed load cartridge and overwrite BIOS
 	if s.regs.Get16(cpu.PC) == 0x0101 {
-		err := s.memory.LoadRom(s.rom)
+		data, err := os.ReadFile(s.rom)
+		if err != nil {
+			panic(err)
+		}
+		err = s.memory.LoadRom(&data)
 		if err != nil {
 			panic(err)
 		}
@@ -315,29 +347,37 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 	if s.memory.ExecuteDMAIfPending() {
 		cyclesCompleted = 162
 	} else {
-		// If handled an interrupt don't process any instructions this cycle
-		if s.interuptHandler.Update() {
-			if err := s.cpu.DoInterruptCycle(); err != nil {
-				return cyclesCompleted, err
+		if s.regs.GetHALT() {
+			if s.interuptHandler.HasInterrupt() {
+				s.regs.SetHALT(false)
 			}
-			cyclesCompleted = 1
-			s.screen.UpdateForCycles(cyclesCompleted * 4)
-
-			return cyclesCompleted, nil
-		}
-
-		for {
-			_, completed, err := s.cpu.ExecuteCycle()
-
 			cyclesCompleted++
 
-			if err != nil {
-				return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+		} else {
+			// If handled an interrupt don't process any instructions this cycle
+			if s.interuptHandler.Update() {
+				if err := s.cpu.DoInterruptCycle(); err != nil {
+					return cyclesCompleted, err
+				}
+				cyclesCompleted = 1
+				s.screen.UpdateForCycles(cyclesCompleted * 4)
+
+				return cyclesCompleted, nil
 			}
 
-			if completed {
-				//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
-				break
+			for {
+				_, completed, err := s.cpu.ExecuteCycle()
+
+				cyclesCompleted++
+
+				if err != nil {
+					return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+				}
+
+				if completed {
+					//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
+					break
+				}
 			}
 		}
 	}
@@ -516,6 +556,10 @@ func (s *System) DumpCode() (instructions []string, previousPCIndex int, current
 
 func (s *System) SetBreakpoint(pcAddress uint16) {
 	s.pcBreakpoint = pcAddress
+}
+
+func (s *System) CartridgeHeader() CartridgeHeader {
+	return *s.cartridgeHeader
 }
 
 func (s *System) PressStart() {

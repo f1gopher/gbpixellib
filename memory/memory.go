@@ -3,7 +3,6 @@ package memory
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/f1gopher/gbpixellib/log"
 )
@@ -229,28 +228,17 @@ func (m *Memory) write(address uint16, value uint8) error {
 	return nil
 }
 
-func (m *Memory) LoadBios(path string) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return errors.Join(errors.New("Failed to load bios"), err)
-	}
-
-	return m.Write(0, data)
+func (m *Memory) LoadBios(data *[]byte) error {
+	return m.Write(0, *data)
 }
 
-func (m *Memory) LoadRom(path string) error {
-	if len(path) == 0 {
-		return nil
+func (m *Memory) LoadRom(data *[]byte) error {
+	// check not too big
+	if len(*data) > memorySize {
+		return errors.New(fmt.Sprintf("ROM size is bigger than memory: %d", len(*data)))
 	}
 
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return errors.Join(errors.New("Failed to load ROM"), err)
-	}
-
-	// TODO - check not too big
-
-	return m.Write(0, data)
+	return m.Write(0, *data)
 }
 
 func (m *Memory) DumpBios() {

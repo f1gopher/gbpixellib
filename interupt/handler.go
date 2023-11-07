@@ -62,6 +62,24 @@ func (h *Handler) Request(i Interupt) {
 	h.memory.WriteByte(InteruptFlag, value)
 }
 
+func (h *Handler) HasInterrupt() bool {
+	if h.regs.GetIME() {
+		req := h.memory.ReadByte(InteruptFlag)
+		enabled := h.memory.ReadByte(InteruptEnableRegister)
+
+		if req > 0 {
+			for i := 0; i < 5; i++ {
+				if memory.GetBit(req, i) {
+					if memory.GetBit(enabled, i) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
 func (h *Handler) Update() bool {
 	if h.regs.GetIME() {
 		req := h.memory.ReadByte(InteruptFlag)

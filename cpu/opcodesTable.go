@@ -193,6 +193,9 @@ func createOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createLD_abs_rr_r(0x75, HL, L))
 	opcodes = append(opcodes, createLD_abs_rr_r(0x77, HL, A))
 
+	// HALT
+	opcodes = append(opcodes, createHALT(0x76))
+
 	// ADD r
 	opcodes = append(opcodes, createADD_r(0x80, B))
 	opcodes = append(opcodes, createADD_r(0x81, C))
