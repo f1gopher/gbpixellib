@@ -14,6 +14,10 @@ type inputOutput interface {
 	ReadStandard() uint8
 }
 
+type interupt interface {
+	TriggerTimerOverflow()
+}
+
 type Memory struct {
 	buffer []uint8
 	log    *log.Log
@@ -25,7 +29,8 @@ type Memory struct {
 	dmaPending bool
 	dmaAddress uint16
 
-	io inputOutput
+	io       inputOutput
+	interupt interupt
 }
 
 func CreateMemory(log *log.Log) *Memory {
@@ -38,8 +43,9 @@ func CreateMemory(log *log.Log) *Memory {
 	}
 }
 
-func (m *Memory) SetIO(io inputOutput) {
+func (m *Memory) SetIO(io inputOutput, interupt interupt) {
 	m.io = io
+	m.interupt = interupt
 }
 
 func (m *Memory) Reset() {
@@ -53,6 +59,9 @@ func (m *Memory) Reset() {
 
 	// For controller
 	m.buffer[0xFF00] = 0x3F
+
+	//  TODO - remove LCDC - to match for comaprisons
+	//m.buffer[0xFF40] = 0x91
 }
 
 func (m *Memory) ReadBit(address uint16, bit uint8) bool {
@@ -98,6 +107,7 @@ func (m *Memory) WriteBit(address uint16, bit uint8, value bool) {
 }
 
 func (m *Memory) WriteByte(address uint16, value byte) {
+
 	// This is cartridge ROM and we can't write to it
 	if address <= 0x7FFF {
 		return
@@ -143,6 +153,7 @@ func (m *Memory) WriteByte(address uint16, value byte) {
 	if address == 0xFF05 {
 		// When timer overflow from FF to 00 triogger interrupt
 		if m.ReadByte(address) == 0xFF && value == 0x00 {
+			m.interupt.TriggerTimerOverflow()
 		}
 	}
 
@@ -153,9 +164,11 @@ func (m *Memory) WriteByte(address uint16, value byte) {
 	//
 	// 0xE000 - 0xFDFF: Echo RAM
 	//This section of memory directly mirrors the working RAM section - meaning if you write into the first address of working RAM (0xC000), the same value will appear in the first spot of echo RAM (0xE000). Nintendo actively discouraged developers from using this area of memory and as such we can just pretend it doesn't exist.
-	//if address >= 0xC000 && address <= 0xDFFF {
-	//	m.write(address+0x2000, value)
-	//}
+	if address >= 0xC000 && address <= 0xDFFF {
+		if address+0x2000 <= 0xFDFF {
+			m.write(address+0x2000, value)
+		}
+	}
 }
 
 func (m *Memory) ExecuteDMAIfPending() bool {

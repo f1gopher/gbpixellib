@@ -57,6 +57,20 @@ func subtract8BitAndCarryWithCarry(original uint8, subtract uint8, carry bool) (
 	return
 }
 
+func subtract8BitWithCarryBit4(original uint8, subtract uint8, carry bool) (result uint8, bit4Carry bool, noBorrow bool) {
+
+	value := int(original) - int(subtract)
+	if carry {
+		value--
+	}
+
+	// TODO - no idea about this!
+	bit4Carry = ((uint8(value) ^ subtract ^ original) & 0x10) == 0x10
+	noBorrow = value < 0
+	result = uint8(value)
+	return
+}
+
 func add16BitWithCarry(original uint16, add uint16) (result uint16, bit11Carry bool, bit15carry bool) {
 	result = original + add
 

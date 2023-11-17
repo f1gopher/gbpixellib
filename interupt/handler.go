@@ -19,7 +19,7 @@ const InteruptEnableRegister = 0xFFFF
 const InteruptFlag = 0xFF0F
 
 func (i Interupt) String() string {
-	return [...]string{"V-Blank", "LCD", "Timer", "Joypad"}[i]
+	return [...]string{"V-Blank", "LCD", "Timer", "Serial", "Joypad"}[i]
 }
 
 type Handler struct {
@@ -35,6 +35,10 @@ func CreateHandler(memory *memory.Memory, registers *cpu.Registers) *Handler {
 }
 
 func (h *Handler) Reset() {
+}
+
+func (h *Handler) TriggerTimerOverflow() {
+	h.Request(Time)
 }
 
 func (h *Handler) Request(i Interupt) {

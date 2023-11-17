@@ -22,6 +22,7 @@ func (o *opcode_SCF) doCycle(cycleNumber int, reg registersInterface, mem memory
 		reg.SetFlag(NFlag, false)
 		reg.SetFlag(HFlag, false)
 		reg.SetFlag(CFlag, true)
+		return true, nil
 	}
 
 	return false, errors.New("Invalid cycle")

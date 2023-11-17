@@ -25,12 +25,12 @@ func createSBC_r(opcode uint8, reg Register) *opcode_SBC_r {
 func (o *opcode_SBC_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
-		result, bit3Carry, bit7Carry := subtract8BitAndCarryWithCarry(reg.Get8(A), reg.Get8(o.src), reg.GetFlag(CFlag))
+		result, bit4Carry, noBorrow := subtract8BitWithCarryBit4(reg.Get8(A), reg.Get8(o.src), reg.GetFlag(CFlag))
 		reg.Set8(A, result)
 		reg.SetFlag(ZFlag, result == 0)
-		reg.SetFlag(NFlag, false)
-		reg.SetFlag(HFlag, bit3Carry)
-		reg.SetFlag(CFlag, bit7Carry)
+		reg.SetFlag(NFlag, true)
+		reg.SetFlag(HFlag, bit4Carry)
+		reg.SetFlag(CFlag, noBorrow)
 
 		return true, nil
 	}

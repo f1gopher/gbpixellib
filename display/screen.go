@@ -219,11 +219,26 @@ func (s *Screen) DumpTileset() image.Image {
 	return img
 }
 
-func (s *Screen) DumpTileMap() *[1024]byte {
+func (s *Screen) DumpBackgroundTileMap() *[1024]byte {
 	tileMap := [1024]byte{}
 
 	// Background tilemap
 	backgroundMemory := s.BgTileMapArea(6)
+
+	for x := 0; x < 1024; x++ {
+		tileNum := s.memory.ReadByte(backgroundMemory + uint16(x))
+
+		tileMap[x] = tileNum
+	}
+
+	return &tileMap
+}
+
+func (s *Screen) DumpWindowTileMap() *[1024]byte {
+	tileMap := [1024]byte{}
+
+	// Background tilemap
+	backgroundMemory := s.WindowTileMapStart()
 
 	for x := 0; x < 1024; x++ {
 		tileNum := s.memory.ReadByte(backgroundMemory + uint16(x))
@@ -453,9 +468,9 @@ func (s *Screen) renderTiles() {
 
 		s.buffer[offset] = color
 
-		if pixel == 32 {
-			s.log.WriteString(fmt.Sprintf("Y: %d, tileid: %d, tile addr: 0x%04X, data: 0x%04X\n", tileRow, tileNum, tileAbc, tile))
-		}
+		//if pixel == 32 {
+		//	s.log.WriteString(fmt.Sprintf("Y: %d, tileid: %d, tile addr: 0x%04X, data: 0x%04X\n", tileRow, tileNum, tileAbc, tile))
+		//}
 	}
 }
 

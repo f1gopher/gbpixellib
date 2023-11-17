@@ -31,6 +31,10 @@ func (o *opcode_POP_rr) doCycle(cycleNumber int, reg registersInterface, mem mem
 
 	if cycleNumber == 2 {
 		msb := readAndIncSP(reg, mem)
+		// If poping into the flags register don't alter the flags
+		if o.target == AF {
+			o.lsb = o.lsb & 0xF0
+		}
 		reg.Set16FromTwoBytes(o.target, msb, o.lsb)
 		return false, nil
 	}

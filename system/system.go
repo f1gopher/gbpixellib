@@ -50,6 +50,8 @@ type InterruptState struct {
 	LCDEnabled      bool
 	TimeRequested   bool
 	TimeEnabled     bool
+	SerialRequested bool
+	SerialEnabled   bool
 	JoypadRequested bool
 	JoypadEnabled   bool
 }
@@ -92,8 +94,9 @@ type LCDControlState struct {
 }
 
 type System struct {
-	bios string
-	rom  string
+	bios      string
+	rom       string
+	isTestROM bool
 
 	debugger        *debugger.Debugger
 	log             *log.Log
@@ -118,6 +121,7 @@ func CreateSystem(bios string, rom string) *System {
 	system := System{
 		debugger:     debugger,
 		log:          l,
+		isTestROM:    false,
 		bios:         bios,
 		rom:          rom,
 		memory:       memory,
@@ -128,7 +132,7 @@ func CreateSystem(bios string, rom string) *System {
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	system.controller = input.CreateInput(system.memory, system.interuptHandler)
-	system.memory.SetIO(system.controller)
+	system.memory.SetIO(system.controller, system.interuptHandler)
 	system.timer = timer.CreateTimer(system.memory)
 	//	system.currentDisplay = system.screen.Render()
 
@@ -137,21 +141,46 @@ func CreateSystem(bios string, rom string) *System {
 	return &system
 }
 
-func CreateTestSystem(testRom string) *System {
-	l := log.CreateLog("log.txt")
-	system := System{
-		bios:   testRom,
-		memory: memory.CreateMemory(l),
-		regs:   &cpu.Registers{},
-	}
-	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
-	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
-	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
-	//	system.currentDisplay = system.screen.Render()
+//func CreateTestSystem(testRom string) *System {
+//	l := log.CreateLog("log.txt")
+//	system := System{
+//		bios:   testRom,
+//		memory: memory.CreateMemory(l),
+//		regs:   &cpu.Registers{},
+//	}
+//	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
+//	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
+//	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
+//	system.controller = input.CreateInput(system.memory, system.interuptHandler)
+//	system.memory.SetIO(system.controller, system.interuptHandler)
+//	system.timer = timer.CreateTimer(system.memory)
+//	//	system.currentDisplay = system.screen.Render()
+//
+//	system.cartridgeHeader = &CartridgeHeader{Title: testRom}
+//
+//	system.memory.Reset()
+//	system.cpu.Reset()
+//	system.cpu.InitForTestROM()
+//	system.interuptHandler.Reset()
+//	system.screen.Reset()
+//	system.controller.Reset()
+//	system.Start()
+//
+//	return &system
+//}
 
-	system.cpu.InitForTestROM()
+func (s *System) LoadGame(bios string, rom string) {
+	s.isTestROM = false
+	s.bios = bios
+	s.rom = rom
+	s.Reset()
+}
 
-	return &system
+func (s *System) LoadTestROM(rom string) {
+	s.isTestROM = true
+	s.bios = rom
+	s.rom = ""
+	s.Reset()
 }
 
 func (s *System) IsCartridgeSupported() bool {
@@ -159,21 +188,25 @@ func (s *System) IsCartridgeSupported() bool {
 }
 
 func (s *System) Start() {
-	data, err := os.ReadFile(s.rom)
-	if err != nil {
-		panic(errors.New("Failed to load ROM"))
+	if !s.isTestROM {
+		data, err := os.ReadFile(s.rom)
+		if err != nil {
+			panic(errors.Join(err, errors.New("Failed to load ROM")))
+		}
+
+		s.cartridgeHeader = readHeader(&data)
+
+		err = s.memory.LoadRom(&data)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		s.cartridgeHeader = &CartridgeHeader{Title: s.bios}
 	}
 
-	s.cartridgeHeader = readHeader(&data)
-
-	err = s.memory.LoadRom(&data)
+	data, err := os.ReadFile(s.bios)
 	if err != nil {
-		panic(err)
-	}
-
-	data, err = os.ReadFile(s.bios)
-	if err != nil {
-		panic(errors.New("Failed to load bios"))
+		panic(errors.Join(err, errors.New("Failed to load bios")))
 	}
 
 	err = s.memory.LoadBios(&data)
@@ -187,7 +220,11 @@ func (s *System) Reset() {
 	s.cpu.Reset()
 	s.interuptHandler.Reset()
 	s.screen.Reset()
-	s.cpu.Init()
+	if s.isTestROM {
+		s.cpu.InitForTestROM()
+	} else {
+		s.cpu.Init()
+	}
 	s.controller.Reset()
 	s.Start()
 }
@@ -243,9 +280,11 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 	cyclesCompleted = 0
 	wasHalted := false
 
-	for x := 0; x < maxCycles; x++ {
+	for x := 0; x < maxCycles; {
+		cyclesCompleted = 1
+
 		// Once BIOS has completed load cartridge and overwrite BIOS
-		if s.regs.Get16(cpu.PC) == 0x0101 {
+		if s.regs.Get16(cpu.PC) == 0x0101 && len(s.rom) != 0 {
 			data, err := os.ReadFile(s.rom)
 			if err != nil {
 				panic(err)
@@ -271,14 +310,16 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 						if err := s.cpu.DoInterruptCycle(); err != nil {
 							return false, cyclesCompleted, err
 						}
-						s.screen.UpdateForCycles(1 * 4)
+						cyclesCompleted = 5
+						s.screen.UpdateForCycles(cyclesCompleted * 4)
 						prevCompleted = false
+						x += cyclesCompleted
 						continue
 					}
 				}
 			}
 
-			s.screen.UpdateForCycles(1 * 4)
+			s.screen.UpdateForCycles(cyclesCompleted * 4)
 			prevCompleted = false
 		}
 
@@ -294,9 +335,11 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 			}
 		}
 
-		s.timer.Update(uint8(cyclesCompleted))
+		s.timer.Update(uint8(x))
 
-		cyclesCompleted++
+		x += cyclesCompleted
+
+		//cyclesCompleted++
 
 		//if s.cpu.GetOpcodePC() == s.pcBreakpoint {
 		//	return true, x, nil
@@ -333,7 +376,7 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 	cyclesCompleted = 0
 
 	// Once BIOS has completed load cartridge and overwrite BIOS
-	if s.regs.Get16(cpu.PC) == 0x0101 {
+	if s.regs.Get16(cpu.PC) == 0x0101 && len(s.rom) != 0 {
 		data, err := os.ReadFile(s.rom)
 		if err != nil {
 			panic(err)
@@ -359,7 +402,7 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 				if err := s.cpu.DoInterruptCycle(); err != nil {
 					return cyclesCompleted, err
 				}
-				cyclesCompleted = 1
+				cyclesCompleted = 5
 				s.screen.UpdateForCycles(cyclesCompleted * 4)
 
 				return cyclesCompleted, nil
@@ -455,6 +498,8 @@ func (s *System) GetInterruptState() *InterruptState {
 		LCDEnabled:      memory.GetBit(enabled, 1),
 		TimeRequested:   memory.GetBit(requested, 2),
 		TimeEnabled:     memory.GetBit(enabled, 2),
+		SerialRequested: memory.GetBit(requested, 3),
+		SerialEnabled:   memory.GetBit(enabled, 3),
 		JoypadRequested: memory.GetBit(requested, 4),
 		JoypadEnabled:   memory.GetBit(enabled, 4),
 	}
@@ -503,7 +548,7 @@ func (s *System) DumpTileset() image.Image {
 }
 
 func (s *System) DumpTileMap() *[1024]byte {
-	return s.screen.DumpTileMap()
+	return s.screen.DumpBackgroundTileMap()
 }
 
 func (s *System) DumpCode() (instructions []string, previousPCIndex int, currentPCIndex int) {

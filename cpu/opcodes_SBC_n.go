@@ -27,13 +27,14 @@ func (o *opcode_SBC_n) doCycle(cycleNumber int, reg registersInterface, mem memo
 		return false, nil
 	}
 
-	if cycleNumber == 1 {
-		result, bit3Carry, bit7Carry := subtract8BitAndCarryWithCarry(reg.Get8(A), o.n, reg.GetFlag(CFlag))
+	if cycleNumber == 2 {
+		result, bit4Carry, noBorrow := subtract8BitWithCarryBit4(reg.Get8(A), o.n, reg.GetFlag(CFlag))
+
 		reg.Set8(A, result)
 		reg.SetFlag(ZFlag, result == 0)
 		reg.SetFlag(NFlag, true)
-		reg.SetFlag(HFlag, bit3Carry)
-		reg.SetFlag(CFlag, bit7Carry)
+		reg.SetFlag(HFlag, bit4Carry)
+		reg.SetFlag(CFlag, noBorrow)
 		return true, nil
 	}
 

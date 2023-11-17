@@ -362,6 +362,9 @@ func createOpcodesTable() [256]opcode {
 	// EI
 	opcodes = append(opcodes, createEI(0xFB))
 
+	// ADD SP,n
+	opcodes = append(opcodes, createADD_SP_n(0xE8))
+
 	// JP HL
 	opcodes = append(opcodes, createJP_HL(0xE9))
 
@@ -377,6 +380,9 @@ func createOpcodesTable() [256]opcode {
 	// LD HL,SP+e
 	opcodes = append(opcodes, createLD_HL_SP_plus_e(0xF8))
 
+	// LD SP,HL
+	opcodes = append(opcodes, createLD_SP_HL(0xF9))
+
 	// Populate the opcodes table according to the opcode value set on each opcode
 	var table [256]opcode
 	for _, x := range opcodes {
@@ -388,6 +394,26 @@ func createOpcodesTable() [256]opcode {
 func createCBOpcodesTable() [256]opcode {
 	var opcodes []opcode
 
+	// RLC
+	opcodes = append(opcodes, createCB_RLC_r(0x00, B))
+	opcodes = append(opcodes, createCB_RLC_r(0x01, C))
+	opcodes = append(opcodes, createCB_RLC_r(0x02, D))
+	opcodes = append(opcodes, createCB_RLC_r(0x03, E))
+	opcodes = append(opcodes, createCB_RLC_r(0x04, H))
+	opcodes = append(opcodes, createCB_RLC_r(0x05, L))
+	opcodes = append(opcodes, createCB_RLC_abs_HL(0x06))
+	opcodes = append(opcodes, createCB_RLC_r(0x07, A))
+
+	// RRC
+	opcodes = append(opcodes, createCB_RRC_r(0x08, B))
+	opcodes = append(opcodes, createCB_RRC_r(0x09, C))
+	opcodes = append(opcodes, createCB_RRC_r(0x0A, D))
+	opcodes = append(opcodes, createCB_RRC_r(0x0B, E))
+	opcodes = append(opcodes, createCB_RRC_r(0x0C, H))
+	opcodes = append(opcodes, createCB_RRC_r(0x0D, L))
+	opcodes = append(opcodes, createCB_RRC_abs_HL(0x0E))
+	opcodes = append(opcodes, createCB_RRC_r(0x0F, A))
+
 	// RL r
 	opcodes = append(opcodes, createCB_RL_r(0x10, B))
 	opcodes = append(opcodes, createCB_RL_r(0x11, C))
@@ -395,6 +421,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RL_r(0x13, E))
 	opcodes = append(opcodes, createCB_RL_r(0x14, H))
 	opcodes = append(opcodes, createCB_RL_r(0x15, L))
+	opcodes = append(opcodes, createCB_RL_abs_HL(0x16))
 	opcodes = append(opcodes, createCB_RL_r(0x17, A))
 
 	// RR
@@ -404,6 +431,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_RR_r(0x1B, E))
 	opcodes = append(opcodes, createCB_RR_r(0x1C, H))
 	opcodes = append(opcodes, createCB_RR_r(0x1D, L))
+	opcodes = append(opcodes, createCB_RR_abs_HL(0x1E))
 	opcodes = append(opcodes, createCB_RR_r(0x1F, A))
 
 	// SLA r
@@ -413,7 +441,18 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_SLA_r(0x23, E))
 	opcodes = append(opcodes, createCB_SLA_r(0x24, H))
 	opcodes = append(opcodes, createCB_SLA_r(0x25, L))
+	opcodes = append(opcodes, createCB_SLA_abs_HL(0x26))
 	opcodes = append(opcodes, createCB_SLA_r(0x27, A))
+
+	// SRA
+	opcodes = append(opcodes, createCB_SRA_r(0x28, B))
+	opcodes = append(opcodes, createCB_SRA_r(0x29, C))
+	opcodes = append(opcodes, createCB_SRA_r(0x2A, D))
+	opcodes = append(opcodes, createCB_SRA_r(0x2B, E))
+	opcodes = append(opcodes, createCB_SRA_r(0x2C, H))
+	opcodes = append(opcodes, createCB_SRA_r(0x2D, L))
+	opcodes = append(opcodes, createCB_SRA_abs_HL(0x2E))
+	opcodes = append(opcodes, createCB_SRA_r(0x2F, A))
 
 	// SWAP
 	opcodes = append(opcodes, createCB_SWAP_r(0x30, B))
@@ -422,6 +461,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_SWAP_r(0x33, E))
 	opcodes = append(opcodes, createCB_SWAP_r(0x34, H))
 	opcodes = append(opcodes, createCB_SWAP_r(0x35, L))
+	opcodes = append(opcodes, createCB_SWAP_abs_HL(0x36))
 	opcodes = append(opcodes, createCB_SWAP_r(0x37, A))
 
 	// SRL
@@ -431,6 +471,7 @@ func createCBOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCB_SRL_r(0x3B, E))
 	opcodes = append(opcodes, createCB_SRL_r(0x3C, H))
 	opcodes = append(opcodes, createCB_SRL_r(0x3D, L))
+	opcodes = append(opcodes, createCB_SRL_abs_HL(0x3E))
 	opcodes = append(opcodes, createCB_SRL_r(0x3F, A))
 
 	// BIT b,r

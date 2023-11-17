@@ -45,16 +45,11 @@ func (o *opcode_CALL_cc_nn) doCycle(cycleNumber int, reg registersInterface, mem
 	}
 
 	if cycleNumber == 3 {
-		// Do NC or NZ by settings the modifier to false
-		if o.modifier {
-			o.condition = reg.GetFlag(o.flag)
-		} else {
-			o.condition = !reg.GetFlag(o.flag)
-		}
-		return !o.condition, nil
+		o.condition = reg.GetFlag(o.flag)
+		return o.condition != o.modifier, nil
 	}
 
-	if !o.condition {
+	if o.condition != o.modifier {
 		return false, errors.New("Invalid cycle for condition")
 	}
 
