@@ -101,7 +101,7 @@ type System struct {
 	debugger        *debugger.Debugger
 	log             *log.Log
 	screen          *display.Screen
-	memory          *memory.Memory
+	memory          *memory.Bus
 	regs            *cpu.Registers
 	cpu             *cpu.Cpu
 	interuptHandler *interupt.Handler
@@ -133,8 +133,7 @@ func CreateSystem(bios string, rom string) *System {
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	system.controller = input.CreateInput(system.memory, system.interuptHandler)
 	system.memory.SetIO(system.controller, system.interuptHandler)
-	system.timer = timer.CreateTimer(system.memory)
-	//	system.currentDisplay = system.screen.Render()
+	system.timer = timer.CreateTimer(system.memory, system.interuptHandler)
 
 	system.Reset()
 
@@ -178,9 +177,12 @@ func (s *System) LoadGame(bios string, rom string) {
 
 func (s *System) LoadTestROM(rom string) {
 	s.isTestROM = true
-	s.bios = rom
-	s.rom = ""
+	s.bios = ""
+	s.rom = rom
 	s.Reset()
+
+	// Disable bios because we load as a ROM
+	s.memory.WriteByte(0xFF50, 0xFF)
 }
 
 func (s *System) IsCartridgeSupported() bool {
@@ -188,31 +190,26 @@ func (s *System) IsCartridgeSupported() bool {
 }
 
 func (s *System) Start() {
+	var rom []byte
+	var bios []byte
+	var err error
+	var cartridge *memory.Cartridge
+
 	if !s.isTestROM {
-		data, err := os.ReadFile(s.rom)
+		bios, err = os.ReadFile(s.bios)
 		if err != nil {
-			panic(errors.Join(err, errors.New("Failed to load ROM")))
+			panic(errors.Join(err, errors.New("Failed to load bios")))
 		}
-
-		s.cartridgeHeader = readHeader(&data)
-
-		err = s.memory.LoadRom(&data)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		s.cartridgeHeader = &CartridgeHeader{Title: s.bios}
 	}
 
-	data, err := os.ReadFile(s.bios)
+	rom, err = os.ReadFile(s.rom)
 	if err != nil {
-		panic(errors.Join(err, errors.New("Failed to load bios")))
+		panic(errors.Join(err, errors.New("Failed to load ROM")))
 	}
+	s.cartridgeHeader = readHeader(&rom)
+	cartridge = memory.CreateCartridge(&rom)
 
-	err = s.memory.LoadBios(&data)
-	if err != nil {
-		panic(err)
-	}
+	s.memory.Load(&bios, cartridge)
 }
 
 func (s *System) Reset() {
@@ -222,6 +219,8 @@ func (s *System) Reset() {
 	s.screen.Reset()
 	if s.isTestROM {
 		s.cpu.InitForTestROM()
+		// Disable bios because we load as a ROM
+		s.memory.WriteByte(0xFF50, 0xFF)
 	} else {
 		s.cpu.Init()
 	}
@@ -282,18 +281,6 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 
 	for x := 0; x < maxCycles; {
 		cyclesCompleted = 1
-
-		// Once BIOS has completed load cartridge and overwrite BIOS
-		if s.regs.Get16(cpu.PC) == 0x0101 && len(s.rom) != 0 {
-			data, err := os.ReadFile(s.rom)
-			if err != nil {
-				panic(err)
-			}
-			err = s.memory.LoadRom(&data)
-			if err != nil {
-				panic(err)
-			}
-		}
 
 		if prevCompleted {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
@@ -374,18 +361,6 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 
 	cyclesCompleted = 0
-
-	// Once BIOS has completed load cartridge and overwrite BIOS
-	if s.regs.Get16(cpu.PC) == 0x0101 && len(s.rom) != 0 {
-		data, err := os.ReadFile(s.rom)
-		if err != nil {
-			panic(err)
-		}
-		err = s.memory.LoadRom(&data)
-		if err != nil {
-			panic(err)
-		}
-	}
 
 	if s.memory.ExecuteDMAIfPending() {
 		cyclesCompleted = 162

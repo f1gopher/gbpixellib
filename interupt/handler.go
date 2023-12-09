@@ -23,11 +23,11 @@ func (i Interupt) String() string {
 }
 
 type Handler struct {
-	memory *memory.Memory
+	memory *memory.Bus
 	regs   *cpu.Registers
 }
 
-func CreateHandler(memory *memory.Memory, registers *cpu.Registers) *Handler {
+func CreateHandler(memory *memory.Bus, registers *cpu.Registers) *Handler {
 	return &Handler{
 		memory: memory,
 		regs:   registers,

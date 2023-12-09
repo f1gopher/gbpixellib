@@ -52,7 +52,7 @@ type interuptHandler interface {
 
 type Screen struct {
 	log             *os.File
-	memory          *memory.Memory
+	memory          *memory.Bus
 	interuptHandler interuptHandler
 
 	buffer []ScreenColor
@@ -60,7 +60,7 @@ type Screen struct {
 	currentCycleForScanline int
 }
 
-func CreateScreen(memory *memory.Memory, interuptHandler interuptHandler) *Screen {
+func CreateScreen(memory *memory.Bus, interuptHandler interuptHandler) *Screen {
 	f, _ := os.Create("./gpu-log.txt")
 	return &Screen{
 		log:                     f,
@@ -375,8 +375,6 @@ func (s *Screen) renderTiles() {
 	windowX := s.WX() - 7
 
 	usingWindow := false
-
-	s.memory.DumpTiles()
 
 	if s.WindowEnable() {
 		usingWindow = windowY <= s.LY()

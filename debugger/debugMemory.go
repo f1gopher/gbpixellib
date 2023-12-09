@@ -3,7 +3,7 @@ package debugger
 import "github.com/f1gopher/gbpixellib/memory"
 
 type debugMemory struct {
-	memory *memory.Memory
+	memory *memory.Bus
 }
 
 func (d *debugMemory) reset() {
@@ -28,8 +28,4 @@ func (d *debugMemory) WriteByte(address uint16, value uint8) {
 
 func (d *debugMemory) WriteShort(address uint16, value uint16) {
 	d.WriteShort(address, value)
-}
-
-func (d *debugMemory) Write(address uint16, data []uint8) error {
-	return d.memory.Write(address, data)
 }

@@ -36,7 +36,6 @@ type memoryInterface interface {
 
 	WriteByte(address uint16, value uint8)
 	WriteShort(address uint16, value uint16)
-	Write(address uint16, data []uint8) error
 }
 
 type Cpu struct {

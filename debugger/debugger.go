@@ -12,9 +12,9 @@ type Debugger struct {
 	memory debugMemory
 }
 
-func CreateDebugger(log *log.Log) (*Debugger, *cpu.Registers, *memory.Memory) {
+func CreateDebugger(log *log.Log) (*Debugger, *cpu.Registers, *memory.Bus) {
 	r := debugRegisters{registers: &cpu.Registers{}}
-	m := debugMemory{memory: memory.CreateMemory(log)}
+	m := debugMemory{memory: memory.CreateBus(log)}
 
 	d := &Debugger{
 		regs:   r,

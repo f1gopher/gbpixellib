@@ -3,106 +3,64 @@ package cpu
 func createOpcodesTable() [256]opcode {
 	var opcodes []opcode
 
-	// Create all the opcodes in any order
-
-	// NOP
 	opcodes = append(opcodes, createNOP(0x00))
-
-	// LD rr,nn
 	opcodes = append(opcodes, createLD_rr_nn(0x01, BC))
-	opcodes = append(opcodes, createLD_rr_nn(0x11, DE))
-	opcodes = append(opcodes, createLD_rr_nn(0x21, HL))
-	opcodes = append(opcodes, createLD_rr_nn(0x31, SP))
-
-	// LD (rr),A
 	opcodes = append(opcodes, createLD_abs_rr_r(0x02, BC, A))
-	opcodes = append(opcodes, createLD_abs_rr_r(0x12, DE, A))
-
-	// LD (HL+),A
-	opcodes = append(opcodes, createLD_inc_HL_A(0x22))
-	// LD (HL-),A
-	opcodes = append(opcodes, createLD_dec_HL_A(0x32))
-	// LD A,(HL+)
-	opcodes = append(opcodes, createLD_A_HL_inc(0x2A))
-	// LD A,(HL-)
-	opcodes = append(opcodes, createLD_A_HL_dec(0x3A))
-
-	// INC rr
 	opcodes = append(opcodes, createINC_rr(0x03, BC))
-	opcodes = append(opcodes, createINC_rr(0x13, DE))
-	opcodes = append(opcodes, createINC_rr(0x23, HL))
-	opcodes = append(opcodes, createINC_rr(0x33, SP))
-
-	// INC (HL)
-	opcodes = append(opcodes, createINC_abs_HL(0x34))
-
-	// DEC rr
-	opcodes = append(opcodes, createDEC_rr(0x0B, BC))
-	opcodes = append(opcodes, createDEC_rr(0x1B, DE))
-	opcodes = append(opcodes, createDEC_rr(0x2B, HL))
-	opcodes = append(opcodes, createDEC_rr(0x3B, SP))
-
-	// DEC (HL)
-	opcodes = append(opcodes, createDEC_abs_HL(0x35))
-
-	// LD (HL), n
-	opcodes = append(opcodes, createLD_abs_HL_n(0x36))
-
-	// LD (nn),SP
-	opcodes = append(opcodes, createLD_abs_nn_SP(0x08))
-
-	// RLCA
+	opcodes = append(opcodes, createINC_r(0x04, B))
+	opcodes = append(opcodes, createDEC_r(0x05, B))
+	opcodes = append(opcodes, createLD_r_n(0x06, B))
 	opcodes = append(opcodes, createRLCA(0x07))
-
-	// RLA
-	opcodes = append(opcodes, createRLA(0x17))
-
-	// JR e
-	opcodes = append(opcodes, createJR_e(0x18))
-
-	// RRCA
+	opcodes = append(opcodes, createLD_abs_nn_SP(0x08))
+	opcodes = append(opcodes, createADD_HL_rr(0x09, BC))
+	opcodes = append(opcodes, createDEC_rr(0x0B, BC))
+	opcodes = append(opcodes, createINC_r(0x0C, C))
+	opcodes = append(opcodes, createDEC_r(0x0D, C))
+	opcodes = append(opcodes, createLD_r_n(0x0E, C))
 	opcodes = append(opcodes, createRRCA(0x0F))
 
-	// RRA
+	opcodes = append(opcodes, createLD_rr_nn(0x11, DE))
+	opcodes = append(opcodes, createLD_abs_rr_r(0x12, DE, A))
+	opcodes = append(opcodes, createINC_rr(0x13, DE))
+	opcodes = append(opcodes, createINC_r(0x14, D))
+	opcodes = append(opcodes, createDEC_r(0x15, D))
+	opcodes = append(opcodes, createLD_r_n(0x16, D))
+	opcodes = append(opcodes, createRLA(0x17))
+	opcodes = append(opcodes, createJR_e(0x18))
+	opcodes = append(opcodes, createADD_HL_rr(0x19, DE))
+	opcodes = append(opcodes, createDEC_rr(0x1B, DE))
+	opcodes = append(opcodes, createINC_r(0x1C, E))
+	opcodes = append(opcodes, createDEC_r(0x1D, E))
+	opcodes = append(opcodes, createLD_r_n(0x1E, E))
 	opcodes = append(opcodes, createRRA(0x1F))
 
-	// DAA
-	opcodes = append(opcodes, createDAA(0x27))
-
-	// INC r
-	opcodes = append(opcodes, createINC_r(0x04, B))
-	opcodes = append(opcodes, createINC_r(0x14, D))
+	opcodes = append(opcodes, createLD_rr_nn(0x21, HL))
+	opcodes = append(opcodes, createLD_inc_HL_A(0x22))
+	opcodes = append(opcodes, createINC_rr(0x23, HL))
 	opcodes = append(opcodes, createINC_r(0x24, H))
-	opcodes = append(opcodes, createINC_r(0x0C, C))
-	opcodes = append(opcodes, createINC_r(0x1C, E))
-	opcodes = append(opcodes, createINC_r(0x2C, L))
-	opcodes = append(opcodes, createINC_r(0x3C, A))
-
-	// DEC r
-	opcodes = append(opcodes, createDEC_r(0x05, B))
-	opcodes = append(opcodes, createDEC_r(0x15, D))
 	opcodes = append(opcodes, createDEC_r(0x25, H))
-	opcodes = append(opcodes, createDEC_r(0x0D, C))
-	opcodes = append(opcodes, createDEC_r(0x1D, E))
-	opcodes = append(opcodes, createDEC_r(0x2D, L))
-	opcodes = append(opcodes, createDEC_r(0x3D, A))
-
-	// LD r,n
-	opcodes = append(opcodes, createLD_r_n(0x06, B))
-	opcodes = append(opcodes, createLD_r_n(0x16, D))
 	opcodes = append(opcodes, createLD_r_n(0x26, H))
-	opcodes = append(opcodes, createLD_r_n(0x0E, C))
-	opcodes = append(opcodes, createLD_r_n(0x1E, E))
+	opcodes = append(opcodes, createDAA(0x27))
+	opcodes = append(opcodes, createADD_HL_rr(0x29, HL))
+	opcodes = append(opcodes, createLD_A_HL_inc(0x2A))
+	opcodes = append(opcodes, createDEC_rr(0x2B, HL))
+	opcodes = append(opcodes, createINC_r(0x2C, L))
+	opcodes = append(opcodes, createDEC_r(0x2D, L))
 	opcodes = append(opcodes, createLD_r_n(0x2E, L))
+
+	opcodes = append(opcodes, createLD_rr_nn(0x31, SP))
+	opcodes = append(opcodes, createLD_dec_HL_A(0x32))
+	opcodes = append(opcodes, createINC_rr(0x33, SP))
+	opcodes = append(opcodes, createINC_abs_HL(0x34))
+	opcodes = append(opcodes, createDEC_abs_HL(0x35))
+	opcodes = append(opcodes, createLD_abs_HL_n(0x36))
+	opcodes = append(opcodes, createADD_HL_rr(0x39, SP))
+	opcodes = append(opcodes, createLD_A_HL_dec(0x3A))
+	opcodes = append(opcodes, createDEC_rr(0x3B, SP))
+	opcodes = append(opcodes, createINC_r(0x3C, A))
+	opcodes = append(opcodes, createDEC_r(0x3D, A))
 	opcodes = append(opcodes, createLD_r_n(0x3E, A))
 
-	// ADD HL,rr
-	opcodes = append(opcodes, createADD_HL_rr(0x09, BC))
-	opcodes = append(opcodes, createADD_HL_rr(0x19, DE))
-	opcodes = append(opcodes, createADD_HL_rr(0x29, HL))
-	opcodes = append(opcodes, createADD_HL_rr(0x39, SP))
-
-	// LD A,(rr)
 	opcodes = append(opcodes, createLD_A_abs_rr(0x0A, BC))
 	opcodes = append(opcodes, createLD_A_abs_rr(0x1A, DE))
 
