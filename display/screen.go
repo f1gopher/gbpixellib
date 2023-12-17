@@ -131,9 +131,7 @@ func (s *Screen) DumpTileset() image.Image {
 	// Border lines are red
 	draw.Draw(img, img.Bounds(), &image.Uniform{colornames.Red}, image.Point{X: 0, Y: 0}, draw.Src)
 
-	//currentAddr := s.BgWindowTileDataArea()
 	tileData := s.BgWindowTileDataArea()
-	unsig := tileData == 0x8000
 	tileX := 0
 	tileY := 0
 	var tileNum uint16 = 0
@@ -172,30 +170,20 @@ func (s *Screen) DumpTileset() image.Image {
 				continue
 			}
 
-			tileLocation := tileData
+			tileAddres := s.tileNumberToAddress(tileData, tileNum, tileY)
 
-			if unsig {
-				tileLocation += tileNum * 0x10
-			} else {
-				tileLocation += (tileNum + 128) * 0x10
-			}
-
-			line := tileY % 8
-			line = line * 2
-			//data1 := s.memory.ReadByte(tileLocation + line)
-			//data2 := s.memory.ReadByte(tileLocation + line + 1)
+			tile := s.memory.ReadShort(tileAddres)
 
 			var colourBit int = int(tileX % 8)
 			colourBit -= 7
 			colourBit = colourBit * -1
 
-			tileAbc := uint16(tileLocation) + uint16(line)
-
-			//tileAbc = s.tileAddrForId(abc)
-
-			tile := s.memory.ReadShort(tileAbc)
-
 			co := s.colorForPixel(tile, byte(colourBit))
+
+			//// if off then the pixel is transparent
+			//if co == White {
+			//	continue
+			//}
 
 			var c color.RGBA
 			switch co {
@@ -222,6 +210,22 @@ func (s *Screen) DumpTileset() image.Image {
 	}
 
 	return img
+}
+
+func (s *Screen) tileNumberToAddress(tileData uint16, tileNum uint16, tileY int) uint16 {
+	tileLocation := tileData
+
+	if tileData == 0x8000 {
+		tileLocation += tileNum * 0x10
+	} else {
+		tileLocation += (tileNum + 128) * 0x10
+	}
+
+	line := tileY % 8
+	line = line * 2
+
+	tileAbc := uint16(tileLocation) + uint16(line)
+	return tileAbc
 }
 
 func (s *Screen) DumpBackgroundTileMap() *[1024]byte {
@@ -386,7 +390,6 @@ func (s *Screen) renderTiles() {
 	}
 
 	tileData := s.BgWindowTileDataArea()
-	unsig := tileData == 0x8000
 
 	if !usingWindow {
 		backgroundMemory = s.BgTileMapArea(3)
@@ -418,49 +421,18 @@ func (s *Screen) renderTiles() {
 		var tileNum uint16 = 0
 		tileAddress := backgroundMemory + tileRow + tileCol
 
-		// TODO - tileAddress is wrong??
-
-		// if unsig {
 		abc := s.memory.ReadByte(tileAddress)
 		tileNum = uint16(abc)
-		// } else {
-		// 	tileNum = uint16(s.memory.ReadByte(tileAddress))
-		// }
-
-		// TODO - HACK
-		// tileNum = 1
-		// TODO - temp hack to draw something
-		//tileNum = 5
-
-		tileLocation := tileData
-
-		if unsig {
-			tileLocation += tileNum * 0x10
-		} else {
-			tileLocation += (tileNum + 128) * 0x10
-		}
-
-		line := yPos % 8
-		line = line * 2
-		//data1 := s.memory.ReadByte(tileLocation + line)
-		//data2 := s.memory.ReadByte(tileLocation + line + 1)
 
 		var colourBit int = int(xPos % 8)
 		colourBit -= 7
 		colourBit = colourBit * -1
 
-		tileAbc := uint16(tileLocation) + uint16(line)
+		tileAddres := s.tileNumberToAddress(tileData, tileNum, int(yPos))
 
-		//tileAbc = s.tileAddrForId(abc)
-
-		tile := s.memory.ReadShort(tileAbc)
+		tile := s.memory.ReadShort(tileAddres)
 
 		color := s.colorForPixel(tile, byte(colourBit))
-
-		//colourNum := memory.GetBit(data2, int(colourBit))
-		//colourNum = colourNum || memory.GetBit(data1, int(colourBit))
-
-		//color := s.bgpColor(colourNum)
 
 		finalY := s.LY()
 		if finalY < 0 || finalY >= screenHeight || pixel < 0 || pixel >= screenWidth {
@@ -470,10 +442,6 @@ func (s *Screen) renderTiles() {
 		offset := (uint16(finalY) * uint16(screenWidth)) + uint16(pixel)
 
 		s.buffer[offset] = color
-
-		//if pixel == 32 {
-		//	s.log.WriteString(fmt.Sprintf("Y: %d, tileid: %d, tile addr: 0x%04X, data: 0x%04X\n", tileRow, tileNum, tileAbc, tile))
-		//}
 	}
 }
 
