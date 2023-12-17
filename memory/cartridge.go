@@ -1,55 +1,38 @@
 package memory
 
-type Cartridge struct {
-	mem *Memory2
-	ram *Memory2
+import "fmt"
+
+const M_1Kb = 1024
+const M_1MiB = 1048576
+
+type Cartridge interface {
+	Reset()
+	ReadBit(address uint16, bit uint8) bool
+	ReadByte(address uint16) byte
+	ReadShort(address uint16) uint16
+	WriteBit(address uint16, bit uint8, value bool)
+	WriteByte(address uint16, value byte)
+	WriteShort(address uint16, value uint16)
+	DumpCode() []uint8
+
+	CurrentBank() uint8
 }
 
-func CreateCartridge(data *[]byte) *Cartridge {
-	ram := make([]byte, 0x2000)
-	return &Cartridge{
-		mem: CreateMemory2("cartridge memory", data, 0),
-		ram: CreateMemory2("cartridge ram", &ram, 0xA000),
-	}
-}
-
-func (c *Cartridge) Reset() {
-	c.ram.Reset()
-	// Don't reset the memory because that is the rom game
-}
-
-func (c *Cartridge) ReadBit(address uint16, bit uint8) bool {
-	return c.memoryBank(address).ReadBit(address, bit)
-}
-
-func (c *Cartridge) ReadByte(address uint16) byte {
-	return c.memoryBank(address).ReadByte(address)
-}
-
-func (c *Cartridge) ReadShort(address uint16) uint16 {
-	return c.memoryBank(address).ReadShort(address)
-}
-
-func (c *Cartridge) WriteBit(address uint16, bit uint8, value bool) {
-	c.memoryBank(address).WriteBit(address, bit, value)
-}
-
-func (c *Cartridge) WriteByte(address uint16, value byte) {
-	c.memoryBank(address).WriteByte(address, value)
-}
-
-func (c *Cartridge) WriteShort(address uint16, value uint16) {
-	c.memoryBank(address).WriteShort(address, value)
-}
-
-func (c *Cartridge) DumpCode() []uint8 {
-	return c.mem.DumpCode()
-}
-
-func (c *Cartridge) memoryBank(address uint16) *Memory2 {
-	if address >= 0xA000 && address <= 0xBFFF {
-		return c.ram
+func CreateCartridge(cartType uint8, romSize uint32, ramSize uint32, data *[]byte) Cartridge {
+	if len(*data) > int(romSize) {
+		panic(fmt.Sprintf("Cartridge data size (%d) is bigger than the header specified rom size (%d)", len(*data), romSize))
 	}
 
-	return c.mem
+	if len(*data) != int(romSize) {
+		panic("data doesn't match specified rom size")
+	}
+
+	switch cartType {
+	case 0x00:
+		return createCartridgeNoMBC(romSize, ramSize, data)
+	case 0x01:
+		return createCartridgeMBC1(romSize, ramSize, data)
+	default:
+		panic(fmt.Sprintf("Unsupported cartridge type: 0x%2X", cartType))
+	}
 }

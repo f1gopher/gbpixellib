@@ -272,7 +272,7 @@ func (s *Screen) Debug() string {
 
 func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 
-	s.setLcdStatus()
+	s.setLcdMode()
 
 	s.currentCycleForScanline += cyclesCompleted
 
@@ -291,6 +291,9 @@ func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 			s.drawScanline()
 		}
 
+		// Set bit 2 of stat register to 1
+		s.setLcdStatus()
+
 		s.currentCycleForScanline -= cyclesToDrawScanline
 
 		currentScanline = s.LY() + 1
@@ -302,56 +305,50 @@ func (s *Screen) Cycles() int {
 	return s.currentCycleForScanline
 }
 
-func (s *Screen) setLcdStatus() {
+func (s *Screen) setLcdMode() {
 	status := s.memory.ReadByte(lcdStatus)
 
-	//if !s.LCDEnable() {
-	//	s.currentCycleForScanline = 0
-	//	s.memory.DisplaySetScanline(0)
-	//	status = status & 252
-	//	status = memory.SetBit(status, 0, true)
-	//	s.memory.WriteByte(lcdStatus, status)
-	//	return
-	//}
-
 	currentLine := s.memory.ReadByte(lcdScanline)
-	currentMode := status & 0x3
 
-	var mode byte = 0
-	reqInt := false
-
-	if currentLine >= 144 {
-		mode = 1
+	if currentLine > 144 {
+		// VBlank - 1
 		status = memory.SetBit(status, 0, true)
 		status = memory.SetBit(status, 1, false)
-		reqInt = memory.GetBit(status, 4)
 
 	} else {
-		mode2Bounds := 456 - 80
-		mode3Bounds := mode2Bounds - 172
-
-		if s.currentCycleForScanline >= mode2Bounds {
-			mode = 2
-			status = memory.SetBit(status, 1, true)
+		if s.currentCycleForScanline <= 80 {
+			// Searching OAM Mode - 2
 			status = memory.SetBit(status, 0, false)
-			reqInt = memory.GetBit(status, 5)
-		} else if s.currentCycleForScanline >= mode3Bounds {
-			mode = 3
 			status = memory.SetBit(status, 1, true)
+		} else if s.currentCycleForScanline >= 167 && s.currentCycleForScanline <= 291 {
+			// Transfering Data - 3
 			status = memory.SetBit(status, 0, true)
+			status = memory.SetBit(status, 1, true)
 		} else {
-			mode = 0
-			status = memory.SetBit(status, 1, false)
+			// HBlank Mode - 0
 			status = memory.SetBit(status, 0, false)
-			reqInt = memory.GetBit(status, 3)
+			status = memory.SetBit(status, 1, false)
+
+			// Bit 3 is hblank interrupt request
+			reqInt := memory.GetBit(status, 3)
+			if reqInt {
+				s.interuptHandler.Request(interupt.LCD)
+			}
 		}
 	}
 
-	if reqInt && mode != currentMode {
-		s.interuptHandler.Request(interupt.LCD)
-	}
+	s.memory.DisplaySetStatus(status)
+}
 
-	if s.LY() == s.memory.ReadByte(0xFF45) {
+func (s *Screen) setLcdStatus() {
+	status := s.memory.ReadByte(lcdStatus)
+
+	// LCD interrupt
+	a := s.LY()
+	b := s.memory.ReadByte(0xFF45)
+	bob := a == b
+
+	if bob { //s.LY() == s.memory.ReadByte(0xFF45) {
 		status = memory.SetBit(status, 2, true)
 
 		if memory.GetBit(status, 6) {
@@ -361,7 +358,7 @@ func (s *Screen) setLcdStatus() {
 		status = memory.SetBit(status, 2, false)
 	}
 
-	s.memory.WriteByte(lcdStatus, status)
+	s.memory.DisplaySetStatus(status)
 }
 
 func (s *Screen) drawScanline() {

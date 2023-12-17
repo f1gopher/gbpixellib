@@ -90,6 +90,10 @@ func (s *Screen) LCDStatusMode() lcdStatusMode {
 	}
 }
 
+func (s *Screen) LCDSInterrptEnabled() bool {
+	return s.memory.ReadBit(lcdStatus, 6)
+}
+
 func (s *Screen) SCY() byte {
 	return s.memory.ReadByte(0xFF42)
 }

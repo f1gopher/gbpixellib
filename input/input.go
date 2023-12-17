@@ -38,6 +38,10 @@ func CreateInput(memory inputMemory, interrupt inputInterupt) *Input {
 func (i *Input) Reset() {
 	i.directional = 0x0F
 	i.standard = 0x0F
+
+	// Uncomment for comparison runs
+	//i.directional = 0x00
+	//i.standard = 0x00
 }
 
 func (i *Input) ReadDirectional() uint8 {

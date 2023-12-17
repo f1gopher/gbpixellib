@@ -1,13 +1,13 @@
 package memory
 
 type videoRam struct {
-	mem *Memory2
+	mem *Memory
 }
 
 func CreateVideoRam() *videoRam {
 	data := make([]byte, 0x2000)
 	return &videoRam{
-		mem: CreateMemory2("video ram", &data, 0x8000),
+		mem: CreateMemory("video ram", &data, 0x8000),
 	}
 }
 

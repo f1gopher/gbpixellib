@@ -2,6 +2,8 @@ package system
 
 import (
 	"fmt"
+
+	"github.com/f1gopher/gbpixellib/memory"
 )
 
 type CartridgeHeader struct {
@@ -16,8 +18,10 @@ type CartridgeHeader struct {
 	CartridgeTypeName   string
 	ROMSize             uint8
 	ROMSizeName         string
+	ROMSizeBytes        uint32
 	RAMSize             uint8
 	RAMSizeName         string
+	RAMSizeBytes        uint32
 	DestinationCode     uint8
 	DestinationCodeName string
 	MaskROMVersion      uint8
@@ -66,6 +70,9 @@ func readHeader(rom *[]byte) *CartridgeHeader {
 		licenseeCodeName = oldLicenseeCodeName(oldLicenseeCode)
 	}
 
+	romSizeName, romSizeBytes := romSizeInfo(romSize)
+	ramSizeName, ramSizeBytes := ramSizeInfo(ramSize)
+
 	return &CartridgeHeader{
 		Title:               title,
 		ManufacturerCode:    manufacturerCode,
@@ -77,9 +84,11 @@ func readHeader(rom *[]byte) *CartridgeHeader {
 		CartridgeType:       cartridgeType,
 		CartridgeTypeName:   cartridgeTypeName(cartridgeType),
 		ROMSize:             romSize,
-		ROMSizeName:         romSizeName(romSize),
+		ROMSizeName:         romSizeName,
+		ROMSizeBytes:        romSizeBytes,
 		RAMSize:             ramSize,
-		RAMSizeName:         ramSizeName(ramSize),
+		RAMSizeName:         ramSizeName,
+		RAMSizeBytes:        ramSizeBytes,
 		DestinationCode:     destinationCode,
 		DestinationCodeName: destinationCodeName(destinationCode),
 		MaskROMVersion:      maskROMVersion,
@@ -298,53 +307,49 @@ func cartridgeTypeName(code uint8) string {
 	}
 }
 
-func romSizeName(code uint8) string {
+func romSizeInfo(code uint8) (string, uint32) {
 	switch code {
 	case 0x00:
-		return "32 KiB"
+		return "32 KiB", 32 * memory.M_1Kb
 	case 0x01:
-		return "64 KiB"
+		return "64 KiB", 64 * memory.M_1Kb
 	case 0x02:
-		return "128 KiB"
+		return "128 KiB", 128 * memory.M_1Kb
 	case 0x03:
-		return "256 KiB"
+		return "256 KiB", 256 * memory.M_1Kb
 	case 0x04:
-		return "512 KiB"
+		return "512 KiB", 512 * memory.M_1Kb
 	case 0x05:
-		return "1 MiB"
+		return "1 MiB", 1 * memory.M_1MiB
 	case 0x06:
-		return "2 MiB"
+		return "2 MiB", 2 * memory.M_1MiB
 	case 0x07:
-		return "4 MiB"
+		return "4 MiB", 4 * memory.M_1MiB
 	case 0x08:
-		return "8 MiB"
-	case 0x52:
-		return "1.1 MiB"
-	case 0x53:
-		return "1.2 MiB"
-	case 0x54:
-		return "1.5 MiB"
+		return "8 MiB", 8 * memory.M_1MiB
+	case 0x52, 0x53, 0x54:
+		panic(fmt.Sprintf("Unsupported rom size: 0x%X", code))
 	default:
-		return fmt.Sprintf("Unknown code: 0xX", code)
+		return fmt.Sprintf("Unknown code: 0xX", code), 0
 	}
 }
 
-func ramSizeName(code uint8) string {
+func ramSizeInfo(code uint8) (string, uint32) {
 	switch code {
 	case 0x00:
-		return "No RAM"
+		return "No RAM", 0
 	case 0x01:
-		return "Unused"
+		panic(fmt.Sprintf("Unsupported rom size: 0x%X", code))
 	case 0x02:
-		return "8 KiB -	1 bank"
+		return "8 KiB -	1 bank", 8 * memory.M_1Kb
 	case 0x03:
-		return "32 KiB - 4 banks of 8 KiB each"
+		return "32 KiB - 4 banks of 8 KiB each", 32 * memory.M_1Kb
 	case 0x04:
-		return "128 KiB	- 16 banks of 8 KiB each"
+		return "128 KiB	- 16 banks of 8 KiB each", 128 * memory.M_1Kb
 	case 0x05:
-		return "64 KiB - 8 banks of 8 KiB each"
+		return "64 KiB - 8 banks of 8 KiB each", 64 * memory.M_1Kb
 	default:
-		return fmt.Sprintf("Unknown code: 0xX", code)
+		return fmt.Sprintf("Unknown code: 0xX", code), 0
 	}
 }
 

@@ -5,10 +5,10 @@ import "github.com/f1gopher/gbpixellib/log"
 type Bus struct {
 	log *log.Log
 
-	bios      *Memory2
+	bios      *Memory
 	video     *videoRam
 	ram       *ram
-	cartridge *Cartridge
+	cartridge Cartridge
 
 	dmaPending bool
 	dmaAddress uint16
@@ -27,9 +27,9 @@ func CreateBus(log *log.Log) *Bus {
 	}
 }
 
-func (b *Bus) Load(bios *[]byte, cartridge *Cartridge) {
+func (b *Bus) Load(bios *[]byte, cartridge Cartridge) {
 	if bios != nil {
-		b.bios = CreateMemory2("bios", bios, 0)
+		b.bios = CreateReadOnlyMemory("bios", bios, 0)
 	} else {
 		b.bios = nil
 	}
@@ -54,10 +54,6 @@ func (b *Bus) ReadBit(address uint16, bit uint8) bool {
 }
 
 func (b *Bus) ReadByte(address uint16) byte {
-	if address == 0x2000 {
-		address = address * 1
-	}
-
 	return b.target(address).ReadByte(address)
 }
 
@@ -68,11 +64,6 @@ func (b *Bus) WriteBit(address uint16, bit uint8, value bool) {
 	b.target(address).WriteBit(address, bit, value)
 }
 func (b *Bus) WriteByte(address uint16, value byte) {
-	// Can't write to this address range
-	if address <= 0x7FFF {
-		return
-	}
-
 	// Trigger DMA transfer
 	if address == 0xFF46 {
 		b.dmaPending = true
@@ -83,11 +74,6 @@ func (b *Bus) WriteByte(address uint16, value byte) {
 	b.target(address).WriteByte(address, value)
 }
 func (b *Bus) WriteShort(address uint16, value uint16) {
-	// Can't write to this address range
-	if address <= 0x7FFF {
-		return
-	}
-
 	b.target(address).WriteShort(address, value)
 }
 
@@ -116,6 +102,10 @@ func (b *Bus) ExecuteDMAIfPending() bool {
 
 func (b *Bus) DisplaySetScanline(value uint8) {
 	b.ram.DisplaySetScanline(value)
+}
+
+func (b *Bus) DisplaySetStatus(value uint8) {
+	b.ram.DisplaySetStatus(value)
 }
 
 func (b *Bus) DumpCode() []uint8 {

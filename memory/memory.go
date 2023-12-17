@@ -4,31 +4,46 @@ import (
 	"fmt"
 )
 
-type Memory2 struct {
+type Memory struct {
 	name          string
 	buffer        []uint8
 	addressOffset uint16
+	readonly      bool
 }
 
-func CreateMemory2(name string, data *[]byte, addressOffset uint16) *Memory2 {
-	return &Memory2{
+func CreateReadOnlyMemory(name string, data *[]byte, addressOffset uint16) *Memory {
+	return &Memory{
 		name:          name,
 		buffer:        *data,
 		addressOffset: addressOffset,
+		readonly:      true,
 	}
 }
 
-func (m *Memory2) offset(address uint16) uint16 {
+func CreateMemory(name string, data *[]byte, addressOffset uint16) *Memory {
+	return &Memory{
+		name:          name,
+		buffer:        *data,
+		addressOffset: addressOffset,
+		readonly:      false,
+	}
+}
+
+func (m *Memory) size() int {
+	return len(m.buffer)
+}
+
+func (m *Memory) offset(address uint16) uint16 {
 	return address - m.addressOffset
 }
 
-func (m *Memory2) Reset() {
+func (m *Memory) Reset() {
 	for x := 0; x < len(m.buffer); x++ {
 		m.buffer[x] = 0x00
 	}
 }
 
-func (m *Memory2) ReadBit(address uint16, bit uint8) bool {
+func (m *Memory) ReadBit(address uint16, bit uint8) bool {
 	if bit < 0 || bit > 7 {
 		panic(fmt.Sprintf("Invalid bit: %d", bit))
 	}
@@ -37,11 +52,11 @@ func (m *Memory2) ReadBit(address uint16, bit uint8) bool {
 	return (value>>bit)&0x01 == 0x01
 }
 
-func (m *Memory2) ReadByte(address uint16) byte {
+func (m *Memory) ReadByte(address uint16) byte {
 	return m.buffer[m.offset(address)]
 }
 
-func (m *Memory2) ReadShort(address uint16) uint16 {
+func (m *Memory) ReadShort(address uint16) uint16 {
 	var result uint16
 	lsb := m.ReadByte(address)
 	msb := m.ReadByte(address + 1)
@@ -52,7 +67,11 @@ func (m *Memory2) ReadShort(address uint16) uint16 {
 	return result
 }
 
-func (m *Memory2) WriteBit(address uint16, bit uint8, value bool) {
+func (m *Memory) WriteBit(address uint16, bit uint8, value bool) {
+	if m.readonly {
+		return
+	}
+
 	if bit < 0 || bit > 7 {
 		panic(fmt.Sprintf("Invalid bit: %d", bit))
 	}
@@ -62,11 +81,19 @@ func (m *Memory2) WriteBit(address uint16, bit uint8, value bool) {
 	m.WriteByte(address, currentByte)
 }
 
-func (m *Memory2) WriteByte(address uint16, value byte) {
+func (m *Memory) WriteByte(address uint16, value byte) {
+	if m.readonly {
+		return
+	}
+
 	m.buffer[m.offset(address)] = value
 }
 
-func (m *Memory2) WriteShort(address uint16, value uint16) {
+func (m *Memory) WriteShort(address uint16, value uint16) {
+	if m.readonly {
+		return
+	}
+
 	lsb := uint8(value)
 	msb := uint8(value >> 8)
 	// Little endian - lsb stored first
@@ -74,7 +101,7 @@ func (m *Memory2) WriteShort(address uint16, value uint16) {
 	m.WriteByte(address+1, msb)
 }
 
-func (m *Memory2) DumpCode() []uint8 {
+func (m *Memory) DumpCode() []uint8 {
 	code := make([]uint8, len(m.buffer))
 	copy(code, m.buffer)
 	return code

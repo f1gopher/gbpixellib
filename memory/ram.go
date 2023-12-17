@@ -12,7 +12,7 @@ type interupt interface {
 const DividerRegister = 0xFF04
 
 type ram struct {
-	mem *Memory2
+	mem *Memory
 
 	io       inputOutput
 	interupt interupt
@@ -21,7 +21,7 @@ type ram struct {
 func CreateRam() *ram {
 	data := make([]byte, ramSize)
 	return &ram{
-		mem: CreateMemory2("ram", &data, ramOffset),
+		mem: CreateMemory("ram", &data, ramOffset),
 		io:  nil,
 	}
 }
@@ -45,6 +45,29 @@ func (r *ram) ReadBit(address uint16, bit uint8) bool {
 }
 
 func (r *ram) ReadByte(address uint16) byte {
+	// Uncomment for comparison runs
+	//	if address == 0xFF00 {
+	//		reg := r.mem.ReadByte(address)
+	//		P14 := (reg >> 4) & 0x01
+	//		P15 := (reg >> 5) & 0x01
+
+	//		if P14 == 0 {
+	//			return reg & ^r.io.ReadDirectional()
+	//		}
+
+	//		if P15 == 0 {
+	//			return reg & ^r.io.ReadStandard()
+	//		}
+
+	//		return reg | 0x0F
+	//	}
+
+	// LCD status register
+	if address == 0xFF41 {
+		value := r.mem.ReadByte(address)
+		return value&0xFB | 0x80
+	}
+
 	return r.mem.ReadByte(address)
 }
 
@@ -85,6 +108,9 @@ func (r *ram) WriteByte(address uint16, value byte) {
 			current &= r.io.ReadStandard()
 		}
 
+		// Uncomment for comparison runs
+		//current := (r.mem.ReadByte(address) & 0xCF) | (value & 0x30)
+
 		r.mem.WriteByte(address, current)
 		return
 	}
@@ -95,6 +121,16 @@ func (r *ram) WriteByte(address uint16, value byte) {
 		if r.ReadByte(address) == 0xFF && value == 0x00 {
 			r.interupt.TriggerTimerOverflow()
 		}
+	}
+
+	// LCD status register
+	if address == 0xFF41 {
+		reg := r.mem.ReadByte(address)
+		// Keep the existing values for the first 3 bits
+		reg = reg & 0b00000111
+		reg = reg | value
+		r.mem.WriteByte(address, reg)
+		return
 	}
 
 	//m.buffer[address] = value
@@ -117,8 +153,12 @@ func (r *ram) WriteDividerRegister(value uint8) {
 
 func (r *ram) DisplaySetScanline(value uint8) {
 	// Only used by the display
-	//m.buffer[0xFF44] = value
 	r.mem.WriteByte(0xFF44, value)
+}
+
+func (r *ram) DisplaySetStatus(value uint8) {
+	// Only display code uses this path
+	r.mem.WriteByte(0xFF41, value)
 }
 
 func (r *ram) WriteShort(address uint16, value uint16) {

@@ -76,6 +76,7 @@ type LCDControlState struct {
 	LCDStatus_Mode0HBlankInterrupt bool
 	LCDStatus_LYCLY                bool
 	LCDStatus_Mode                 byte
+	LCDStatus                      uint8
 
 	SCY byte
 	SCX byte
@@ -93,6 +94,10 @@ type LCDControlState struct {
 	Clock int
 }
 
+type CartridgeState struct {
+	CurrentBank uint8
+}
+
 type System struct {
 	bios      string
 	rom       string
@@ -108,6 +113,7 @@ type System struct {
 	controller      *input.Input
 	timer           *timer.Timer
 	cartridgeHeader *CartridgeHeader
+	cartridge       memory.Cartridge
 
 	currentDisplay string
 	displayLock    sync.Mutex
@@ -186,14 +192,14 @@ func (s *System) LoadTestROM(rom string) {
 }
 
 func (s *System) IsCartridgeSupported() bool {
-	return s.cartridgeHeader.CartridgeType == 0x00
+	return s.cartridgeHeader.CartridgeType == 0x00 ||
+		s.cartridgeHeader.CartridgeType == 0x01
 }
 
 func (s *System) Start() {
 	var rom []byte
 	var bios []byte
 	var err error
-	var cartridge *memory.Cartridge
 
 	if !s.isTestROM {
 		bios, err = os.ReadFile(s.bios)
@@ -207,9 +213,18 @@ func (s *System) Start() {
 		panic(errors.Join(err, errors.New("Failed to load ROM")))
 	}
 	s.cartridgeHeader = readHeader(&rom)
-	cartridge = memory.CreateCartridge(&rom)
 
-	s.memory.Load(&bios, cartridge)
+	if !s.IsCartridgeSupported() {
+		s.log.Debug(fmt.Sprintf("Unsupported cartridge type: %s", s.cartridgeHeader.CartridgeType))
+	}
+
+	s.cartridge = memory.CreateCartridge(
+		s.cartridgeHeader.CartridgeType,
+		s.cartridgeHeader.ROMSizeBytes,
+		s.cartridgeHeader.RAMSizeBytes,
+		&rom)
+
+	s.memory.Load(&bios, s.cartridge)
 }
 
 func (s *System) Reset() {
@@ -501,6 +516,7 @@ func (s *System) GetGPUState() *LCDControlState {
 		LCDStatus_Mode0HBlankInterrupt: s.screen.LCDStatusStatInterruptMode0Hblank(),
 		LCDStatus_LYCLY:                s.screen.LCDStatusLycLy(),
 		LCDStatus_Mode:                 byte(s.screen.LCDStatusMode()),
+		LCDStatus:                      s.memory.ReadByte(0xFF41),
 
 		SCY: s.screen.SCY(),
 		SCX: s.screen.SCX(),
@@ -508,6 +524,12 @@ func (s *System) GetGPUState() *LCDControlState {
 		WX:  s.screen.WX(),
 
 		Clock: s.screen.Cycles(),
+	}
+}
+
+func (s *System) GetCartridgeState() *CartridgeState {
+	return &CartridgeState{
+		CurrentBank: s.cartridge.CurrentBank(),
 	}
 }
 
