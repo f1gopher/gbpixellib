@@ -141,11 +141,16 @@ func (s *Screen) DumpTileset() image.Image {
 
 	for y := 1; y < img.Bounds().Max.Y-1; y++ {
 
+		// Gap between tilesets
+		if y > 36 && y <= 45 {
+			continue
+		}
+
 		// Skip tile seperation rows
 		if y == 9 ||
 			y == 18 ||
 			y == 27 ||
-			(y >= 36 && y <= 45) ||
+			y == 36 ||
 			y == 54 ||
 			y == 62 ||
 			y == 71 {
