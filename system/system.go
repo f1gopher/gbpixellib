@@ -501,7 +501,7 @@ func (s *System) GetGPUState() *LCDControlState {
 		WindowTileMapArea: s.screen.WindowTileMapStart(),
 		WindowEnabled:     s.screen.WindowEnable(),
 		BGWindowTileData:  s.screen.BgWindowTileDataArea(),
-		BGTileMap:         s.screen.BgTileMapArea(0), // TODO - is this right
+		BGTileMap:         s.screen.BackgroundTileMapStart(),
 		OBJSize:           s.screen.ObjSize(),
 		OBJEnabled:        s.screen.ObjEnable(),
 		BGWindowEnabled:   s.screen.BgWindowEnablePriority(),
@@ -544,7 +544,19 @@ func (s *System) DumpTileset() image.Image {
 	return s.screen.DumpTileset()
 }
 
-func (s *System) DumpTileMap() *[1024]byte {
+func (s *System) DumpFirstTileMap() *[1024]byte {
+	return s.screen.DumpFirstTileMap()
+}
+
+func (s *System) DumpSecondTileMap() *[1024]byte {
+	return s.screen.DumpSecondTileMap()
+}
+
+func (s *System) DumpWindowTileMap() *[1024]byte {
+	return s.screen.DumpWindowTileMap()
+}
+
+func (s *System) DumpBackgroundTileMap() *[1024]byte {
 	return s.screen.DumpBackgroundTileMap()
 }
 

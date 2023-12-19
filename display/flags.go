@@ -24,8 +24,8 @@ func (s *Screen) BgWindowTileDataArea() uint16 {
 	return 0x8800
 }
 
-func (s *Screen) BgTileMapArea(bit byte) uint16 {
-	if s.memory.ReadBit(lcdcRegister, bit) {
+func (s *Screen) BackgroundTileMapStart() uint16 {
+	if s.memory.ReadBit(lcdcRegister, 3) {
 		return 0x9C00
 	}
 
