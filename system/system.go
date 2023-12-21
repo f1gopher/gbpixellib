@@ -17,6 +17,12 @@ import (
 	"github.com/f1gopher/gbpixellib/timer"
 )
 
+type ExecutionInfo struct {
+	Name           string
+	StartCycle     uint
+	ProgramCounter uint16
+}
+
 type DebugState struct {
 	NextInstruction     string
 	ValueReferencedByPC uint8
@@ -40,6 +46,8 @@ type CPUState struct {
 	CFlag bool
 
 	SPMem uint16
+
+	Cycle uint
 }
 
 type InterruptState struct {
@@ -91,7 +99,7 @@ type LCDControlState struct {
 	OBP0 byte
 	OBP1 byte
 
-	Clock int
+	Clock uint
 }
 
 type CartridgeState struct {
@@ -119,20 +127,24 @@ type System struct {
 	displayLock    sync.Mutex
 
 	pcBreakpoint uint16
+
+	cycle            uint
+	executionHistory []ExecutionInfo
 }
 
 func CreateSystem(bios string, rom string) *System {
 	l := log.CreateLog("./log.txt")
 	debugger, registers, memory := debugger.CreateDebugger(l)
 	system := System{
-		debugger:     debugger,
-		log:          l,
-		isTestROM:    false,
-		bios:         bios,
-		rom:          rom,
-		memory:       memory,
-		regs:         registers,
-		pcBreakpoint: 0x0000,
+		debugger:         debugger,
+		log:              l,
+		isTestROM:        false,
+		bios:             bios,
+		rom:              rom,
+		memory:           memory,
+		regs:             registers,
+		pcBreakpoint:     0x0000,
+		executionHistory: make([]ExecutionInfo, 10),
 	}
 	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
@@ -145,34 +157,6 @@ func CreateSystem(bios string, rom string) *System {
 
 	return &system
 }
-
-//func CreateTestSystem(testRom string) *System {
-//	l := log.CreateLog("log.txt")
-//	system := System{
-//		bios:   testRom,
-//		memory: memory.CreateMemory(l),
-//		regs:   &cpu.Registers{},
-//	}
-//	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
-//	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
-//	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
-//	system.controller = input.CreateInput(system.memory, system.interuptHandler)
-//	system.memory.SetIO(system.controller, system.interuptHandler)
-//	system.timer = timer.CreateTimer(system.memory)
-//	//	system.currentDisplay = system.screen.Render()
-//
-//	system.cartridgeHeader = &CartridgeHeader{Title: testRom}
-//
-//	system.memory.Reset()
-//	system.cpu.Reset()
-//	system.cpu.InitForTestROM()
-//	system.interuptHandler.Reset()
-//	system.screen.Reset()
-//	system.controller.Reset()
-//	system.Start()
-//
-//	return &system
-//}
 
 func (s *System) LoadGame(bios string, rom string) {
 	s.isTestROM = false
@@ -240,14 +224,10 @@ func (s *System) Reset() {
 		s.cpu.Init()
 	}
 	s.controller.Reset()
+	s.executionHistory = make([]ExecutionInfo, 10)
+	s.cycle = 0
 	s.Start()
 }
-
-//func (s *System) Pixels() string {
-//	s.displayLock.Lock()
-//	defer s.displayLock.Unlock()
-//	return s.currentDisplay
-//}
 
 func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) {
 	s.displayLock.Lock()
@@ -256,49 +236,24 @@ func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) 
 	s.screen.Render(callback)
 }
 
-//func (s *System) loop() {
-//
-//	const maxCycles = 69905
-//
-//	frameTime := (time.Millisecond * 1000) / 60
-//
-//	for {
-//		start := time.Now().UTC()
-//
-//		currentCycles := 0
-//
-//		for currentCycles < maxCycles {
-//			currentCycles += s.Tick()
-//		}
-//
-//		//		s.displayLock.Lock()
-//		//		s.currentDisplay = s.screen.Render()
-//		//		s.displayLock.Unlock()
-//
-//		// TODO - need to sleep to force 60fps rate
-//
-//		elapsed := time.Now().UTC().Sub(start)
-//
-//		sleep := frameTime.Milliseconds() - elapsed.Milliseconds()
-//
-//		time.Sleep(time.Duration(sleep))
-//	}
-//}
-
-func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
+func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 
 	const maxCycles = 69905
-	//	currentCycles := 0
 	prevCompleted := false
 	didDMA := false
 	cyclesCompleted = 0
 	wasHalted := false
+	var x uint
+	info := ExecutionInfo{}
 
-	for x := 0; x < maxCycles; {
+	for x = 0; x < maxCycles; {
 		cyclesCompleted = 1
+		info.StartCycle = s.cycle
+		info.ProgramCounter = s.cpu.GetOpcodePC()
 
 		if prevCompleted {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
+				info.Name = "DMA"
 				cyclesCompleted += 162
 			} else {
 				wasHalted = s.regs.GetHALT()
@@ -313,9 +268,12 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 							return false, cyclesCompleted, err
 						}
 						cyclesCompleted = 5
+						info.Name = "Interupt"
+						s.appendExecutionHistory(&info)
 						s.screen.UpdateForCycles(cyclesCompleted * 4)
 						prevCompleted = false
 						x += cyclesCompleted
+						s.cycle += cyclesCompleted
 						continue
 					}
 				}
@@ -339,46 +297,27 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted int, err error) {
 
 		s.timer.Update(uint8(x))
 
+		info.Name = fmt.Sprintf("0x%02X", s.cpu.GetPrevOpcode())
+		s.appendExecutionHistory(&info)
+
 		x += cyclesCompleted
-
-		//cyclesCompleted++
-
-		//if s.cpu.GetOpcodePC() == s.pcBreakpoint {
-		//	return true, x, nil
-		//}
-
-		//if completed {
-		//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
-
-		// Update timers
-		//s.screen.UpdateForCycles(1 * 4)
-
-		//}
+		s.cycle += cyclesCompleted
 	}
-
-	//	for currentCycles < maxCycles {
-	//		cyclesCompleted, err := s.SingleInstruction()
-	//		if err != nil {
-	//			return false, currentCycles, err
-	//		}
-
-	//		currentCycles += cyclesCompleted
-
-	// Stop if we hit the prgoram counter breakpoint
-	//		if s.pcBreakpoint != 0x0000 && s.cpu.GetRegShort(cpu.PC) == s.pcBreakpoint {
-	//			return true, currentCycles, nil
-	//		}
-	//	}
 
 	return false, maxCycles, nil
 }
 
-func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
+func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 
 	cyclesCompleted = 0
+	info := ExecutionInfo{
+		StartCycle:     s.cycle,
+		ProgramCounter: s.cpu.GetOpcodePC(),
+	}
 
 	if s.memory.ExecuteDMAIfPending() {
 		cyclesCompleted = 162
+		info.Name = "DMA"
 	} else {
 		if s.regs.GetHALT() {
 			if s.interuptHandler.HasInterrupt() {
@@ -392,6 +331,9 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 				if err := s.cpu.DoInterruptCycle(); err != nil {
 					return cyclesCompleted, err
 				}
+
+				info.Name = "Interupt"
+				s.appendExecutionHistory(&info)
 				cyclesCompleted = 5
 				s.screen.UpdateForCycles(cyclesCompleted * 4)
 
@@ -408,7 +350,6 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 				}
 
 				if completed {
-					//s.log.Debug(fmt.Sprintf("CPU: %s", s.cpu.GetOpcode()))
 					break
 				}
 			}
@@ -420,11 +361,10 @@ func (s *System) SingleInstruction() (cyclesCompleted int, err error) {
 
 	s.timer.Update(uint8(cyclesCompleted))
 
-	//cyclesCompleted, err = s.cpu.Tick()
+	info.Name = fmt.Sprintf("0x%02X", s.cpu.GetPrevOpcode())
+	s.appendExecutionHistory(&info)
 
-	//if err != nil {
-	//	return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
-	//}
+	s.cycle += cyclesCompleted
 
 	return cyclesCompleted, nil
 }
@@ -473,6 +413,7 @@ func (s *System) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
 		HFlag: s.regs.GetFlag(cpu.HFlag),
 		CFlag: s.regs.GetFlag(cpu.CFlag),
 		SPMem: spMem,
+		Cycle: s.cycle,
 	}, s.cpu.GetPrevOpcode(), isCB
 }
 
@@ -538,6 +479,10 @@ func (s *System) GetDebugState() *DebugState {
 		NextInstruction:     s.cpu.GetOpcode(),
 		ValueReferencedByPC: s.memory.ReadByte(s.regs.Get16(cpu.PC)),
 	}
+}
+
+func (s *System) GetExecutionHistory() []ExecutionInfo {
+	return s.executionHistory
 }
 
 func (s *System) DumpTileset() image.Image {
@@ -660,4 +605,12 @@ func (s *System) PressRight() {
 }
 func (s *System) ReleaseRight() {
 	s.controller.InputRight(false)
+}
+
+func (s *System) appendExecutionHistory(action *ExecutionInfo) {
+	if len(s.executionHistory) == 10 {
+		s.executionHistory = s.executionHistory[1:]
+	}
+
+	s.executionHistory = append(s.executionHistory)
 }

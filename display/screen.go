@@ -57,7 +57,7 @@ type Screen struct {
 
 	buffer []ScreenColor
 
-	currentCycleForScanline int
+	currentCycleForScanline uint
 }
 
 func CreateScreen(memory *memory.Bus, interuptHandler interuptHandler) *Screen {
@@ -270,7 +270,7 @@ func (s *Screen) Debug() string {
 	)
 }
 
-func (s *Screen) UpdateForCycles(cyclesCompleted int) {
+func (s *Screen) UpdateForCycles(cyclesCompleted uint) {
 
 	s.setLcdMode()
 
@@ -301,7 +301,7 @@ func (s *Screen) UpdateForCycles(cyclesCompleted int) {
 	}
 }
 
-func (s *Screen) Cycles() int {
+func (s *Screen) Cycles() uint {
 	return s.currentCycleForScanline
 }
 
