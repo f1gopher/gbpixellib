@@ -228,29 +228,27 @@ func (s *Screen) tileNumberToAddress(tileData uint16, tileNum uint16, tileY int)
 	return tileAbc
 }
 
-func (s *Screen) DumpBackgroundTileMap() *[1024]byte {
-	tileMap := [1024]byte{}
+func (s *Screen) DumpFirstTileMap() *[1024]byte {
+	return s.dumpTileMap(0x9800)
+}
 
-	// Background tilemap
-	backgroundMemory := s.BgTileMapArea(6)
-
-	for x := 0; x < 1024; x++ {
-		tileNum := s.memory.ReadByte(backgroundMemory + uint16(x))
-
-		tileMap[x] = tileNum
-	}
-
-	return &tileMap
+func (s *Screen) DumpSecondTileMap() *[1024]byte {
+	return s.dumpTileMap(0x9C00)
 }
 
 func (s *Screen) DumpWindowTileMap() *[1024]byte {
+	return s.dumpTileMap(s.WindowTileMapStart())
+}
+
+func (s *Screen) DumpBackgroundTileMap() *[1024]byte {
+	return s.dumpTileMap(s.BackgroundTileMapStart())
+}
+
+func (s *Screen) dumpTileMap(address uint16) *[1024]byte {
 	tileMap := [1024]byte{}
 
-	// Background tilemap
-	backgroundMemory := s.WindowTileMapStart()
-
 	for x := 0; x < 1024; x++ {
-		tileNum := s.memory.ReadByte(backgroundMemory + uint16(x))
+		tileNum := s.memory.ReadByte(address + uint16(x))
 
 		tileMap[x] = tileNum
 	}
@@ -389,9 +387,9 @@ func (s *Screen) renderTiles() {
 	tileData := s.BgWindowTileDataArea()
 
 	if !usingWindow {
-		backgroundMemory = s.BgTileMapArea(3)
+		backgroundMemory = s.BackgroundTileMapStart()
 	} else {
-		backgroundMemory = s.BgTileMapArea(6)
+		backgroundMemory = s.WindowTileMapStart()
 	}
 
 	var yPos byte = 0
@@ -525,40 +523,6 @@ func (s *Screen) Render(callback func(x int, y int, color ScreenColor)) {
 	}
 
 	//return output.String()
-}
-
-func (s *Screen) read() {
-	currentTileAddr := s.BgTileMapArea(0)
-
-	//	scrollY := s.scy()
-	//	scrollX := s.scx()
-
-	for y := 0; y < screenHeight; y += 8 {
-		for x := 0; x < screenWidth; x += 8 {
-			tileId := s.memory.ReadByte(currentTileAddr)
-			tileAddr := s.tileAddrForId(tileId)
-
-			s.drawTile(tileAddr, (screenWidth*y)+x)
-
-			currentTileAddr++
-		}
-	}
-
-	// FF40 controls layout in memory
-
-	// draw background tiles - only ones visible in region
-	// 32x32 set cropped down
-	// bg map
-
-	// draw window
-	// window map
-
-	// draw sprites
-	// sprites have OAM attributes
-	// 40 sprites in system
-	// 40 OAM entries in OAM RAM
-
-	// draw 60 times a second
 }
 
 func (s *Screen) tileAddrForId(id byte) uint16 {
