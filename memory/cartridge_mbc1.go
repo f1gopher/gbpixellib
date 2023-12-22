@@ -67,15 +67,25 @@ func (c *cartridgeMBC1) Reset() {
 }
 
 func (c *cartridgeMBC1) ReadBit(address uint16, bit uint8) bool {
+	if address >= c.ram.addressOffset && !c.isRamEnabled() {
+		return true
+	}
+
 	return c.memoryBank(address).ReadBit(address, bit)
 }
 
 func (c *cartridgeMBC1) ReadByte(address uint16) byte {
+	if address >= c.ram.addressOffset && !c.isRamEnabled() {
+		return 0xFF
+	}
 
 	return c.memoryBank(address).ReadByte(address)
 }
 
 func (c *cartridgeMBC1) ReadShort(address uint16) uint16 {
+	if address >= c.ram.addressOffset && !c.isRamEnabled() {
+		return 0xFFFF
+	}
 
 	return c.memoryBank(address).ReadShort(address)
 }
@@ -85,10 +95,17 @@ func (c *cartridgeMBC1) WriteBit(address uint16, bit uint8, value bool) {
 		panic("This shouldn't happen")
 	}
 
+	if address >= c.ram.addressOffset && !c.isRamEnabled() {
+		return
+	}
+
 	c.memoryBank(address).WriteBit(address, bit, value)
 }
 
 func (c *cartridgeMBC1) WriteByte(address uint16, value byte) {
+	if address >= c.ram.addressOffset && !c.isRamEnabled() {
+		return
+	}
 
 	if address <= 0x7FFF {
 		if address >= 0x0000 && address <= 0x1FFF {
@@ -116,6 +133,10 @@ func (c *cartridgeMBC1) WriteByte(address uint16, value byte) {
 }
 
 func (c *cartridgeMBC1) WriteShort(address uint16, value uint16) {
+	if address >= c.ram.addressOffset && !c.isRamEnabled() {
+		return
+	}
+
 	if address <= 0x7FFF {
 		panic("This shouldn't happen")
 	}
