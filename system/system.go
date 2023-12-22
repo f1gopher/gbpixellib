@@ -144,7 +144,7 @@ func CreateSystem(bios string, rom string) *System {
 		memory:           memory,
 		regs:             registers,
 		pcBreakpoint:     0x0000,
-		executionHistory: make([]ExecutionInfo, 10),
+		executionHistory: make([]ExecutionInfo, 0),
 	}
 	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
@@ -224,7 +224,7 @@ func (s *System) Reset() {
 		s.cpu.Init()
 	}
 	s.controller.Reset()
-	s.executionHistory = make([]ExecutionInfo, 10)
+	s.executionHistory = make([]ExecutionInfo, 0)
 	s.cycle = 0
 	s.Start()
 }
@@ -253,14 +253,19 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 
 		if prevCompleted {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
-				info.Name = "DMA"
+				info.Name = "**DMA**"
 				cyclesCompleted += 162
 			} else {
 				wasHalted = s.regs.GetHALT()
-				if s.regs.GetHALT() {
+				if wasHalted {
 					if s.interuptHandler.HasInterrupt() {
 						s.regs.SetHALT(false)
+						info.Name = "**UNHALT**"
+					} else {
+						info.Name = "**HALTED**"
 					}
+					cyclesCompleted++
+					s.appendExecutionHistory(&info)
 				} else {
 					// If handled an interrupt don't process any instructions this cycle
 					if s.interuptHandler.Update() {
@@ -268,10 +273,9 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 							return false, cyclesCompleted, err
 						}
 						cyclesCompleted = 5
-						info.Name = "Interupt"
+						info.Name = "**INTERUPT**"
 						s.appendExecutionHistory(&info)
 						s.screen.UpdateForCycles(cyclesCompleted * 4)
-						prevCompleted = false
 						x += cyclesCompleted
 						s.cycle += cyclesCompleted
 						continue
@@ -280,11 +284,10 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 			}
 
 			s.screen.UpdateForCycles(cyclesCompleted * 4)
-			prevCompleted = false
 		}
 
 		if !didDMA && !wasHalted {
-			breakpoint, prevCompleted, err = s.cpu.ExecuteCycle()
+			breakpoint, prevCompleted, info.Name, err = s.cpu.ExecuteCycle()
 
 			if err != nil {
 				return false, x, err
@@ -293,12 +296,13 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 			if breakpoint {
 				return true, x, nil
 			}
+
+			if prevCompleted {
+				s.appendExecutionHistory(&info)
+			}
 		}
 
 		s.timer.Update(uint8(x))
-
-		info.Name = fmt.Sprintf("0x%02X", s.cpu.GetPrevOpcode())
-		s.appendExecutionHistory(&info)
 
 		x += cyclesCompleted
 		s.cycle += cyclesCompleted
@@ -317,11 +321,14 @@ func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 
 	if s.memory.ExecuteDMAIfPending() {
 		cyclesCompleted = 162
-		info.Name = "DMA"
+		info.Name = "**DMA**"
 	} else {
 		if s.regs.GetHALT() {
 			if s.interuptHandler.HasInterrupt() {
 				s.regs.SetHALT(false)
+				info.Name = "**UNHALT**"
+			} else {
+				info.Name = "**HALTED**"
 			}
 			cyclesCompleted++
 
@@ -332,7 +339,7 @@ func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 					return cyclesCompleted, err
 				}
 
-				info.Name = "Interupt"
+				info.Name = "**INTERUPT**"
 				s.appendExecutionHistory(&info)
 				cyclesCompleted = 5
 				s.screen.UpdateForCycles(cyclesCompleted * 4)
@@ -340,8 +347,9 @@ func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 				return cyclesCompleted, nil
 			}
 
+			var completed bool
 			for {
-				_, completed, err := s.cpu.ExecuteCycle()
+				_, completed, info.Name, err = s.cpu.ExecuteCycle()
 
 				cyclesCompleted++
 
@@ -361,7 +369,6 @@ func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 
 	s.timer.Update(uint8(cyclesCompleted))
 
-	info.Name = fmt.Sprintf("0x%02X", s.cpu.GetPrevOpcode())
 	s.appendExecutionHistory(&info)
 
 	s.cycle += cyclesCompleted
@@ -624,5 +631,5 @@ func (s *System) appendExecutionHistory(action *ExecutionInfo) {
 		s.executionHistory = s.executionHistory[1:]
 	}
 
-	s.executionHistory = append(s.executionHistory)
+	s.executionHistory = append(s.executionHistory, *action)
 }

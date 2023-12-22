@@ -160,7 +160,7 @@ func (c *Cpu) DoInterruptCycle() error {
 	return nil
 }
 
-func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, err error) {
+func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcodeDescription string, err error) {
 	// On startup we will have no fetched opcode so
 	// fetch a nw opcode then end the cycle
 	if c.executeOpcode == nil {
@@ -178,7 +178,7 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, err er
 		c.executeOpcodesCycle = 0
 
 		if err != nil {
-			return false, false, err
+			return false, false, "", err
 		}
 
 		// TODO - not sure is this is right, hack to match the other app for testing
@@ -203,7 +203,7 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, err er
 		c.executeOpcodesCycle = 0
 
 		if err != nil {
-			return false, false, err
+			return false, false, "", err
 		}
 	}
 
@@ -214,10 +214,11 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, err er
 		c.memory)
 
 	if err != nil {
-		return false, completed, errors.Join(errors.New(fmt.Sprintf("Opcode %s cycle %d", c.executeOpcode.name(), c.executeOpcodesCycle)), err)
+		return false, completed, "", errors.Join(errors.New(fmt.Sprintf("Opcode %s cycle %d", c.executeOpcode.name(), c.executeOpcodesCycle)), err)
 	}
 
 	c.executeOpcodesCycle++
+	var description string
 
 	// TODO - directly check registers/memory for breakpoints here (and clear
 	// before execution)
@@ -226,6 +227,8 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, err er
 	// in the same cycle (overlapping execute and fetch)
 	if completed {
 		c.executeOpcodesCycle = 0
+
+		description = c.executeOpcode.name()
 
 		c.prevOpcodePC = c.executeOpcodePC
 		c.executeOpcodePC = c.reg.Get16(PC)
@@ -242,11 +245,11 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, err er
 
 		// If we had an error fetching the opcode fail
 		if err != nil {
-			return false, completed, err
+			return false, completed, "", err
 		}
 	}
 
-	return false, completed, nil
+	return false, completed, description, nil
 }
 
 func (c *Cpu) GetOpcode() string {
