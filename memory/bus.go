@@ -2,6 +2,17 @@ package memory
 
 import "github.com/f1gopher/gbpixellib/log"
 
+type Area int
+
+const (
+	BIOSROM Area = iota
+	GPUMemory
+	ConsoleRAM
+	CartridgeRAM
+	CartridgeROM
+	CartridgeROMBank
+)
+
 type Bus struct {
 	log *log.Log
 
@@ -108,8 +119,23 @@ func (b *Bus) DisplaySetStatus(value uint8) {
 	b.ram.DisplaySetStatus(value)
 }
 
-func (b *Bus) DumpCode() []uint8 {
-	return b.cartridge.DumpCode()
+func (b *Bus) DumpCode(area Area, bank uint8) []uint8 {
+	switch area {
+	case BIOSROM:
+		return b.bios.DumpCode()
+	case GPUMemory:
+		return b.video.mem.DumpCode()
+	case ConsoleRAM:
+		return b.ram.mem.DumpCode()
+	case CartridgeRAM:
+		return b.cartridge.DumpRAMCode()
+	case CartridgeROMBank:
+		return b.cartridge.DumpROMBankCode(bank)
+	case CartridgeROM:
+		return b.cartridge.DumpROMCode()
+	default:
+		panic("Unhandled memory area for dumping")
+	}
 }
 
 func (b *Bus) target(address uint16) RWMemory {

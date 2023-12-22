@@ -497,8 +497,10 @@ func (s *Screen) renderSprites() {
 
 				//color := s.bgpColor(colourNum)
 
+				// This happens sometimes (Mario)
 				if scanline < 0 || scanline >= screenHeight || pixel < 0 || pixel >= screenWidth {
-					panic("Invalid pixel location")
+					// panic("Invalid pixel location")
+					continue
 				}
 
 				s.buffer[pixel+(uint16(scanline)*uint16(screenWidth))] = color

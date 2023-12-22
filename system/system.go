@@ -512,8 +512,8 @@ func (s *System) DumpBackgroundTileMap() *[1024]byte {
 	return s.screen.DumpBackgroundTileMap()
 }
 
-func (s *System) DumpCode() (instructions []string, previousPCIndex int, currentPCIndex int) {
-	bios := s.memory.DumpCode()
+func (s *System) DumpCode(area memory.Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int) {
+	bios := s.memory.DumpCode(area, bank)
 	current := s.cpu.GetOpcodePC()
 	previous := s.cpu.GetPrevOpcodePC()
 
