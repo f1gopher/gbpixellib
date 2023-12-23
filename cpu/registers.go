@@ -59,7 +59,7 @@ type Registers struct {
 	haltEnabled bool
 }
 
-func (r *Registers) reset() {
+func (r *Registers) Reset() {
 	r.regAF = 0x0000
 	r.regBC = 0x0000
 	r.regDE = 0x0000

@@ -22,7 +22,7 @@ func createLD_A_abs_rr(opcode uint8, reg Register) *opcode_LD_A_abs_rr {
 	}
 }
 
-func (o *opcode_LD_A_abs_rr) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_A_abs_rr) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		reg.Set8(A, mem.ReadByte(reg.Get16(o.target)))

@@ -22,7 +22,7 @@ func createCB_SWAP_r(opcode uint8, reg Register) *opcode_CB_SWAP_r {
 	}
 }
 
-func (o *opcode_CB_SWAP_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CB_SWAP_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		value := reg.Get8(o.target)

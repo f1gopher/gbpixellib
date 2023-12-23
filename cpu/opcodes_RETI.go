@@ -21,7 +21,7 @@ func createRETI(opcode uint8) *opcode_RETI {
 	}
 }
 
-func (o *opcode_RETI) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_RETI) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.lsb = readAndIncSP(reg, mem)

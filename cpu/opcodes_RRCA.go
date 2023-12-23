@@ -20,7 +20,7 @@ func createRRCA(opcode uint8) *opcode_RRCA {
 	}
 }
 
-func (o *opcode_RRCA) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_RRCA) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		a := reg.Get8(A)

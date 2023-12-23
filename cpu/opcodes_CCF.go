@@ -16,7 +16,7 @@ func createCCF(opcode uint8) *opcode_CCF {
 	}
 }
 
-func (o *opcode_CCF) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CCF) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		reg.SetFlag(NFlag, false)

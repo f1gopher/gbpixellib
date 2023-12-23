@@ -20,7 +20,7 @@ func createLDH_A_imed_C(opcode uint8) *opcode_LDH_A_imed_C {
 	}
 }
 
-func (o *opcode_LDH_A_imed_C) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LDH_A_imed_C) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		reg.Set8(A, mem.ReadByte(combineBytes(0xFF, reg.Get8(C))))

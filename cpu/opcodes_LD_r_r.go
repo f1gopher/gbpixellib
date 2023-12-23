@@ -24,7 +24,7 @@ func createLD_r_r(opcode uint8, dest Register, src Register) *opcode_LD_r_r {
 	}
 }
 
-func (o *opcode_LD_r_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_r_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		reg.Set8(o.dest, reg.Get8(o.src))

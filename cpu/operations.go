@@ -99,7 +99,7 @@ func subtract16Bit(original uint16, subtract uint16) (result uint16) {
 	return
 }
 
-func readAndIncPC(reg registersInterface, mem memoryInterface) uint8 {
+func readAndIncPC(reg RegistersInterface, mem memoryInterface) uint8 {
 	pc := reg.Get16(PC)
 	result := mem.ReadByte(pc)
 	pc++
@@ -108,7 +108,7 @@ func readAndIncPC(reg registersInterface, mem memoryInterface) uint8 {
 	return result
 }
 
-func readAndIncSP(reg registersInterface, mem memoryInterface) uint8 {
+func readAndIncSP(reg RegistersInterface, mem memoryInterface) uint8 {
 	sp := reg.Get16(SP)
 	result := mem.ReadByte(sp)
 	sp++
@@ -117,7 +117,7 @@ func readAndIncSP(reg registersInterface, mem memoryInterface) uint8 {
 	return result
 }
 
-func readAndDecSP(reg registersInterface, mem memoryInterface) uint8 {
+func readAndDecSP(reg RegistersInterface, mem memoryInterface) uint8 {
 	sp := reg.Get16(SP)
 	result := mem.ReadByte(sp)
 	sp--
@@ -126,19 +126,19 @@ func readAndDecSP(reg registersInterface, mem memoryInterface) uint8 {
 	return result
 }
 
-func DecAndWriteSP(reg registersInterface, mem memoryInterface, value uint8) {
+func DecAndWriteSP(reg RegistersInterface, mem memoryInterface, value uint8) {
 	sp := reg.Get16(SP)
 	sp--
 	mem.WriteByte(sp, value)
 	reg.Set16(SP, sp)
 }
 
-func incPC(reg registersInterface) {
+func incPC(reg RegistersInterface) {
 	pc := reg.Get16(PC)
 	reg.Set16(PC, pc+1)
 }
 
-func decSP(reg registersInterface) {
+func decSP(reg RegistersInterface) {
 	sp := reg.Get16(SP)
 	reg.Set16(SP, sp-1)
 }

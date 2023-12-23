@@ -7,7 +7,7 @@ import (
 	"github.com/f1gopher/gbpixellib/log"
 )
 
-type registersInterface interface {
+type RegistersInterface interface {
 	Get8(source Register) uint8
 	Get16(source Register) uint16
 	Get16Msb(source Register) uint8
@@ -26,7 +26,7 @@ type registersInterface interface {
 	SetHALT(enabled bool)
 	GetHALT() bool
 
-	reset()
+	Reset()
 }
 
 type memoryInterface interface {
@@ -40,7 +40,7 @@ type memoryInterface interface {
 
 type Cpu struct {
 	log    *log.Log
-	reg    registersInterface
+	reg    RegistersInterface
 	memory memoryInterface
 
 	executeOpcodePC     uint16
@@ -56,7 +56,7 @@ type Cpu struct {
 	interruptHappened bool
 }
 
-func CreateCPU(log *log.Log, regs registersInterface, memory memoryInterface) *Cpu {
+func CreateCPU(log *log.Log, regs RegistersInterface, memory memoryInterface) *Cpu {
 	return &Cpu{
 		log:       log,
 		reg:       regs,
@@ -127,7 +127,7 @@ func (c *Cpu) Init() {
 func (c *Cpu) Reset() {
 	c.executeOpcode = nil
 	c.executeOpcodesCycle = 0
-	c.reg.reset()
+	c.reg.Reset()
 	c.executeOpcodePC = 0
 	c.prevOpcodePC = 0
 	c.prevOpcode = 0

@@ -22,7 +22,7 @@ func createADD_HL_rr(opcode uint8, srcReg Register) *opcode_ADD_HL_rr {
 	}
 }
 
-func (o *opcode_ADD_HL_rr) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_ADD_HL_rr) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	// TODO - what happens in which cycle is probably wrong
 	if cycleNumber == 1 {

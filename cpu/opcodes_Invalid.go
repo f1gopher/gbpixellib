@@ -19,6 +19,6 @@ func createInvalid(opcode uint8) *opcode_Invalid {
 	}
 }
 
-func (o *opcode_Invalid) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_Invalid) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 	return true, errors.New(fmt.Sprintf("Invalid opcode 0x%02X", o.opcodeId))
 }

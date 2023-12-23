@@ -24,7 +24,7 @@ func createCB_SRA_r(opcode uint8, reg Register) *opcodeCB_SRA_r {
 	}
 }
 
-func (o *opcodeCB_SRA_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcodeCB_SRA_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		a := reg.Get8(o.src)

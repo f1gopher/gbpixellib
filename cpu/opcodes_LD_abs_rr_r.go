@@ -24,7 +24,7 @@ func createLD_abs_rr_r(opcode uint8, dest Register, src Register) *opcode_LD_abs
 	}
 }
 
-func (o *opcode_LD_abs_rr_r) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_abs_rr_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		mem.WriteByte(reg.Get16(o.dest), reg.Get8(o.src))

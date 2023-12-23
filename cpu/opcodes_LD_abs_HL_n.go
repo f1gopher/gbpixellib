@@ -20,7 +20,7 @@ func createLD_abs_HL_n(opcode uint8) *opcode_LD_abs_HL_n {
 	}
 }
 
-func (o *opcode_LD_abs_HL_n) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_abs_HL_n) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.value = readAndIncPC(reg, mem)

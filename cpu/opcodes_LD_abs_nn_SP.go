@@ -22,7 +22,7 @@ func createLD_abs_nn_SP(opcode uint8) *opcode_LD_abs_nn_SP {
 	}
 }
 
-func (o *opcode_LD_abs_nn_SP) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_abs_nn_SP) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.lsb = readAndIncPC(reg, mem)

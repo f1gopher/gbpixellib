@@ -26,7 +26,7 @@ func createCB_BIT_b_HL(opcode uint8, bit uint8) *opcode_CB_BIT_b_HL {
 	}
 }
 
-func (o *opcode_CB_BIT_b_HL) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CB_BIT_b_HL) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.hl = reg.Get16(HL)

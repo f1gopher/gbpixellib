@@ -20,7 +20,7 @@ func createLDH_imed_n_A(opcode uint8) *opcode_LDH_imed_n_A {
 	}
 }
 
-func (o *opcode_LDH_imed_n_A) doCycle(cycleNumber int, reg registersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LDH_imed_n_A) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.n = readAndIncPC(reg, mem)
