@@ -6,6 +6,13 @@ import (
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
+type BreakpointComparison int
+
+const (
+	Equals BreakpointComparison = iota
+	GreaterThanOrEqual
+)
+
 type Debugger struct {
 	log    *log.Log
 	regs   debugRegisters
@@ -13,7 +20,10 @@ type Debugger struct {
 }
 
 func CreateDebugger(log *log.Log) (*Debugger, *cpu.Registers, *memory.Bus) {
-	r := debugRegisters{registers: &cpu.Registers{}}
+	r := debugRegisters{
+		registers:   &cpu.Registers{},
+		breakpoints: make(map[cpu.Register][]registerBreakpoint, 0),
+	}
 	m := debugMemory{memory: memory.CreateBus(log)}
 
 	d := &Debugger{
@@ -32,6 +42,6 @@ func (d *Debugger) HasHitBreakpoint() bool {
 	return false
 }
 
-func (d *Debugger) AddRegisterValueBP(reg cpu.Register, value uint16) {
-
+func (d *Debugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint8) {
+	d.regs.AddBP(reg, comparison, value)
 }
