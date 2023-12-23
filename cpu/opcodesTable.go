@@ -341,6 +341,18 @@ func createOpcodesTable() [256]opcode {
 	// LD SP,HL
 	opcodes = append(opcodes, createLD_SP_HL(0xF9))
 
+	// Invalid opcodes
+	opcodes = append(opcodes, createInvalid(0xD3))
+	opcodes = append(opcodes, createInvalid(0xDB))
+	opcodes = append(opcodes, createInvalid(0xE3))
+	opcodes = append(opcodes, createInvalid(0xE4))
+	opcodes = append(opcodes, createInvalid(0xEB))
+	opcodes = append(opcodes, createInvalid(0xEC))
+	opcodes = append(opcodes, createInvalid(0xED))
+	opcodes = append(opcodes, createInvalid(0xF4))
+	opcodes = append(opcodes, createInvalid(0xFC))
+	opcodes = append(opcodes, createInvalid(0xFD))
+
 	// Populate the opcodes table according to the opcode value set on each opcode
 	var table [256]opcode
 	for _, x := range opcodes {
