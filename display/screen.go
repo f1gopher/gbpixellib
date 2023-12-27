@@ -136,6 +136,9 @@ func (s *Screen) DumpTileset() image.Image {
 	tileY := 0
 	var tileNum uint16 = 0
 	var tileRow uint16 = 0
+	if tileData == 0x8800 {
+		tileNum = 255
+	}
 
 	for y := 1; y < img.Bounds().Max.Y-1; y++ {
 
@@ -166,7 +169,11 @@ func (s *Screen) DumpTileset() image.Image {
 			// Leave a border between tiles
 			if tileX == 8 {
 				tileX = 0
-				tileNum++
+				if tileData == 0x8000 {
+					tileNum++
+				} else {
+					tileNum--
+				}
 				continue
 			}
 
@@ -216,9 +223,14 @@ func (s *Screen) tileNumberToAddress(tileData uint16, tileNum uint16, tileY int)
 	tileLocation := tileData
 
 	if tileData == 0x8000 {
-		tileLocation += tileNum * 0x10
+		tileLocation += tileNum * tileSize
 	} else {
-		tileLocation += (tileNum + 128) * 0x10
+		if tileNum <= 127 {
+			tileLocation = 0x9000
+			tileLocation += tileNum * tileSize
+		} else {
+			tileLocation += (tileNum - 128) * tileSize
+		}
 	}
 
 	line := tileY % 8
