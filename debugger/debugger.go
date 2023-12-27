@@ -9,8 +9,12 @@ import (
 type BreakpointComparison int
 
 const (
-	Equals BreakpointComparison = iota
+	Equal BreakpointComparison = iota
+	NotEqual
+	GreaterThan
+	LessThan
 	GreaterThanOrEqual
+	LessThanOrEqual
 )
 
 type Debugger struct {

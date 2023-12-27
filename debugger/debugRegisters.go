@@ -57,17 +57,19 @@ func (d *debugRegisters) Get16Lsb(source cpu.Register) uint8 {
 }
 
 func (d *debugRegisters) Set8(target cpu.Register, value uint8) {
-	// bps := d.hasBP(target)
-	//
-	// if bps != nil {
-	// 	for x := 0; x < len(bps); x++ {
-	// 		if d.evaluateBp(value, bps[x].comparison, bps[x].value) {
-	// 			d.hitBreakpoint = true
-	// 			continue
-	// 		}
-	// 	}
-	// }
-	//
+	bps := d.hasBP(target)
+
+	if bps != nil {
+		for x := 0; x < len(bps); x++ {
+			lsbValue := cpu.Lsb(bps[x].value)
+			if evaluateBp(value, bps[x].comparison, lsbValue) {
+				d.hitBreakpoint = true
+				d.description = fmt.Sprintf("Setting %s to 0x%02X", target.String(), lsbValue)
+				continue
+			}
+		}
+	}
+
 	d.registers.Set8(target, value)
 }
 
@@ -76,7 +78,7 @@ func (d *debugRegisters) Set16(target cpu.Register, value uint16) {
 
 	if bps != nil {
 		for x := 0; x < len(bps); x++ {
-			if d.evaluateBp(value, bps[x].comparison, bps[x].value) {
+			if evaluateBp(value, bps[x].comparison, bps[x].value) {
 				d.hitBreakpoint = true
 				d.description = fmt.Sprintf("Setting %s to 0x%02X", target.String(), value)
 				continue
@@ -158,12 +160,20 @@ func (d *debugRegisters) hasBP(reg cpu.Register) []registerBreakpoint {
 	return enabledBps
 }
 
-func (d *debugRegisters) evaluateBp(value uint16, comparison BreakpointComparison, bpValue uint16) bool {
+func evaluateBp[T uint8 | uint16](value T, comparison BreakpointComparison, bpValue T) bool {
 	switch comparison {
-	case Equals:
+	case Equal:
 		return value == bpValue
+	case NotEqual:
+		return value != bpValue
+	case GreaterThan:
+		return value > bpValue
+	case LessThan:
+		return value < bpValue
 	case GreaterThanOrEqual:
 		return value >= bpValue
+	case LessThanOrEqual:
+		return value <= bpValue
 	default:
 		panic("Not implemented breakpoint comparison")
 	}
