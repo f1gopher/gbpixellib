@@ -35,8 +35,6 @@ func CreateDebugger(log *log.Log) (*Debugger, cpu.RegistersInterface, *memory.Bu
 		memory: m,
 	}
 
-	r.AddBP(cpu.PC, GreaterThanOrEqual, 0x8000)
-
 	return d, &d.regs, m.memory
 }
 
