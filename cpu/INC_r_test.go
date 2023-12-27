@@ -57,7 +57,7 @@ func (i *incTestSuite) test(initial uint8, expected uint8, carry bool) {
 	regs := &testRegisters_UseOneRegister{
 		test:         i.Suite.T(),
 		allowedReg:   i.reg,
-		allowedFlags: []registerFlags{ZFlag, NFlag, HFlag},
+		allowedFlags: []RegisterFlags{ZFlag, NFlag, HFlag},
 	}
 	mem := &testMemory_NoAccess{test: i.Suite.T()}
 

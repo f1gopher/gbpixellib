@@ -8,13 +8,13 @@ import (
 type opcode_JR_cc_e struct {
 	opcodeBase
 
-	flag      registerFlags
+	flag      RegisterFlags
 	modifier  bool
 	condition bool
 	e         int8
 }
 
-func createJR_cc_e(opcode uint8, flag registerFlags, modifier bool) *opcode_JR_cc_e {
+func createJR_cc_e(opcode uint8, flag RegisterFlags, modifier bool) *opcode_JR_cc_e {
 	flagText := flag.String()
 	if !modifier {
 		flagText = "N" + flagText

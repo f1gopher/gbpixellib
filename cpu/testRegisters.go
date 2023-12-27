@@ -12,7 +12,7 @@ type testRegisters_UseOneRegister struct {
 	test *testing.T
 
 	allowedReg   Register
-	allowedFlags []registerFlags
+	allowedFlags []RegisterFlags
 }
 
 func (t *testRegisters_UseOneRegister) Get8(source Register) uint8 {
@@ -63,7 +63,7 @@ func (t *testRegisters_UseOneRegister) Set16(target Register, value uint16) {
 	t.Registers.Set16(target, value)
 }
 
-func (t *testRegisters_UseOneRegister) GetFlag(flag registerFlags) bool {
+func (t *testRegisters_UseOneRegister) GetFlag(flag RegisterFlags) bool {
 	if !slices.Contains(t.allowedFlags, flag) {
 		t.test.FailNow()
 	}
@@ -71,7 +71,7 @@ func (t *testRegisters_UseOneRegister) GetFlag(flag registerFlags) bool {
 	return t.Registers.GetFlag(flag)
 }
 
-func (t *testRegisters_UseOneRegister) SetFlag(flag registerFlags, value bool) {
+func (t *testRegisters_UseOneRegister) SetFlag(flag RegisterFlags, value bool) {
 	if !slices.Contains(t.allowedFlags, flag) {
 		t.test.FailNow()
 	}

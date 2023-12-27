@@ -19,7 +19,7 @@ type Debugger struct {
 	memory debugMemory
 }
 
-func CreateDebugger(log *log.Log) (*Debugger, *cpu.Registers, *memory.Bus) {
+func CreateDebugger(log *log.Log) (*Debugger, cpu.RegistersInterface, *memory.Bus) {
 	r := debugRegisters{
 		registers:   &cpu.Registers{},
 		breakpoints: make(map[cpu.Register][]registerBreakpoint, 0),
@@ -31,17 +31,23 @@ func CreateDebugger(log *log.Log) (*Debugger, *cpu.Registers, *memory.Bus) {
 		memory: m,
 	}
 
-	return d, r.registers, m.memory
+	r.AddBP(cpu.PC, GreaterThanOrEqual, 0x8000)
+
+	return d, &d.regs, m.memory
 }
 
 func (d *Debugger) StartCycle() {
-
+	d.regs.startCycle()
 }
 
 func (d *Debugger) HasHitBreakpoint() bool {
-	return false
+	return d.regs.hasHitBreakpoint()
 }
 
-func (d *Debugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint8) {
+func (d *Debugger) BreakpointReason() string {
+	return d.regs.BreakpointReason()
+}
+
+func (d *Debugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) {
 	d.regs.AddBP(reg, comparison, value)
 }

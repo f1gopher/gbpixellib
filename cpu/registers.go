@@ -29,16 +29,16 @@ func (r Register) String() string {
 	return [...]string{"AF", "BC", "DE", "HL", "SP", "PC", "A", "F", "B", "C", "D", "E", "H", "L"}[r]
 }
 
-type registerFlags int
+type RegisterFlags int
 
 const (
-	ZFlag registerFlags = iota
+	ZFlag RegisterFlags = iota
 	NFlag
 	HFlag
 	CFlag
 )
 
-func (f registerFlags) String() string {
+func (f RegisterFlags) String() string {
 	return [...]string{"Z", "N", "H", "C"}[f]
 }
 
@@ -193,10 +193,6 @@ func (r *Registers) Set16FromTwoBytes(target Register, msb uint8, lsb uint8) {
 	r.Set16(target, combineBytes(msb, lsb))
 }
 
-func (r *Registers) SetPC(value uint16) {
-	r.Set16(PC, value)
-}
-
 func (r *Registers) Set16(target Register, value uint16) {
 	switch target {
 	case AF:
@@ -216,7 +212,7 @@ func (r *Registers) Set16(target Register, value uint16) {
 	}
 }
 
-func (r *Registers) GetFlag(flag registerFlags) bool {
+func (r *Registers) GetFlag(flag RegisterFlags) bool {
 	switch flag {
 	case ZFlag:
 		return getRegBit(r.Get8(F), zFlagBit)
@@ -231,7 +227,7 @@ func (r *Registers) GetFlag(flag registerFlags) bool {
 	}
 }
 
-func (r *Registers) SetFlag(flag registerFlags, value bool) {
+func (r *Registers) SetFlag(flag RegisterFlags, value bool) {
 	switch flag {
 	case ZFlag:
 		r.SetRegBit(F, zFlagBit, value)

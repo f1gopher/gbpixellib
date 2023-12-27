@@ -17,6 +17,8 @@ import (
 	"github.com/f1gopher/gbpixellib/timer"
 )
 
+const executionHistorySize = 10
+
 type ExecutionInfo struct {
 	Name           string
 	StartCycle     uint
@@ -115,7 +117,7 @@ type System struct {
 	log             *log.Log
 	screen          *display.Screen
 	memory          *memory.Bus
-	regs            *cpu.Registers
+	regs            cpu.RegistersInterface
 	cpu             *cpu.Cpu
 	interuptHandler *interupt.Handler
 	controller      *input.Input
@@ -226,6 +228,7 @@ func (s *System) Reset() {
 	s.controller.Reset()
 	s.executionHistory = make([]ExecutionInfo, 0)
 	s.cycle = 0
+	s.debugger.StartCycle()
 	s.Start()
 }
 
@@ -255,6 +258,12 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
 				info.Name = "**DMA**"
 				cyclesCompleted += 162
+
+				if s.debugger.HasHitBreakpoint() {
+					return true, x, nil
+				}
+
+				s.debugger.StartCycle()
 			} else {
 				wasHalted = s.regs.GetHALT()
 				if wasHalted {
@@ -268,16 +277,22 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 					s.appendExecutionHistory(&info)
 				} else {
 					// If handled an interrupt don't process any instructions this cycle
-					if s.interuptHandler.Update() {
+					if interupted, name := s.interuptHandler.Update(); interupted {
 						if err := s.cpu.DoInterruptCycle(); err != nil {
 							return false, cyclesCompleted, err
 						}
 						cyclesCompleted = 5
-						info.Name = "**INTERUPT**"
+						info.Name = "**INTERUPT** - " + name
 						s.appendExecutionHistory(&info)
 						s.screen.UpdateForCycles(cyclesCompleted * 4)
 						x += cyclesCompleted
 						s.cycle += cyclesCompleted
+
+						if s.debugger.HasHitBreakpoint() {
+							return true, x, nil
+						}
+
+						s.debugger.StartCycle()
 						continue
 					}
 				}
@@ -287,14 +302,10 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 		}
 
 		if !didDMA && !wasHalted {
-			breakpoint, prevCompleted, info.Name, err = s.cpu.ExecuteCycle()
+			_, prevCompleted, info.Name, err = s.cpu.ExecuteCycle()
 
 			if err != nil {
 				return false, x, err
-			}
-
-			if breakpoint {
-				return true, x, nil
 			}
 
 			if prevCompleted {
@@ -306,13 +317,22 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 
 		x += cyclesCompleted
 		s.cycle += cyclesCompleted
+
+		if prevCompleted {
+			if s.debugger.HasHitBreakpoint() {
+				return true, x, nil
+			}
+
+			s.debugger.StartCycle()
+		}
 	}
 
 	return false, maxCycles, nil
 }
 
-func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
+func (s *System) SingleInstruction() (breakpoint bool, cyclesCompleted uint, err error) {
 
+	s.debugger.StartCycle()
 	cyclesCompleted = 0
 	info := ExecutionInfo{
 		StartCycle:     s.cycle,
@@ -334,17 +354,17 @@ func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 
 		} else {
 			// If handled an interrupt don't process any instructions this cycle
-			if s.interuptHandler.Update() {
+			if interupted, name := s.interuptHandler.Update(); interupted {
 				if err := s.cpu.DoInterruptCycle(); err != nil {
-					return cyclesCompleted, err
+					return false, cyclesCompleted, err
 				}
 
-				info.Name = "**INTERUPT**"
+				info.Name = "**INTERUPT** - " + name
 				s.appendExecutionHistory(&info)
 				cyclesCompleted = 5
 				s.screen.UpdateForCycles(cyclesCompleted * 4)
 
-				return cyclesCompleted, nil
+				return s.debugger.HasHitBreakpoint(), cyclesCompleted, nil
 			}
 
 			var completed bool
@@ -354,7 +374,7 @@ func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 				cyclesCompleted++
 
 				if err != nil {
-					return cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+					return false, cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
 				}
 
 				if completed {
@@ -373,7 +393,7 @@ func (s *System) SingleInstruction() (cyclesCompleted uint, err error) {
 
 	s.cycle += cyclesCompleted
 
-	return cyclesCompleted, nil
+	return s.debugger.HasHitBreakpoint(), cyclesCompleted, nil
 }
 
 func (s *System) State() string {
@@ -626,8 +646,12 @@ func (s *System) ReleaseRight() {
 	s.controller.InputRight(false)
 }
 
+func (s *System) BreakpointReason() string {
+	return s.debugger.BreakpointReason()
+}
+
 func (s *System) appendExecutionHistory(action *ExecutionInfo) {
-	if len(s.executionHistory) == 10 {
+	if len(s.executionHistory) == executionHistorySize {
 		s.executionHistory = s.executionHistory[1:]
 	}
 

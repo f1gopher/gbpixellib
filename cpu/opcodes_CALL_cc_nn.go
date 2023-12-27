@@ -8,14 +8,14 @@ import (
 type opcode_CALL_cc_nn struct {
 	opcodeBase
 
-	flag      registerFlags
+	flag      RegisterFlags
 	modifier  bool
 	condition bool
 	msb       uint8
 	lsb       uint8
 }
 
-func createCALL_cc_nn(opcode uint8, flag registerFlags, modifier bool) *opcode_CALL_cc_nn {
+func createCALL_cc_nn(opcode uint8, flag RegisterFlags, modifier bool) *opcode_CALL_cc_nn {
 	flagText := flag.String()
 	if !modifier {
 		flagText = "N" + flagText

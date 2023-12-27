@@ -17,8 +17,8 @@ type RegistersInterface interface {
 	Set16FromTwoBytes(target Register, msb uint8, lsb uint8)
 	SetRegBit(target Register, bit uint8, value bool)
 
-	GetFlag(flag registerFlags) bool
-	SetFlag(flag registerFlags, value bool)
+	GetFlag(flag RegisterFlags) bool
+	SetFlag(flag RegisterFlags, value bool)
 
 	SetIME(enabled bool)
 	GetIME() bool
@@ -219,6 +219,7 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcode
 
 	c.executeOpcodesCycle++
 	var description string
+	breakpointHit := false
 
 	// TODO - directly check registers/memory for breakpoints here (and clear
 	// before execution)
@@ -245,11 +246,11 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcode
 
 		// If we had an error fetching the opcode fail
 		if err != nil {
-			return false, completed, "", err
+			return breakpointHit, completed, "", err
 		}
 	}
 
-	return false, completed, description, nil
+	return breakpointHit, completed, description, nil
 }
 
 func (c *Cpu) GetOpcode() string {

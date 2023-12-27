@@ -24,10 +24,10 @@ func (i Interupt) String() string {
 
 type Handler struct {
 	memory *memory.Bus
-	regs   *cpu.Registers
+	regs   cpu.RegistersInterface
 }
 
-func CreateHandler(memory *memory.Bus, registers *cpu.Registers) *Handler {
+func CreateHandler(memory *memory.Bus, registers cpu.RegistersInterface) *Handler {
 	return &Handler{
 		memory: memory,
 		regs:   registers,
@@ -84,7 +84,7 @@ func (h *Handler) HasInterrupt() bool {
 	return false
 }
 
-func (h *Handler) Update() bool {
+func (h *Handler) Update() (interupted bool, name string) {
 	if h.regs.GetIME() {
 		req := h.memory.ReadByte(InteruptFlag)
 		enabled := h.memory.ReadByte(InteruptEnableRegister)
@@ -93,22 +93,22 @@ func (h *Handler) Update() bool {
 			for i := 0; i < 5; i++ {
 				if memory.GetBit(req, i) {
 					if memory.GetBit(enabled, i) {
-						h.serviceInterupt(uint8(i))
-						return true
+						return true, h.serviceInterupt(uint8(i))
 					}
 				}
 			}
 		}
 	}
 
-	return false
+	return false, ""
 }
 
-func (h *Handler) serviceInterupt(interupt uint8) {
+func (h *Handler) serviceInterupt(interupt uint8) string {
 	h.regs.SetIME(false)
 	req := h.memory.ReadByte(InteruptFlag)
 	req = memory.SetBit(req, interupt, false)
 	h.memory.WriteByte(InteruptFlag, req)
+	var name string
 
 	// TODO - push PC onto stack
 
@@ -116,14 +116,19 @@ func (h *Handler) serviceInterupt(interupt uint8) {
 	switch interupt {
 	case 0: // Vertical Blank
 		programCounter = 0x0040
+		name = "Vertical Blank"
 	case 1: // LCDC Status
 		programCounter = 0x0048
+		name = "LCDC Status"
 	case 2: // Timer Overflow
 		programCounter = 0x0050
+		name = "Timer Overflow"
 	case 3: // Serial Transfer
 		programCounter = 0x0058
+		name = "Serial Transfer"
 	case 4: // Joypad
 		programCounter = 0x0060
+		name = "Joypad"
 	default:
 		panic("Unhandled service interupt")
 	}
@@ -136,5 +141,6 @@ func (h *Handler) serviceInterupt(interupt uint8) {
 	currentPC := h.regs.Get16(cpu.PC) - 1
 	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Msb(currentPC))
 	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Lsb(currentPC))
-	h.regs.SetPC(programCounter)
+	h.regs.Set16(cpu.PC, programCounter)
+	return name
 }

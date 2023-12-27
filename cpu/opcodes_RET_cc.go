@@ -8,14 +8,14 @@ import (
 type opcode_RET_cc struct {
 	opcodeBase
 
-	flag      registerFlags
+	flag      RegisterFlags
 	modifier  bool
 	condition bool
 	msb       uint8
 	lsb       uint8
 }
 
-func createRET_cc(opcode uint8, flag registerFlags, modifier bool) *opcode_RET_cc {
+func createRET_cc(opcode uint8, flag RegisterFlags, modifier bool) *opcode_RET_cc {
 	flagText := flag.String()
 	if !modifier {
 		flagText = "N" + flagText
