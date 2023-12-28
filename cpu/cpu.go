@@ -78,8 +78,7 @@ func (c *Cpu) InitForTestROM() {
 	c.reg.Set8(H, 0x01)
 	c.reg.Set8(L, 0x4D)
 	c.reg.Set16(SP, 0xFFFE)
-	//	c.reg.Set16(PC, 0x0100)
-	c.reg.Set16(PC, 0x0000)
+	c.reg.Set16(PC, 0x0100)
 }
 
 func (c *Cpu) Init() {
