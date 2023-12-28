@@ -580,6 +580,21 @@ func (s *System) DumpCode(area memory.Area, bank uint8) (instructions []string, 
 	return instructions, previousIndex, currentIndex
 }
 
+func (s *System) DumpCallstack() []string {
+	var stackStart uint16 = 0xFFFE
+	stackEnd := s.regs.Get16(cpu.SP)
+	result := make([]string, 0)
+
+	for x := stackEnd; x < stackStart; x += 2 {
+		value := s.memory.ReadShort(x)
+
+		result = append(result, fmt.Sprintf("0x%04X => 0x%04X", x, value))
+	}
+	result = append(result, fmt.Sprintf("0x%04X => 0x%04X", stackStart, s.memory.ReadShort(stackStart)))
+
+	return result
+}
+
 func (s *System) SetBreakpoint(pcAddress uint16) {
 	s.pcBreakpoint = pcAddress
 }
