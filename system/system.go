@@ -277,7 +277,7 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 					s.appendExecutionHistory(&info)
 				} else {
 					// If handled an interrupt don't process any instructions this cycle
-					if interupted, name := s.interuptHandler.Update(); interupted {
+					if interupted, name := s.interuptHandler.Update(s.cpu.GetOpcodePC()); interupted {
 						if err := s.cpu.DoInterruptCycle(); err != nil {
 							return false, cyclesCompleted, err
 						}
@@ -354,7 +354,7 @@ func (s *System) SingleInstruction() (breakpoint bool, cyclesCompleted uint, err
 
 		} else {
 			// If handled an interrupt don't process any instructions this cycle
-			if interupted, name := s.interuptHandler.Update(); interupted {
+			if interupted, name := s.interuptHandler.Update(s.cpu.GetOpcodePC()); interupted {
 				if err := s.cpu.DoInterruptCycle(); err != nil {
 					return false, cyclesCompleted, err
 				}

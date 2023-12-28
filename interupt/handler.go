@@ -84,7 +84,7 @@ func (h *Handler) HasInterrupt() bool {
 	return false
 }
 
-func (h *Handler) Update() (interupted bool, name string) {
+func (h *Handler) Update(lastPC uint16) (interupted bool, name string) {
 	if h.regs.GetIME() {
 		req := h.memory.ReadByte(InteruptFlag)
 		enabled := h.memory.ReadByte(InteruptEnableRegister)
@@ -93,7 +93,7 @@ func (h *Handler) Update() (interupted bool, name string) {
 			for i := 0; i < 5; i++ {
 				if memory.GetBit(req, i) {
 					if memory.GetBit(enabled, i) {
-						return true, h.serviceInterupt(uint8(i))
+						return true, h.serviceInterupt(lastPC, uint8(i))
 					}
 				}
 			}
@@ -103,14 +103,12 @@ func (h *Handler) Update() (interupted bool, name string) {
 	return false, ""
 }
 
-func (h *Handler) serviceInterupt(interupt uint8) string {
+func (h *Handler) serviceInterupt(currentPC uint16, interupt uint8) string {
 	h.regs.SetIME(false)
 	req := h.memory.ReadByte(InteruptFlag)
 	req = memory.SetBit(req, interupt, false)
 	h.memory.WriteByte(InteruptFlag, req)
 	var name string
-
-	// TODO - push PC onto stack
 
 	var programCounter uint16 = 0
 	switch interupt {
@@ -133,12 +131,6 @@ func (h *Handler) serviceInterupt(interupt uint8) string {
 		panic("Unhandled service interupt")
 	}
 
-	// TODO - set PC
-	//h.cpu.PushAndReplacePC(programCounter)
-
-	// TODO - -1 for PC because we fetch the next opcode but we shouldn't???
-
-	currentPC := h.regs.Get16(cpu.PC) - 1
 	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Msb(currentPC))
 	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Lsb(currentPC))
 	h.regs.Set16(cpu.PC, programCounter)

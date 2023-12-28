@@ -140,7 +140,7 @@ func (r *ram) WriteByte(address uint16, value byte) {
 	//
 	// 0xE000 - 0xFDFF: Echo RAM
 	//This section of memory directly mirrors the working RAM section - meaning if you write into the first address of working RAM (0xC000), the same value will appear in the first spot of echo RAM (0xE000). Nintendo actively discouraged developers from using this area of memory and as such we can just pretend it doesn't exist.
-	if address >= 0xC000 && address <= 0xDFFF {
+	if address >= 0xC000 && address <= 0xDDFF {
 		if address+0x2000 <= 0xFDFF {
 			r.mem.WriteByte(address+0x2000, value)
 		}
