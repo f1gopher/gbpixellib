@@ -1,6 +1,8 @@
 package memory
 
-import "github.com/f1gopher/gbpixellib/log"
+import (
+	"github.com/f1gopher/gbpixellib/log"
+)
 
 type Area int
 
@@ -13,6 +15,10 @@ const (
 	CartridgeROMBank
 )
 
+type timerDivide interface {
+	TimerDivideWrite()
+}
+
 type Bus struct {
 	log *log.Log
 
@@ -20,6 +26,7 @@ type Bus struct {
 	video     *videoRam
 	ram       *ram
 	cartridge Cartridge
+	timer     timerDivide
 
 	dmaPending bool
 	dmaAddress uint16
@@ -35,7 +42,12 @@ func CreateBus(log *log.Log) *Bus {
 		video:     CreateVideoRam(),
 		ram:       CreateRam(),
 		cartridge: nil,
+		timer:     nil,
 	}
+}
+
+func (b *Bus) SetTimer(timer timerDivide) {
+	b.timer = timer
 }
 
 func (b *Bus) Load(bios *[]byte, cartridge Cartridge) {
@@ -79,6 +91,11 @@ func (b *Bus) WriteByte(address uint16, value byte) {
 	if address == 0xFF46 {
 		b.dmaPending = true
 		b.dmaAddress = uint16(value) << 8
+		return
+	}
+
+	if address == DividerRegister {
+		b.timer.TimerDivideWrite()
 		return
 	}
 

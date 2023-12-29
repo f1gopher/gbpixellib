@@ -154,6 +154,7 @@ func CreateSystem(bios string, rom string) *System {
 	system.controller = input.CreateInput(system.memory, system.interuptHandler)
 	system.memory.SetIO(system.controller, system.interuptHandler)
 	system.timer = timer.CreateTimer(system.memory, system.interuptHandler)
+	system.memory.SetTimer(system.timer)
 
 	system.Reset()
 
@@ -226,6 +227,7 @@ func (s *System) Reset() {
 		s.cpu.Init()
 	}
 	s.controller.Reset()
+	s.timer.Reset()
 	s.executionHistory = make([]ExecutionInfo, 0)
 	s.cycle = 0
 	s.debugger.StartCycle()

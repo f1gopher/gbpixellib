@@ -88,11 +88,6 @@ func (r *ram) WriteByte(address uint16, value byte) {
 		return
 	}
 
-	// Any write resets it to 0
-	if address == DividerRegister {
-		r.mem.WriteByte(address, 0)
-	}
-
 	// Controller
 	if address == 0xFF00 {
 		P14 := (value >> 4) & 0x01
@@ -113,14 +108,6 @@ func (r *ram) WriteByte(address uint16, value byte) {
 
 		r.mem.WriteByte(address, current)
 		return
-	}
-
-	// Timer register
-	if address == 0xFF05 {
-		// When timer overflow from FF to 00 triogger interrupt
-		if r.ReadByte(address) == 0xFF && value == 0x00 {
-			r.interupt.TriggerTimerOverflow()
-		}
 	}
 
 	// LCD status register
