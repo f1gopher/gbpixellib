@@ -113,7 +113,7 @@ type System struct {
 	rom       string
 	isTestROM bool
 
-	debugger        *debugger.Debugger
+	debugger        debugger.Debugger
 	log             *log.Log
 	screen          *display.Screen
 	memory          *memory.Bus
@@ -134,9 +134,9 @@ type System struct {
 	executionHistory []ExecutionInfo
 }
 
-func CreateSystem(bios string, rom string) *System {
+func CreateSystem(bios string, rom string, useDebugger bool) *System {
 	l := log.CreateLog("./log.txt")
-	debugger, registers, memory := debugger.CreateDebugger(l)
+	debugger, registers, memory := debugger.CreateDebugger(l, useDebugger)
 	system := System{
 		debugger:         debugger,
 		log:              l,

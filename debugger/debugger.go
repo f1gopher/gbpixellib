@@ -6,50 +6,17 @@ import (
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
-type BreakpointComparison int
-
-const (
-	Equal BreakpointComparison = iota
-	NotEqual
-	GreaterThan
-	LessThan
-	GreaterThanOrEqual
-	LessThanOrEqual
-)
-
-type Debugger struct {
-	log    *log.Log
-	regs   debugRegisters
-	memory debugMemory
+type Debugger interface {
+	StartCycle()
+	HasHitBreakpoint() bool
+	BreakpointReason() string
+	AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16)
 }
 
-func CreateDebugger(log *log.Log) (*Debugger, cpu.RegistersInterface, *memory.Bus) {
-	r := debugRegisters{
-		registers:   &cpu.Registers{},
-		breakpoints: make(map[cpu.Register][]registerBreakpoint, 0),
-	}
-	m := debugMemory{memory: memory.CreateBus(log)}
-
-	d := &Debugger{
-		regs:   r,
-		memory: m,
+func CreateDebugger(l *log.Log, debug bool) (Debugger, cpu.RegistersInterface, *memory.Bus) {
+	if debug {
+		return createRealDebugger(l)
 	}
 
-	return d, &d.regs, m.memory
-}
-
-func (d *Debugger) StartCycle() {
-	d.regs.startCycle()
-}
-
-func (d *Debugger) HasHitBreakpoint() bool {
-	return d.regs.hasHitBreakpoint()
-}
-
-func (d *Debugger) BreakpointReason() string {
-	return d.regs.BreakpointReason()
-}
-
-func (d *Debugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) {
-	d.regs.AddBP(reg, comparison, value)
+	return createFakeDebugger(l)
 }

@@ -69,6 +69,7 @@ func (t *Timer) Update(cycles uint8) {
 	}
 
 	counter := t.mem.ReadByte(timerCounter)
+	enabled := memory.GetBit(control, 2)
 
 	var x uint8
 	for x = 0; x < cycles; x++ {
@@ -80,7 +81,7 @@ func (t *Timer) Update(cycles uint8) {
 		t.frequencyCounter = 0
 
 		// Increment if enabled
-		if memory.GetBit(control, 2) {
+		if enabled {
 			var newValue uint8
 
 			if uint16(counter)+1 > 0x00FF {
