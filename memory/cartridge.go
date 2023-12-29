@@ -35,6 +35,6 @@ func CreateCartridge(cartType uint8, romSize uint32, ramSize uint32, data *[]byt
 	case 0x01:
 		return createCartridgeMBC1(romSize, ramSize, data)
 	default:
-		panic(fmt.Sprintf("Unsupported cartridge type: 0x%2X", cartType))
+		panic(fmt.Sprintf("Unsupported cartridge type: 0x%02X", cartType))
 	}
 }

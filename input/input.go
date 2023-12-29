@@ -83,7 +83,7 @@ func (i *Input) InputB(pressed bool) {
 }
 
 func (i *Input) InputUp(pressed bool) {
-	i.directional = memory.SetBit(i.directional, P11, !pressed)
+	i.directional = memory.SetBit(i.directional, P12, !pressed)
 	if !pressed {
 		i.interupt.Request(interupt.Joypad)
 	}
