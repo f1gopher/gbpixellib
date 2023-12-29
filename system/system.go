@@ -315,7 +315,7 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 			}
 		}
 
-		s.timer.Update(uint8(x))
+		s.timer.Update(uint8(cyclesCompleted))
 
 		x += cyclesCompleted
 		s.cycle += cyclesCompleted
