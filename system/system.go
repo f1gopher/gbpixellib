@@ -101,10 +101,10 @@ type LCDControlState struct {
 	WY  byte
 	WX  byte
 
-	BGP_Idx3 byte
-	BGP_Idx2 byte
-	BGP_Idx1 byte
-	BGP_Idx0 byte
+	BGP_Idx3 display.ScreenColor
+	BGP_Idx2 display.ScreenColor
+	BGP_Idx1 display.ScreenColor
+	BGP_Idx0 display.ScreenColor
 
 	OBP0 byte
 	OBP1 byte
@@ -502,6 +502,11 @@ func (s *System) GetGPUState() *LCDControlState {
 		WX:  s.screen.WX(),
 
 		Clock: s.screen.Cycles(),
+
+		BGP_Idx0: s.screen.BGPIndex0Color(),
+		BGP_Idx1: s.screen.BGPIndex1Color(),
+		BGP_Idx2: s.screen.BGPIndex2Color(),
+		BGP_Idx3: s.screen.BGPIndex3Color(),
 	}
 }
 

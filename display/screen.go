@@ -43,7 +43,7 @@ const (
 )
 
 func (s ScreenColor) String() string {
-	return [...]string{" ", " ", ".", "o", "#"}[s]
+	return [...]string{"Off", "White", "Light Grey", "Dark Grey", "Black"}[s]
 }
 
 type interuptHandler interface {
@@ -473,15 +473,8 @@ func (s *Screen) renderSprites() {
 
 			line := scanline - yPos
 
-			//if yFlip {
-			//	line -= byte(ySize)
-			//	line *= -1
-			//}
-
 			line *= 2
 			dataAddress := (0x8000 + (uint16(tileLocation) * 16)) + uint16(line)
-			//data1 := s.memory.ReadByte(dataAddress)
-			//data2 := s.memory.ReadByte(dataAddress + 1)
 
 			tile := s.memory.ReadShort(dataAddress)
 
@@ -504,11 +497,6 @@ func (s *Screen) renderSprites() {
 				xPix += 7
 				pixel := uint16(xPos) + uint16(xPix)
 
-				//colourNum := memory.GetBit(data2, int(colourBit))
-				//colourNum = colourNum || memory.GetBit(data1, int(colourBit))
-
-				//color := s.bgpColor(colourNum)
-
 				// This happens sometimes (Mario)
 				if scanline < 0 || scanline >= screenHeight || pixel < 0 || pixel >= screenWidth {
 					// panic("Invalid pixel location")
@@ -523,20 +511,11 @@ func (s *Screen) renderSprites() {
 }
 
 func (s *Screen) Render(callback func(x int, y int, color ScreenColor)) {
-
-	//s.read()
-
-	//var output strings.Builder
-	//output.Grow(101 * screenWidth)
 	for y := 0; y < screenHeight; y++ {
 		for x := 0; x < screenWidth; x++ {
-			//output.WriteString(s.buffer[(y*screenWidth)+x].String())
 			callback(x, y, s.buffer[(y*screenWidth)+x])
 		}
-		//output.WriteString("\n")
 	}
-
-	//return output.String()
 }
 
 func (s *Screen) tileAddrForId(id byte) uint16 {
@@ -576,66 +555,18 @@ func (s *Screen) drawTile(tileAddr uint16, firstPixelIndex int) {
 }
 
 func (s *Screen) colorForPixel(block uint16, index byte) ScreenColor {
-	// var paletteId byte = 0
-	// l1 := s.memory.ReadBit(block, 7-index)
-	// l2 := s.memory.ReadBit(block+1, 7-index)
-	// if l1 {
-	// 	paletteId = 1
-	// }
-	//
-	// if l2 {
-	// 	paletteId += 2
-	// }
-	//
-	// c := (byte(s.memory.ReadByte(0xFF47)) >> (paletteId * 2)) & 0x03
-	// switch c {
-	// case 0:
-	// 	return white
-	// case 1:
-	// 	return lightGray
-	// case 2:
-	// 	return darkGray
-	// case 3:
-	// 	return black
-	// default:
-	// 	panic("")
-	// }
-	//
-
-	// bit 7 is for pixel 0
-	//switch index {
-	//case 0:
-	//	index = 7
-	//case 1:
-	//	index = 6
-	//case 2:
-	//	index = 5
-	//case 3:
-	//	index = 4
-	//case 4:
-	//	index = 3
-	//case 5:
-	//	index = 2
-	//case 6:
-	//	index = 1
-	//case 7:
-	//	index = 0
-	//default:
-	//	panic("")
-	//}
-
 	highFlag := block >> (8 + index) & 0x0001
 	lowFlag := block >> index & 0x0001
 
-	// TODO - check order of bytes
+	// TODO - check the order of bytes
 
 	if highFlag == 0x00 && lowFlag == 0x00 {
-		return White
+		return s.BGPIndex0Color()
 	} else if highFlag == 0x00 && lowFlag == 0x01 {
-		return LightGray
+		return s.BGPIndex1Color()
 	} else if highFlag == 0x01 && lowFlag == 0x00 {
-		return DarkGray
-	} else { // aFlag == 0x00 && bFlag == 0x00
-		return Black
+		return s.BGPIndex2Color()
+	} else {
+		return s.BGPIndex3Color()
 	}
 }
