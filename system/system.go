@@ -113,7 +113,8 @@ type LCDControlState struct {
 }
 
 type CartridgeState struct {
-	CurrentBank uint8
+	CurrentROMBank uint8
+	CurrentRAMBank uint8
 }
 
 type System struct {
@@ -506,7 +507,8 @@ func (s *System) GetGPUState() *LCDControlState {
 
 func (s *System) GetCartridgeState() *CartridgeState {
 	return &CartridgeState{
-		CurrentBank: s.cartridge.CurrentBank(),
+		CurrentROMBank: s.cartridge.CurrentROMBank(),
+		CurrentRAMBank: s.cartridge.CurrentRAMBank(),
 	}
 }
 

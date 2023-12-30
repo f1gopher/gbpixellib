@@ -2,7 +2,7 @@ package memory
 
 import "fmt"
 
-type cartridgeMBC1 struct {
+type cartridgeMBC3 struct {
 	romBanks map[uint8]*Memory
 	ramBanks map[uint8]*Memory
 
@@ -13,14 +13,10 @@ type cartridgeMBC1 struct {
 	ramStart          uint16
 }
 
-func createCartridgeMBC1(romSize uint32, ramSize uint32, data *[]byte) Cartridge {
-
-	if romSize >= M_1MiB {
-		panic("Not implemented version of MBC1")
-	}
+func createCartridgeMBC3(romSize uint32, ramSize uint32, data *[]byte) Cartridge {
 
 	ram := make([]byte, ramSize)
-	return &cartridgeMBC1{
+	return &cartridgeMBC3{
 		romBanks:          splitDataIntoBanks(0x0000, 0x4000, M_16Kb, data, "ROM"),
 		ramBanks:          splitDataIntoBanks(0xA000, 0xA000, M_8Kb, &ram, "RAM"),
 		ramEnable:         0x00,
@@ -31,7 +27,7 @@ func createCartridgeMBC1(romSize uint32, ramSize uint32, data *[]byte) Cartridge
 	}
 }
 
-func (c *cartridgeMBC1) Reset() {
+func (c *cartridgeMBC3) Reset() {
 	for k, _ := range c.ramBanks {
 		c.ramBanks[k].Reset()
 	}
@@ -43,7 +39,7 @@ func (c *cartridgeMBC1) Reset() {
 	c.bankingModeSelect = 0x00
 }
 
-func (c *cartridgeMBC1) ReadBit(address uint16, bit uint8) bool {
+func (c *cartridgeMBC3) ReadBit(address uint16, bit uint8) bool {
 	if address >= c.ramStart && !c.isRamEnabled() {
 		return true
 	}
@@ -51,15 +47,21 @@ func (c *cartridgeMBC1) ReadBit(address uint16, bit uint8) bool {
 	return c.memoryBank(address).ReadBit(address, bit)
 }
 
-func (c *cartridgeMBC1) ReadByte(address uint16) byte {
-	if address >= c.ramStart && !c.isRamEnabled() {
-		return 0xFF
+func (c *cartridgeMBC3) ReadByte(address uint16) byte {
+	if address >= c.ramStart {
+		if !c.isRamEnabled() {
+			return 0xFF
+		}
+
+		if c.isRTCEnabled() {
+			return 0xFF
+		}
 	}
 
 	return c.memoryBank(address).ReadByte(address)
 }
 
-func (c *cartridgeMBC1) ReadShort(address uint16) uint16 {
+func (c *cartridgeMBC3) ReadShort(address uint16) uint16 {
 	if address >= c.ramStart && !c.isRamEnabled() {
 		return 0xFFFF
 	}
@@ -67,7 +69,7 @@ func (c *cartridgeMBC1) ReadShort(address uint16) uint16 {
 	return c.memoryBank(address).ReadShort(address)
 }
 
-func (c *cartridgeMBC1) WriteBit(address uint16, bit uint8, value bool) {
+func (c *cartridgeMBC3) WriteBit(address uint16, bit uint8, value bool) {
 	if address <= 0x7FFF {
 		panic("This shouldn't happen")
 	}
@@ -79,7 +81,7 @@ func (c *cartridgeMBC1) WriteBit(address uint16, bit uint8, value bool) {
 	c.memoryBank(address).WriteBit(address, bit, value)
 }
 
-func (c *cartridgeMBC1) WriteByte(address uint16, value byte) {
+func (c *cartridgeMBC3) WriteByte(address uint16, value byte) {
 	if address >= c.ramStart && !c.isRamEnabled() {
 		return
 	}
@@ -109,7 +111,7 @@ func (c *cartridgeMBC1) WriteByte(address uint16, value byte) {
 	c.memoryBank(address).WriteByte(address, value)
 }
 
-func (c *cartridgeMBC1) WriteShort(address uint16, value uint16) {
+func (c *cartridgeMBC3) WriteShort(address uint16, value uint16) {
 	if address >= c.ramStart && !c.isRamEnabled() {
 		return
 	}
@@ -121,7 +123,7 @@ func (c *cartridgeMBC1) WriteShort(address uint16, value uint16) {
 	c.memoryBank(address).WriteShort(address, value)
 }
 
-func (c *cartridgeMBC1) DumpROMCode() []uint8 {
+func (c *cartridgeMBC3) DumpROMCode() []uint8 {
 
 	// Combine the first and current banks
 	code := c.romBanks[0].DumpCode()
@@ -130,32 +132,33 @@ func (c *cartridgeMBC1) DumpROMCode() []uint8 {
 	return code
 }
 
-func (c *cartridgeMBC1) DumpRAMCode() []uint8 {
+func (c *cartridgeMBC3) DumpRAMCode() []uint8 {
 	return c.ramBanks[c.ramBank()].DumpCode()
 }
 
-func (c *cartridgeMBC1) DumpROMBankCode(bank uint8) []uint8 {
+func (c *cartridgeMBC3) DumpROMBankCode(bank uint8) []uint8 {
 	if int(bank) > len(c.romBanks)-1 {
 		panic("Invalid bank number for cartridge")
 	}
 	return c.romBanks[bank].DumpCode()
 }
 
-func (c *cartridgeMBC1) DumpRAMBankCode(bank uint8) []uint8 {
+func (c *cartridgeMBC3) DumpRAMBankCode(bank uint8) []uint8 {
 	if int(bank) > len(c.ramBanks)-1 {
 		panic("Invalid bank number for cartridge")
 	}
 	return c.ramBanks[bank].DumpCode()
 }
 
-func (c *cartridgeMBC1) CurrentROMBank() uint8 {
+func (c *cartridgeMBC3) CurrentROMBank() uint8 {
 	return c.romBank()
 }
 
-func (c *cartridgeMBC1) CurrentRAMBank() uint8 {
+func (c *cartridgeMBC3) CurrentRAMBank() uint8 {
 	return c.ramBank()
 }
-func (c *cartridgeMBC1) memoryBank(address uint16) *Memory {
+
+func (c *cartridgeMBC3) memoryBank(address uint16) *Memory {
 	if address >= c.ramStart && address <= 0xBFFF {
 		bankNumber := c.ramBank()
 		bank, exists := c.ramBanks[bankNumber]
@@ -178,13 +181,13 @@ func (c *cartridgeMBC1) memoryBank(address uint16) *Memory {
 	return bank
 }
 
-func (c *cartridgeMBC1) isRamEnabled() bool {
+func (c *cartridgeMBC3) isRamEnabled() bool {
 	// Lower 4 bits must be A
 	return (0b00001111 & c.ramEnable) == 0x0A
 }
 
-func (c *cartridgeMBC1) romBank() uint8 {
-	bank := (0b00011111 & c.romBankNumber)
+func (c *cartridgeMBC3) romBank() uint8 {
+	bank := (0b01111111 & c.romBankNumber)
 
 	if bank == 0 {
 		bank = 1
@@ -193,8 +196,13 @@ func (c *cartridgeMBC1) romBank() uint8 {
 	return bank
 }
 
-func (c *cartridgeMBC1) ramBank() uint8 {
-	// TODO - is this right or should it be %?
-	bank := (0b00000011 & c.ramBankNumber)
-	return bank
+func (c *cartridgeMBC3) ramBank() uint8 {
+	// TODO - why???
+	return c.ramBankNumber % uint8(len(c.ramBanks))
+	// bank := (0b00000011 & c.ramBankNumber)
+	// return bank
+}
+
+func (c *cartridgeMBC3) isRTCEnabled() bool {
+	return c.ramBankNumber >= 0x08 && c.ramBankNumber <= 0x0C
 }

@@ -58,7 +58,15 @@ func (c *CartridgeNoMBC) DumpROMBankCode(bank uint8) []uint8 {
 	panic("Cartridge type does not have memory banks")
 }
 
-func (c *CartridgeNoMBC) CurrentBank() uint8 {
+func (c *CartridgeNoMBC) DumpRAMBankCode(bank uint8) []uint8 {
+	panic("Cartridge type does not have memory banks")
+}
+
+func (c *CartridgeNoMBC) CurrentROMBank() uint8 {
+	return 0
+}
+
+func (c *CartridgeNoMBC) CurrentRAMBank() uint8 {
 	return 0
 }
 

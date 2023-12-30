@@ -10,6 +10,7 @@ const (
 	BIOSROM Area = iota
 	GPUMemory
 	ConsoleRAM
+	CartridgeRAMBank
 	CartridgeRAM
 	CartridgeROM
 	CartridgeROMBank
@@ -144,6 +145,7 @@ func (b *Bus) DumpCode(area Area, bank uint8) []uint8 {
 		return b.video.mem.DumpCode()
 	case ConsoleRAM:
 		return b.ram.mem.DumpCode()
+	case CartridgeRAMBank: return b.cartridge.DumpRAMBankCode(bank)
 	case CartridgeRAM:
 		return b.cartridge.DumpRAMCode()
 	case CartridgeROMBank:
