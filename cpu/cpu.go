@@ -43,12 +43,12 @@ type Cpu struct {
 	reg    RegistersInterface
 	memory memoryInterface
 
-	executeOpcodePC     uint16
-	prevOpcodePC        uint16
-	executeOpcode       opcode
-	executeOpcodesCycle int
-	prevOpcode          uint8
-	isCB                bool
+	executeOpcodePC      uint16
+	prevOpcodePC         uint16
+	executeOpcode        opcode
+	executeOpcodesMCycle int
+	prevOpcode           uint8
+	isCB                 bool
 
 	opcodes   [256]opcode
 	cbOpcodes [256]opcode
@@ -125,7 +125,7 @@ func (c *Cpu) Init() {
 
 func (c *Cpu) Reset() {
 	c.executeOpcode = nil
-	c.executeOpcodesCycle = 0
+	c.executeOpcodesMCycle = 0
 	c.reg.Reset()
 	c.executeOpcodePC = 0
 	c.prevOpcodePC = 0
@@ -135,10 +135,10 @@ func (c *Cpu) Reset() {
 }
 
 func (c *Cpu) DoInterruptCycle() error {
-	c.executeOpcodesCycle++
+	c.executeOpcodesMCycle++
 
 	// If an interrupt with jump happens reset and fetch the next instruction
-	c.executeOpcodesCycle = 0
+	c.executeOpcodesMCycle = 0
 
 	c.prevOpcodePC = c.executeOpcodePC
 	//c.executeOpcodePC = c.reg.Get16(PC)
@@ -159,7 +159,7 @@ func (c *Cpu) DoInterruptCycle() error {
 	return nil
 }
 
-func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcodeDescription string, err error) {
+func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcodeDescription string, err error) {
 	// On startup we will have no fetched opcode so
 	// fetch a nw opcode then end the cycle
 	if c.executeOpcode == nil {
@@ -174,7 +174,7 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcode
 		// Assign it straight to execute so it will be ready for the next cycle
 		c.executeOpcode, err = c.getOpcode(opcode, cbOpcode)
 
-		c.executeOpcodesCycle = 0
+		c.executeOpcodesMCycle = 0
 
 		if err != nil {
 			return false, false, "", err
@@ -199,7 +199,7 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcode
 		// Assign it straight to execute so it will be ready for the next cycle
 		c.executeOpcode, err = c.getOpcode(opcode, cbOpcode)
 
-		c.executeOpcodesCycle = 0
+		c.executeOpcodesMCycle = 0
 
 		if err != nil {
 			return false, false, "", err
@@ -208,15 +208,15 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcode
 
 	// We already have an opcode so do an excute on that opcode
 	completed, err := c.executeOpcode.doCycle(
-		c.executeOpcodesCycle+1,
+		c.executeOpcodesMCycle+1,
 		c.reg,
 		c.memory)
 
 	if err != nil {
-		return false, completed, "", errors.Join(errors.New(fmt.Sprintf("Opcode %s cycle %d", c.executeOpcode.name(), c.executeOpcodesCycle)), err)
+		return false, completed, "", errors.Join(errors.New(fmt.Sprintf("Opcode %s cycle %d", c.executeOpcode.name(), c.executeOpcodesMCycle)), err)
 	}
 
-	c.executeOpcodesCycle++
+	c.executeOpcodesMCycle++
 	var description string
 	breakpointHit := false
 
@@ -226,7 +226,7 @@ func (c *Cpu) ExecuteCycle() (breakpoint bool, instructionCompleted bool, opcode
 	// If the current opcode has finished then do a fetch for the next opcode
 	// in the same cycle (overlapping execute and fetch)
 	if completed {
-		c.executeOpcodesCycle = 0
+		c.executeOpcodesMCycle = 0
 
 		description = c.executeOpcode.name()
 

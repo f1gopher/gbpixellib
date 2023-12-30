@@ -17,11 +17,19 @@ import (
 	"github.com/f1gopher/gbpixellib/timer"
 )
 
+const cyclesPerSecond = 4194304
+const framesPerSecond = 60
+const cyclesPerFrame = cyclesPerSecond / framesPerSecond
+const cyclesPerMCycle = 4
+const mCyclesPerFrame = cyclesPerFrame / cyclesPerMCycle
+const dmaMCycles = 160
+const handleInterruptMCycles = 5
+
 const executionHistorySize = 10
 
 type ExecutionInfo struct {
 	Name           string
-	StartCycle     uint
+	StartMCycle    uint
 	ProgramCounter uint16
 }
 
@@ -130,7 +138,7 @@ type System struct {
 
 	pcBreakpoint uint16
 
-	cycle            uint
+	mCycle           uint
 	executionHistory []ExecutionInfo
 }
 
@@ -229,7 +237,7 @@ func (s *System) Reset() {
 	s.controller.Reset()
 	s.timer.Reset()
 	s.executionHistory = make([]ExecutionInfo, 0)
-	s.cycle = 0
+	s.mCycle = 0
 	s.debugger.StartCycle()
 	s.Start()
 }
@@ -241,25 +249,24 @@ func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) 
 	s.screen.Render(callback)
 }
 
-func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
+func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err error) {
 
-	const maxCycles = 69905
 	prevCompleted := false
 	didDMA := false
-	cyclesCompleted = 0
+	mCyclesCompleted = 0
 	wasHalted := false
 	var x uint
 	info := ExecutionInfo{}
 
-	for x = 0; x < maxCycles; {
-		cyclesCompleted = 1
-		info.StartCycle = s.cycle
+	for x = 0; x < mCyclesPerFrame; {
+		mCyclesCompleted = 1
+		info.StartMCycle = s.mCycle
 		info.ProgramCounter = s.cpu.GetOpcodePC()
 
 		if prevCompleted {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
 				info.Name = "**DMA**"
-				cyclesCompleted += 162
+				mCyclesCompleted += dmaMCycles
 
 				if s.debugger.HasHitBreakpoint() {
 					return true, x, nil
@@ -275,20 +282,20 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 					} else {
 						info.Name = "**HALTED**"
 					}
-					cyclesCompleted++
+					mCyclesCompleted++
 					s.appendExecutionHistory(&info)
 				} else {
 					// If handled an interrupt don't process any instructions this cycle
 					if interupted, name := s.interuptHandler.Update(s.cpu.GetOpcodePC()); interupted {
 						if err := s.cpu.DoInterruptCycle(); err != nil {
-							return false, cyclesCompleted, err
+							return false, mCyclesCompleted, err
 						}
-						cyclesCompleted = 5
+						mCyclesCompleted = handleInterruptMCycles
 						info.Name = "**INTERUPT** - " + name
 						s.appendExecutionHistory(&info)
-						s.screen.UpdateForCycles(cyclesCompleted * 4)
-						x += cyclesCompleted
-						s.cycle += cyclesCompleted
+						s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+						x += mCyclesCompleted
+						s.mCycle += mCyclesCompleted
 
 						if s.debugger.HasHitBreakpoint() {
 							return true, x, nil
@@ -300,11 +307,11 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 				}
 			}
 
-			s.screen.UpdateForCycles(cyclesCompleted * 4)
+			s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 		}
 
 		if !didDMA && !wasHalted {
-			_, prevCompleted, info.Name, err = s.cpu.ExecuteCycle()
+			_, prevCompleted, info.Name, err = s.cpu.ExecuteMCycle()
 
 			if err != nil {
 				return false, x, err
@@ -315,10 +322,10 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 			}
 		}
 
-		s.timer.Update(uint8(cyclesCompleted))
+		s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
 
-		x += cyclesCompleted
-		s.cycle += cyclesCompleted
+		x += mCyclesCompleted
+		s.mCycle += mCyclesCompleted
 
 		if prevCompleted {
 			if s.debugger.HasHitBreakpoint() {
@@ -329,20 +336,20 @@ func (s *System) Tick() (breakpoint bool, cyclesCompleted uint, err error) {
 		}
 	}
 
-	return false, maxCycles, nil
+	return false, mCyclesCompleted, nil
 }
 
-func (s *System) SingleInstruction() (breakpoint bool, cyclesCompleted uint, err error) {
+func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, err error) {
 
 	s.debugger.StartCycle()
-	cyclesCompleted = 0
+	mCyclesCompleted = 0
 	info := ExecutionInfo{
-		StartCycle:     s.cycle,
+		StartMCycle:    s.mCycle,
 		ProgramCounter: s.cpu.GetOpcodePC(),
 	}
 
 	if s.memory.ExecuteDMAIfPending() {
-		cyclesCompleted = 162
+		mCyclesCompleted = dmaMCycles
 		info.Name = "**DMA**"
 	} else {
 		if s.regs.GetHALT() {
@@ -352,31 +359,31 @@ func (s *System) SingleInstruction() (breakpoint bool, cyclesCompleted uint, err
 			} else {
 				info.Name = "**HALTED**"
 			}
-			cyclesCompleted++
+			mCyclesCompleted++
 
 		} else {
 			// If handled an interrupt don't process any instructions this cycle
 			if interupted, name := s.interuptHandler.Update(s.cpu.GetOpcodePC()); interupted {
 				if err := s.cpu.DoInterruptCycle(); err != nil {
-					return false, cyclesCompleted, err
+					return false, mCyclesCompleted, err
 				}
 
 				info.Name = "**INTERUPT** - " + name
 				s.appendExecutionHistory(&info)
-				cyclesCompleted = 5
-				s.screen.UpdateForCycles(cyclesCompleted * 4)
+				mCyclesCompleted = handleInterruptMCycles
+				s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 
-				return s.debugger.HasHitBreakpoint(), cyclesCompleted, nil
+				return s.debugger.HasHitBreakpoint(), mCyclesCompleted, nil
 			}
 
 			var completed bool
 			for {
-				_, completed, info.Name, err = s.cpu.ExecuteCycle()
+				_, completed, info.Name, err = s.cpu.ExecuteMCycle()
 
-				cyclesCompleted++
+				mCyclesCompleted++
 
 				if err != nil {
-					return false, cyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
+					return false, mCyclesCompleted, errors.Join(errors.New("Tick incomplete"), err)
 				}
 
 				if completed {
@@ -387,15 +394,15 @@ func (s *System) SingleInstruction() (breakpoint bool, cyclesCompleted uint, err
 	}
 
 	// Update timers
-	s.screen.UpdateForCycles(cyclesCompleted * 4)
+	s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 
-	s.timer.Update(uint8(cyclesCompleted))
+	s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
 
 	s.appendExecutionHistory(&info)
 
-	s.cycle += cyclesCompleted
+	s.mCycle += mCyclesCompleted
 
-	return s.debugger.HasHitBreakpoint(), cyclesCompleted, nil
+	return s.debugger.HasHitBreakpoint(), mCyclesCompleted, nil
 }
 
 func (s *System) State() string {
@@ -442,7 +449,7 @@ func (s *System) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
 		HFlag: s.regs.GetFlag(cpu.HFlag),
 		CFlag: s.regs.GetFlag(cpu.CFlag),
 		SPMem: spMem,
-		Cycle: s.cycle,
+		Cycle: s.mCycle,
 	}, s.cpu.GetPrevOpcode(), isCB
 }
 

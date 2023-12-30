@@ -74,7 +74,7 @@ func (t *Timer) Update(cycles uint8) {
 	var x uint8
 	for x = 0; x < cycles; x++ {
 
-		t.frequencyCounter += 4
+		t.frequencyCounter++
 		if t.frequencyCounter < frequency {
 			continue
 		}
