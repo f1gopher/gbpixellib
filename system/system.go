@@ -3,7 +3,6 @@ package system
 import (
 	"errors"
 	"fmt"
-	"image"
 	"os"
 	"sync"
 
@@ -24,93 +23,6 @@ const cyclesPerMCycle = 4
 const mCyclesPerFrame = cyclesPerFrame / cyclesPerMCycle
 const dmaMCycles = 160
 const handleInterruptMCycles = 5
-
-const executionHistorySize = 10
-
-type ExecutionInfo struct {
-	Name           string
-	StartMCycle    uint
-	ProgramCounter uint16
-}
-
-type DebugState struct {
-	NextInstruction     string
-	ValueReferencedByPC uint8
-}
-
-type CPUState struct {
-	A  uint8
-	F  uint8
-	B  uint8
-	C  uint8
-	D  uint8
-	E  uint8
-	H  uint8
-	L  uint8
-	SP uint16
-	PC uint16
-
-	ZFlag bool
-	NFlag bool
-	HFlag bool
-	CFlag bool
-
-	SPMem uint16
-
-	Cycle uint
-}
-
-type InterruptState struct {
-	IME             bool
-	VBlankRequested bool
-	VBlankEnabled   bool
-	LCDRequested    bool
-	LCDEnabled      bool
-	TimeRequested   bool
-	TimeEnabled     bool
-	SerialRequested bool
-	SerialEnabled   bool
-	JoypadRequested bool
-	JoypadEnabled   bool
-}
-
-type LCDControlState struct {
-	LCDEnabled        bool
-	WindowTileMapArea uint16
-	WindowEnabled     bool
-	BGWindowTileData  uint16
-	BGTileMap         uint16
-	OBJSize           byte
-	OBJEnabled        bool
-	BGWindowEnabled   bool
-
-	LCDY byte
-
-	LYLYCCompare byte
-
-	LCDStatus_LYCLYInterrupt       bool
-	LCDStatus_Mode2OAMInterrupt    bool
-	LCDStatus_Mode1VBlankInterrupt bool
-	LCDStatus_Mode0HBlankInterrupt bool
-	LCDStatus_LYCLY                bool
-	LCDStatus_Mode                 byte
-	LCDStatus                      uint8
-
-	SCY byte
-	SCX byte
-	WY  byte
-	WX  byte
-
-	BGP_Idx3 display.ScreenColor
-	BGP_Idx2 display.ScreenColor
-	BGP_Idx1 display.ScreenColor
-	BGP_Idx0 display.ScreenColor
-
-	OBP0 byte
-	OBP1 byte
-
-	Clock uint
-}
 
 type CartridgeState struct {
 	CurrentROMBank uint8
@@ -137,22 +49,20 @@ type System struct {
 	currentDisplay string
 	displayLock    sync.Mutex
 
-	mCycle           uint
-	executionHistory []ExecutionInfo
+	dump dumpInterface
 }
 
 func CreateSystem(bios string, rom string, useDebugger bool) *System {
 	l := log.CreateLog("./log.txt")
 	debugger, registers, memory := debugger.CreateDebugger(l, useDebugger)
 	system := System{
-		debugger:         debugger,
-		log:              l,
-		isTestROM:        false,
-		bios:             bios,
-		rom:              rom,
-		memory:           memory,
-		regs:             registers,
-		executionHistory: make([]ExecutionInfo, 0),
+		debugger:  debugger,
+		log:       l,
+		isTestROM: false,
+		bios:      bios,
+		rom:       rom,
+		memory:    memory,
+		regs:      registers,
 	}
 	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
@@ -161,6 +71,15 @@ func CreateSystem(bios string, rom string, useDebugger bool) *System {
 	system.memory.SetIO(system.controller, system.interuptHandler)
 	system.timer = timer.CreateTimer(system.memory, system.interuptHandler)
 	system.memory.SetTimer(system.timer)
+
+	system.dump = dumpInterface{
+		regs:             system.regs,
+		cpu:              system.cpu,
+		memory:           system.memory,
+		screen:           system.screen,
+		cartridge:        system.cartridge,
+		executionHistory: make([]ExecutionInfo, 0),
+	}
 
 	system.Reset()
 
@@ -186,7 +105,8 @@ func (s *System) LoadTestROM(rom string) {
 
 func (s *System) IsCartridgeSupported() bool {
 	return s.cartridgeHeader.CartridgeType == 0x00 ||
-		s.cartridgeHeader.CartridgeType == 0x01
+		s.cartridgeHeader.CartridgeType == 0x01 ||
+		s.cartridgeHeader.CartridgeType == 0x03
 }
 
 func (s *System) Start() {
@@ -216,6 +136,7 @@ func (s *System) Start() {
 		s.cartridgeHeader.ROMSizeBytes,
 		s.cartridgeHeader.RAMSizeBytes,
 		&rom)
+	s.dump.cartridge = s.cartridge
 
 	s.memory.Load(&bios, s.cartridge)
 }
@@ -234,8 +155,7 @@ func (s *System) Reset() {
 	}
 	s.controller.Reset()
 	s.timer.Reset()
-	s.executionHistory = make([]ExecutionInfo, 0)
-	s.mCycle = 0
+	s.dump.reset()
 	s.debugger.StartCycle()
 	s.Start()
 }
@@ -258,7 +178,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 
 	for x = 0; x < mCyclesPerFrame; {
 		mCyclesCompleted = 1
-		info.StartMCycle = s.mCycle
+		info.StartMCycle = s.dump.mCycle
 		info.ProgramCounter = s.cpu.GetOpcodePC()
 
 		if prevCompleted {
@@ -281,7 +201,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 						info.Name = "**HALTED**"
 					}
 					mCyclesCompleted++
-					s.appendExecutionHistory(&info)
+					s.dump.appendExecutionHistory(&info)
 				} else {
 					// If handled an interrupt don't process any instructions this cycle
 					if interupted, name := s.interuptHandler.Update(s.cpu.GetOpcodePC()); interupted {
@@ -290,10 +210,10 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 						}
 						mCyclesCompleted = handleInterruptMCycles
 						info.Name = "**INTERUPT** - " + name
-						s.appendExecutionHistory(&info)
+						s.dump.appendExecutionHistory(&info)
 						s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 						x += mCyclesCompleted
-						s.mCycle += mCyclesCompleted
+						s.dump.mCycle += mCyclesCompleted
 
 						if s.debugger.HasHitBreakpoint() {
 							return true, x, nil
@@ -316,14 +236,14 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 			}
 
 			if prevCompleted {
-				s.appendExecutionHistory(&info)
+				s.dump.appendExecutionHistory(&info)
 			}
 		}
 
 		s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
 
 		x += mCyclesCompleted
-		s.mCycle += mCyclesCompleted
+		s.dump.mCycle += mCyclesCompleted
 
 		if prevCompleted {
 			if s.debugger.HasHitBreakpoint() {
@@ -342,7 +262,7 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 	s.debugger.StartCycle()
 	mCyclesCompleted = 0
 	info := ExecutionInfo{
-		StartMCycle:    s.mCycle,
+		StartMCycle:    s.dump.mCycle,
 		ProgramCounter: s.cpu.GetOpcodePC(),
 	}
 
@@ -367,7 +287,7 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 				}
 
 				info.Name = "**INTERUPT** - " + name
-				s.appendExecutionHistory(&info)
+				s.dump.appendExecutionHistory(&info)
 				mCyclesCompleted = handleInterruptMCycles
 				s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 
@@ -396,9 +316,9 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 
 	s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
 
-	s.appendExecutionHistory(&info)
+	s.dump.appendExecutionHistory(&info)
 
-	s.mCycle += mCyclesCompleted
+	s.dump.mCycle += mCyclesCompleted
 
 	return s.debugger.HasHitBreakpoint(), mCyclesCompleted, nil
 }
@@ -422,258 +342,18 @@ func (s *System) PreviousPC() uint16 {
 	return s.cpu.GetPrevOpcodePC()
 }
 
-func (s *System) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
-	_, isCB = s.cpu.GetNextOpcode()
-
-	lsb := s.memory.ReadByte(s.regs.Get16(cpu.SP))
-	msb := s.memory.ReadByte(s.regs.Get16(cpu.SP) + 1)
-	spMem := uint16(msb)
-	spMem = spMem << 8
-	spMem = spMem | uint16(lsb)
-
-	return &CPUState{
-		A:     s.regs.Get8(cpu.A),
-		F:     s.regs.Get8(cpu.F),
-		B:     s.regs.Get8(cpu.B),
-		C:     s.regs.Get8(cpu.C),
-		D:     s.regs.Get8(cpu.D),
-		E:     s.regs.Get8(cpu.E),
-		H:     s.regs.Get8(cpu.H),
-		L:     s.regs.Get8(cpu.L),
-		SP:    s.regs.Get16(cpu.SP),
-		PC:    s.regs.Get16(cpu.PC),
-		ZFlag: s.regs.GetFlag(cpu.ZFlag),
-		NFlag: s.regs.GetFlag(cpu.NFlag),
-		HFlag: s.regs.GetFlag(cpu.HFlag),
-		CFlag: s.regs.GetFlag(cpu.CFlag),
-		SPMem: spMem,
-		Cycle: s.mCycle,
-	}, s.cpu.GetPrevOpcode(), isCB
-}
-
-func (s *System) GetInterruptState() *InterruptState {
-	requested := s.memory.ReadByte(0xFF0F)
-	enabled := s.memory.ReadByte(0xFFFF)
-
-	return &InterruptState{
-		IME:             s.regs.GetIME(),
-		VBlankRequested: memory.GetBit(requested, 0),
-		VBlankEnabled:   memory.GetBit(enabled, 0),
-		LCDRequested:    memory.GetBit(requested, 1),
-		LCDEnabled:      memory.GetBit(enabled, 1),
-		TimeRequested:   memory.GetBit(requested, 2),
-		TimeEnabled:     memory.GetBit(enabled, 2),
-		SerialRequested: memory.GetBit(requested, 3),
-		SerialEnabled:   memory.GetBit(enabled, 3),
-		JoypadRequested: memory.GetBit(requested, 4),
-		JoypadEnabled:   memory.GetBit(enabled, 4),
-	}
-}
-
-func (s *System) GetGPUState() *LCDControlState {
-	return &LCDControlState{
-		LCDEnabled:        s.screen.LCDEnable(),
-		WindowTileMapArea: s.screen.WindowTileMapStart(),
-		WindowEnabled:     s.screen.WindowEnable(),
-		BGWindowTileData:  s.screen.BgWindowTileDataArea(),
-		BGTileMap:         s.screen.BackgroundTileMapStart(),
-		OBJSize:           s.screen.ObjSize(),
-		OBJEnabled:        s.screen.ObjEnable(),
-		BGWindowEnabled:   s.screen.BgWindowEnablePriority(),
-
-		LCDY: s.screen.LY(),
-
-		LYLYCCompare: s.screen.LYC(),
-
-		LCDStatus_LYCLYInterrupt:       s.screen.LCDStatusStatInterruptLycLy(),
-		LCDStatus_Mode2OAMInterrupt:    s.screen.LCDStatusStatInterruptMode2Oam(),
-		LCDStatus_Mode1VBlankInterrupt: s.screen.LCDStatusStatInterruptMode1Vblank(),
-		LCDStatus_Mode0HBlankInterrupt: s.screen.LCDStatusStatInterruptMode0Hblank(),
-		LCDStatus_LYCLY:                s.screen.LCDStatusLycLy(),
-		LCDStatus_Mode:                 byte(s.screen.LCDStatusMode()),
-		LCDStatus:                      s.memory.ReadByte(0xFF41),
-
-		SCY: s.screen.SCY(),
-		SCX: s.screen.SCX(),
-		WY:  s.screen.WY(),
-		WX:  s.screen.WX(),
-
-		Clock: s.screen.Cycles(),
-
-		BGP_Idx0: s.screen.BGPIndex0Color(),
-		BGP_Idx1: s.screen.BGPIndex1Color(),
-		BGP_Idx2: s.screen.BGPIndex2Color(),
-		BGP_Idx3: s.screen.BGPIndex3Color(),
-	}
-}
-
-func (s *System) GetCartridgeState() *CartridgeState {
-	return &CartridgeState{
-		CurrentROMBank: s.cartridge.CurrentROMBank(),
-		CurrentRAMBank: s.cartridge.CurrentRAMBank(),
-	}
-}
-
-func (s *System) GetDebugState() *DebugState {
-	return &DebugState{
-		NextInstruction:     s.cpu.GetOpcode(),
-		ValueReferencedByPC: s.memory.ReadByte(s.regs.Get16(cpu.PC)),
-	}
-}
-
-func (s *System) GetExecutionHistory() []ExecutionInfo {
-	return s.executionHistory
-}
-
-func (s *System) DumpTileset() image.Image {
-	return s.screen.DumpTileset()
-}
-
-func (s *System) DumpFirstTileMap() *[1024]byte {
-	return s.screen.DumpFirstTileMap()
-}
-
-func (s *System) DumpSecondTileMap() *[1024]byte {
-	return s.screen.DumpSecondTileMap()
-}
-
-func (s *System) DumpWindowTileMap() *[1024]byte {
-	return s.screen.DumpWindowTileMap()
-}
-
-func (s *System) DumpBackgroundTileMap() *[1024]byte {
-	return s.screen.DumpBackgroundTileMap()
-}
-
-func (s *System) DumpCode(area memory.Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int) {
-	bios := s.memory.DumpCode(area, bank)
-	current := s.cpu.GetOpcodePC()
-	previous := s.cpu.GetPrevOpcodePC()
-
-	//// If we are executing then subtract one because we will inc the PC after getting the opcocde and so will point past
-	//// the current instruction
-	//if current != 0 {
-	//	current--
-	//}
-
-	instructions = make([]string, 0)
-	currentIndex := 0
-	previousIndex := 0
-
-	for x := uint16(0); x < uint16(len(bios)); {
-		opcode := bios[x]
-		var cbOpcode uint8 = 0
-		if x+1 < uint16(len(bios)) {
-			cbOpcode = bios[x+1]
-		}
-		name, opcodeLength := s.cpu.GetOpcodeInfo(opcode, cbOpcode)
-		extraInfo := ""
-
-		for y := uint16(1); y < uint16(opcodeLength); y++ {
-			extraInfo += fmt.Sprintf(" %02X", bios[x+y])
-		}
-
-		instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s\n", x, name, extraInfo))
-
-		if x == current {
-			currentIndex = len(instructions) - 1
-		}
-
-		if x == previous {
-			previousIndex = len(instructions) - 1
-		}
-
-		x += uint16(opcodeLength)
-	}
-
-	return instructions, previousIndex, currentIndex
-}
-
-func (s *System) DumpCallstack() []string {
-	var stackStart uint16 = 0xFFFE
-	stackEnd := s.regs.Get16(cpu.SP)
-	result := make([]string, 0)
-
-	for x := stackEnd; x < stackStart; x += 2 {
-		value := s.memory.ReadShort(x)
-
-		result = append(result, fmt.Sprintf("0x%04X => 0x%04X", x, value))
-	}
-	result = append(result, fmt.Sprintf("0x%04X => 0x%04X", stackStart, s.memory.ReadShort(stackStart)))
-
-	return result
-}
-
 func (s *System) CartridgeHeader() CartridgeHeader {
 	return *s.cartridgeHeader
 }
 
-func (s *System) PressStart() {
-	s.controller.InputStart(true)
+func (s *System) Dump() Dump {
+	return &s.dump
 }
 
-func (s *System) ReleaseStart() {
-	s.controller.InputStart(false)
+func (s *System) Debug() Debug {
+	return s.debugger
 }
 
-func (s *System) PressSelect() {
-	s.controller.InputSelect(true)
-}
-
-func (s *System) ReleaseSelect() {
-	s.controller.InputSelect(false)
-}
-func (s *System) PressA() {
-	s.controller.InputA(true)
-}
-
-func (s *System) ReleaseA() {
-	s.controller.InputA(false)
-}
-func (s *System) PressB() {
-	s.controller.InputB(true)
-}
-
-func (s *System) ReleaseB() {
-	s.controller.InputB(false)
-}
-func (s *System) PressUp() {
-	s.controller.InputUp(true)
-}
-
-func (s *System) ReleaseUp() {
-	s.controller.InputUp(false)
-}
-func (s *System) PressDown() {
-	s.controller.InputDown(true)
-}
-
-func (s *System) ReleaseDown() {
-	s.controller.InputDown(false)
-}
-
-func (s *System) PressLeft() {
-	s.controller.InputLeft(true)
-}
-
-func (s *System) ReleaseLeft() {
-	s.controller.InputLeft(false)
-}
-func (s *System) PressRight() {
-	s.controller.InputRight(true)
-}
-func (s *System) ReleaseRight() {
-	s.controller.InputRight(false)
-}
-
-func (s *System) BreakpointReason() string {
-	return s.debugger.BreakpointReason()
-}
-
-func (s *System) appendExecutionHistory(action *ExecutionInfo) {
-	if len(s.executionHistory) == executionHistorySize {
-		s.executionHistory = s.executionHistory[1:]
-	}
-
-	s.executionHistory = append(s.executionHistory, *action)
+func (s *System) Joypad() Joypad {
+	return s.controller
 }
