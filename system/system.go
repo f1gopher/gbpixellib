@@ -137,8 +137,6 @@ type System struct {
 	currentDisplay string
 	displayLock    sync.Mutex
 
-	pcBreakpoint uint16
-
 	mCycle           uint
 	executionHistory []ExecutionInfo
 }
@@ -154,7 +152,6 @@ func CreateSystem(bios string, rom string, useDebugger bool) *System {
 		rom:              rom,
 		memory:           memory,
 		regs:             registers,
-		pcBreakpoint:     0x0000,
 		executionHistory: make([]ExecutionInfo, 0),
 	}
 	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
@@ -576,11 +573,7 @@ func (s *System) DumpCode(area memory.Area, bank uint8) (instructions []string, 
 			extraInfo += fmt.Sprintf(" %02X", bios[x+y])
 		}
 
-		if x == s.pcBreakpoint {
-			instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s **** BREAKPOINT ****\n", x, name, extraInfo))
-		} else {
-			instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s\n", x, name, extraInfo))
-		}
+		instructions = append(instructions, fmt.Sprintf("0x%04X - %-20s%s\n", x, name, extraInfo))
 
 		if x == current {
 			currentIndex = len(instructions) - 1
@@ -609,10 +602,6 @@ func (s *System) DumpCallstack() []string {
 	result = append(result, fmt.Sprintf("0x%04X => 0x%04X", stackStart, s.memory.ReadShort(stackStart)))
 
 	return result
-}
-
-func (s *System) SetBreakpoint(pcAddress uint16) {
-	s.pcBreakpoint = pcAddress
 }
 
 func (s *System) CartridgeHeader() CartridgeHeader {

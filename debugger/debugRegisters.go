@@ -121,7 +121,7 @@ func (d *debugRegisters) GetHALT() bool {
 	return d.registers.GetHALT()
 }
 
-func (d *debugRegisters) AddBP(reg cpu.Register, comparison BreakpointComparison, value uint16) {
+func (d *debugRegisters) addBP(reg cpu.Register, comparison BreakpointComparison, value uint16) {
 	// TODO - validate value against register (8bit or 16bit)
 
 	bp := registerBreakpoint{

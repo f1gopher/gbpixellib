@@ -1,6 +1,8 @@
 package debugger
 
 import (
+	"strings"
+
 	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/log"
 	"github.com/f1gopher/gbpixellib/memory"
@@ -35,23 +37,46 @@ func createRealDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, *memory
 		memory: m,
 	}
 
-	// r.AddBP(cpu.PC, GreaterThanOrEqual, 0x8000)
-
 	return d, &d.regs, m.memory
 }
 
 func (d *realDebugger) StartCycle() {
 	d.regs.startCycle()
+	d.memory.startCycle()
 }
 
 func (d *realDebugger) HasHitBreakpoint() bool {
-	return d.regs.hasHitBreakpoint()
+	return d.regs.hasHitBreakpoint() || d.memory.hasHitBreakpoint()
 }
 
 func (d *realDebugger) BreakpointReason() string {
-	return d.regs.BreakpointReason()
+	regBP := d.regs.BreakpointReason()
+	memBP := d.memory.BreakpointReason()
+
+	if regBP == "" && memBP == "" {
+		return ""
+	}
+
+	return strings.Join([]string{regBP, memBP}, "\n")
+}
+
+func (d *realDebugger) DisableAllBreakpoints() {
+	for _, bps := range d.regs.breakpoints {
+		for x, _ := range bps {
+			bps[x].enabled = false
+		}
+	}
+	for _, bps := range d.memory.breakpoints {
+		for x, _ := range bps {
+			bps[x].enabled = false
+		}
+	}
 }
 
 func (d *realDebugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) {
-	d.regs.AddBP(reg, comparison, value)
+	d.regs.addBP(reg, comparison, value)
+}
+
+func (d *realDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) {
+	d.memory.addBP(address, comparison, value)
 }
