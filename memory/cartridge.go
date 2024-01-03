@@ -16,10 +16,10 @@ type Cartridge interface {
 	WriteBit(address uint16, bit uint8, value bool)
 	WriteByte(address uint16, value byte)
 	WriteShort(address uint16, value uint16)
-	DumpROMCode() []uint8
-	DumpROMBankCode(bank uint8) []uint8
-	DumpRAMCode() []uint8
-	DumpRAMBankCode(bank uint8) []uint8
+	DumpROMCode() (data []uint8, startAddress uint16)
+	DumpROMBankCode(bank uint8) (data []uint8, startAddress uint16)
+	DumpRAMCode() (data []uint8, startAddress uint16)
+	DumpRAMBankCode(bank uint8) (data []uint8, startAddress uint16)
 
 	CurrentROMBank() uint8
 	CurrentRAMBank() uint8

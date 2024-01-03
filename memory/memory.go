@@ -101,8 +101,8 @@ func (m *Memory) WriteShort(address uint16, value uint16) {
 	m.WriteByte(address+1, msb)
 }
 
-func (m *Memory) DumpCode() []uint8 {
+func (m *Memory) DumpCode() (data []uint8, startAddress uint16) {
 	code := make([]uint8, len(m.buffer))
 	copy(code, m.buffer)
-	return code
+	return code, m.addressOffset
 }

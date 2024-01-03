@@ -46,19 +46,19 @@ func (c *CartridgeNoMBC) WriteShort(address uint16, value uint16) {
 	c.memoryBank(address).WriteShort(address, value)
 }
 
-func (c *CartridgeNoMBC) DumpROMCode() []uint8 {
+func (c *CartridgeNoMBC) DumpROMCode() (data []uint8, startAddress uint16) {
 	return c.rom.DumpCode()
 }
 
-func (c *CartridgeNoMBC) DumpRAMCode() []uint8 {
+func (c *CartridgeNoMBC) DumpRAMCode() (data []uint8, startAddress uint16) {
 	return c.ram.DumpCode()
 }
 
-func (c *CartridgeNoMBC) DumpROMBankCode(bank uint8) []uint8 {
+func (c *CartridgeNoMBC) DumpROMBankCode(bank uint8) (data []uint8, startAddress uint16) {
 	panic("Cartridge type does not have memory banks")
 }
 
-func (c *CartridgeNoMBC) DumpRAMBankCode(bank uint8) []uint8 {
+func (c *CartridgeNoMBC) DumpRAMBankCode(bank uint8) (data []uint8, startAddress uint16) {
 	panic("Cartridge type does not have memory banks")
 }
 

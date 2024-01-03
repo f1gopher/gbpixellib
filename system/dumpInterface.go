@@ -109,6 +109,7 @@ type Dump interface {
 	DumpCode(area memory.Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int)
 	DumpCallstack() []string
 	GetExecutionHistory() []ExecutionInfo
+	DumpMemory(area memory.Area, bank uint8) (data []uint8, startAddress uint16)
 }
 
 type dumpInterface struct {
@@ -258,7 +259,7 @@ func (d *dumpInterface) DumpBackgroundTileMap() *[1024]byte {
 }
 
 func (d *dumpInterface) DumpCode(area memory.Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int) {
-	bios := d.memory.DumpCode(area, bank)
+	bios, _ := d.memory.DumpCode(area, bank)
 	current := d.cpu.GetOpcodePC()
 	previous := d.cpu.GetPrevOpcodePC()
 
@@ -314,4 +315,8 @@ func (d *dumpInterface) DumpCallstack() []string {
 	result = append(result, fmt.Sprintf("0x%04X => 0x%04X", stackStart, d.memory.ReadShort(stackStart)))
 
 	return result
+}
+
+func (d *dumpInterface) DumpMemory(area memory.Area, bank uint8) (data []uint8, startAddress uint16) {
+	return d.memory.DumpCode(area, bank)
 }

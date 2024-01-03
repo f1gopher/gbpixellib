@@ -121,27 +121,28 @@ func (c *cartridgeMBC1) WriteShort(address uint16, value uint16) {
 	c.memoryBank(address).WriteShort(address, value)
 }
 
-func (c *cartridgeMBC1) DumpROMCode() []uint8 {
+func (c *cartridgeMBC1) DumpROMCode() (data []uint8, startAddress uint16) {
 
 	// Combine the first and current banks
-	code := c.romBanks[0].DumpCode()
-	code = append(code, c.romBanks[c.romBank()].DumpCode()...)
+	code, startAddress := c.romBanks[0].DumpCode()
+	currentCode, _ := c.romBanks[c.romBank()].DumpCode()
+	code = append(code, currentCode...)
 
-	return code
+	return code, startAddress
 }
 
-func (c *cartridgeMBC1) DumpRAMCode() []uint8 {
+func (c *cartridgeMBC1) DumpRAMCode() (data []uint8, startAddress uint16) {
 	return c.ramBanks[c.ramBank()].DumpCode()
 }
 
-func (c *cartridgeMBC1) DumpROMBankCode(bank uint8) []uint8 {
+func (c *cartridgeMBC1) DumpROMBankCode(bank uint8) (data []uint8, startAddress uint16) {
 	if int(bank) > len(c.romBanks)-1 {
 		panic("Invalid bank number for cartridge")
 	}
 	return c.romBanks[bank].DumpCode()
 }
 
-func (c *cartridgeMBC1) DumpRAMBankCode(bank uint8) []uint8 {
+func (c *cartridgeMBC1) DumpRAMBankCode(bank uint8) (data []uint8, startAddress uint16) {
 	if int(bank) > len(c.ramBanks)-1 {
 		panic("Invalid bank number for cartridge")
 	}

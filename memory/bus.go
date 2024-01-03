@@ -16,6 +16,17 @@ const (
 	CartridgeROMBank
 )
 
+func (a Area) String() string {
+	return [...]string{
+		"BIOS ROM",
+		"GPU Memory",
+		"Console RAM",
+		"Cartridge RAM Bank",
+		"Cartridge RAM",
+		"Cartridge ROM",
+		"Cartridge ROM Bank"}[a]
+}
+
 type timerDivide interface {
 	TimerDivideWrite()
 }
@@ -137,7 +148,7 @@ func (b *Bus) DisplaySetStatus(value uint8) {
 	b.ram.DisplaySetStatus(value)
 }
 
-func (b *Bus) DumpCode(area Area, bank uint8) []uint8 {
+func (b *Bus) DumpCode(area Area, bank uint8) (data []uint8, startAddress uint16) {
 	switch area {
 	case BIOSROM:
 		return b.bios.DumpCode()
@@ -145,7 +156,8 @@ func (b *Bus) DumpCode(area Area, bank uint8) []uint8 {
 		return b.video.mem.DumpCode()
 	case ConsoleRAM:
 		return b.ram.mem.DumpCode()
-	case CartridgeRAMBank: return b.cartridge.DumpRAMBankCode(bank)
+	case CartridgeRAMBank:
+		return b.cartridge.DumpRAMBankCode(bank)
 	case CartridgeRAM:
 		return b.cartridge.DumpRAMCode()
 	case CartridgeROMBank:
