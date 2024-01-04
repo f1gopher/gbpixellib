@@ -27,6 +27,10 @@ type CartridgeHeader struct {
 	MaskROMVersion      uint8
 	HeaderChecksum      uint8
 	GlobalChecksum      uint16
+
+	// Not part of the official header info
+	NumRAMBanks uint8
+	NumROMBanks uint8
 }
 
 func readHeader(rom *[]byte) *CartridgeHeader {
@@ -94,6 +98,8 @@ func readHeader(rom *[]byte) *CartridgeHeader {
 		MaskROMVersion:      maskROMVersion,
 		HeaderChecksum:      headerChecksum,
 		GlobalChecksum:      globalChecksum,
+		NumRAMBanks:         uint8(ramSizeBytes / 8),
+		NumROMBanks:         uint8(romSizeBytes) / 8,
 	}
 }
 
