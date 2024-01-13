@@ -76,7 +76,7 @@ func (r *ram) ReadShort(address uint16) uint16 {
 }
 
 func (r *ram) WriteBit(address uint16, bit uint8, value bool) {
-	r.WriteBit(address, bit, value)
+	r.mem.WriteBit(address, bit, value)
 }
 
 func (r *ram) WriteByte(address uint16, value byte) {
