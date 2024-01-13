@@ -188,6 +188,10 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 	// TODO - is this right?
 	if c.interruptHappened {
 		c.interruptHappened = false
+		
+		c.prevOpcodePC = c.executeOpcodePC
+		c.executeOpcodePC = c.reg.Get16(PC)
+		c.prevOpcode = c.executeOpcode.opcode()
 
 		opcode := readAndIncPC(c.reg, c.memory)
 		var cbOpcode uint8 = 0x00
