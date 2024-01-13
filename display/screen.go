@@ -489,7 +489,7 @@ func (s *Screen) renderTiles() {
 
 		tile := s.memory.ReadShort(tileAddres)
 
-		color := s.colorForPixel(tile, byte(colourBit))
+		color := s.colorForBGPixel(tile, byte(colourBit))
 
 		finalY := s.LY()
 		if finalY < 0 || finalY >= screenHeight || pixel < 0 || pixel >= screenWidth {
@@ -513,8 +513,10 @@ func (s *Screen) renderSprites() {
 		tileLocation := s.memory.ReadByte(0xFE00 + index + 2)
 		attributes := s.memory.ReadByte(0xFE00 + index + 3)
 
-		//		yFlip := memory.GetBit(attributes, 6)
+		usePalette1 := memory.GetBit(attributes, 4)
 		xFlip := memory.GetBit(attributes, 5)
+		// yFlip := memory.GetBit(attributes, 6)
+		//priority := memory.GetBit(attributes, 7)
 
 		ySize := s.ObjSize()
 		scanline := s.LY()
@@ -536,7 +538,11 @@ func (s *Screen) renderSprites() {
 					colorBit *= -1
 				}
 
-				color := s.colorForPixel(tile, byte(colorBit))
+				// TODO - do y flip
+
+				// TODO - handle priority
+
+				color := s.colorForObjPixel(tile, byte(colorBit), usePalette1)
 
 				// White is transparent for sprites
 				if color == White {
@@ -568,43 +574,7 @@ func (s *Screen) Render(callback func(x int, y int, color ScreenColor)) {
 	}
 }
 
-func (s *Screen) tileAddrForId(id byte) uint16 {
-	lcdc4 := s.memory.ReadBit(lcdcRegister, 4)
-
-	if lcdc4 {
-		if id <= 127 {
-			return 0x8000 + uint16(id)
-		} else {
-			return 0x8800 + (uint16(id) - 127)
-		}
-	} else {
-		if id <= 127 {
-			return 0x9000 + uint16(id)
-		} else {
-			return 0x8800 + (uint16(id) - 127)
-		}
-	}
-}
-
-func (s *Screen) drawTile(tileAddr uint16, firstPixelIndex int) {
-
-	pixelIndex := firstPixelIndex
-
-	for pixelBlockAddr := tileAddr; pixelBlockAddr < tileAddr+tileSize; pixelBlockAddr += 2 {
-		pixelBlock := s.memory.ReadShort(pixelBlockAddr)
-
-		for x := 0; x < 8; x++ {
-			color := s.colorForPixel(pixelBlock, byte(x))
-
-			s.buffer[pixelIndex+x] = color
-		}
-
-		// Move to next row of pixels
-		pixelIndex += screenWidth
-	}
-}
-
-func (s *Screen) colorForPixel(block uint16, index byte) ScreenColor {
+func (s *Screen) colorForBGPixel(block uint16, index byte) ScreenColor {
 	highFlag := block >> (8 + index) & 0x0001
 	lowFlag := block >> index & 0x0001
 
@@ -618,5 +588,33 @@ func (s *Screen) colorForPixel(block uint16, index byte) ScreenColor {
 		return s.BGPIndex2Color()
 	} else {
 		return s.BGPIndex3Color()
+	}
+}
+
+func (s *Screen) colorForObjPixel(block uint16, index byte, usePalette1 bool) ScreenColor {
+	highFlag := block >> (8 + index) & 0x0001
+	lowFlag := block >> index & 0x0001
+
+	// TODO - check the order of bytes
+	if usePalette1 {
+		if highFlag == 0x00 && lowFlag == 0x00 {
+			return s.ObjPalette1Index0Color()
+		} else if highFlag == 0x00 && lowFlag == 0x01 {
+			return s.ObjPalette1Index1Color()
+		} else if highFlag == 0x01 && lowFlag == 0x00 {
+			return s.ObjPalette1Index2Color()
+		} else {
+			return s.ObjPalette1Index3Color()
+		}
+	}
+
+	if highFlag == 0x00 && lowFlag == 0x00 {
+		return s.ObjPalette0Index0Color()
+	} else if highFlag == 0x00 && lowFlag == 0x01 {
+		return s.ObjPalette0Index1Color()
+	} else if highFlag == 0x01 && lowFlag == 0x00 {
+		return s.ObjPalette0Index2Color()
+	} else {
+		return s.ObjPalette0Index3Color()
 	}
 }
