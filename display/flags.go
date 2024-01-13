@@ -13,11 +13,7 @@ func (s *Screen) WindowTileMapStart() uint16 {
 }
 
 func (s *Screen) WindowEnable() bool {
-	if !s.memory.ReadBit(lcdcRegister, 5) {
-		return s.memory.ReadBit(lcdcRegister, 0)
-	}
-
-	return true
+	return s.memory.ReadBit(lcdcRegister, 5)
 }
 
 func (s *Screen) BgWindowTileDataArea() uint16 {
