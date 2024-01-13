@@ -90,7 +90,16 @@ type LCDControlState struct {
 	BGP_Idx1 display.ScreenColor
 	BGP_Idx0 display.ScreenColor
 
-	OBP0 byte
+	OBJ_0_Idx3 display.ScreenColor
+	OBJ_0_Idx2 display.ScreenColor
+	OBJ_0_Idx1 display.ScreenColor
+	OBJ_0_Idx0 display.ScreenColor
+
+	OBJ_1_Idx3 display.ScreenColor
+	OBJ_1_Idx2 display.ScreenColor
+	OBJ_1_Idx1 display.ScreenColor
+	OBJ_1_Idx0 display.ScreenColor
+
 	OBP1 byte
 
 	Clock uint
@@ -102,6 +111,7 @@ type Dump interface {
 	GetCartridgeState() *CartridgeState
 	GetDebugState() *DebugState
 	DumpTileset() image.Image
+	DumpTile(tileNum uint16, palette display.Palette) image.Image
 	DumpFirstTileMap() *[1024]byte
 	DumpSecondTileMap() *[1024]byte
 	DumpWindowTileMap() *[1024]byte
@@ -217,6 +227,16 @@ func (d *dumpInterface) GetGPUState() *LCDControlState {
 		BGP_Idx1: d.screen.BGPIndex1Color(),
 		BGP_Idx2: d.screen.BGPIndex2Color(),
 		BGP_Idx3: d.screen.BGPIndex3Color(),
+
+		OBJ_0_Idx3: d.screen.ObjPalette0Index3Color(),
+		OBJ_0_Idx2: d.screen.ObjPalette0Index2Color(),
+		OBJ_0_Idx1: d.screen.ObjPalette0Index1Color(),
+		OBJ_0_Idx0: d.screen.ObjPalette0Index0Color(),
+
+		OBJ_1_Idx3: d.screen.ObjPalette1Index3Color(),
+		OBJ_1_Idx2: d.screen.ObjPalette1Index2Color(),
+		OBJ_1_Idx1: d.screen.ObjPalette1Index1Color(),
+		OBJ_1_Idx0: d.screen.ObjPalette1Index0Color(),
 	}
 }
 
@@ -240,6 +260,10 @@ func (d *dumpInterface) GetExecutionHistory() []ExecutionInfo {
 
 func (d *dumpInterface) DumpTileset() image.Image {
 	return d.screen.DumpTileset()
+}
+
+func (d *dumpInterface) DumpTile(tileNum uint16, palette display.Palette) image.Image {
+	return d.screen.DumpTile(tileNum, palette)
 }
 
 func (d *dumpInterface) DumpFirstTileMap() *[1024]byte {

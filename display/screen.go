@@ -219,6 +219,56 @@ func (s *Screen) DumpTileset() image.Image {
 	return img
 }
 
+func (s *Screen) DumpTile(tileNum uint16, palette Palette) image.Image {
+	img := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	tileData := s.BgWindowTileDataArea()
+
+	for tileX := 0; tileX < 8; tileX++ {
+		for tileY := 0; tileY < 8; tileY++ {
+
+			tileAddres := s.tileNumberToAddress(tileData, tileNum, tileY)
+
+			tile := s.memory.ReadShort(tileAddres)
+
+			var colourBit int = int(tileX % 8)
+			colourBit -= 7
+			colourBit = colourBit * -1
+			var co ScreenColor
+
+			switch palette {
+			case Background:
+				co = s.colorForBGPixel(tile, byte(colourBit))
+			case Obj0:
+				co = s.colorForObjPixel(tile, byte(colourBit), false)
+			case Obj1:
+				co = s.colorForObjPixel(tile, byte(colourBit), true)
+			default:
+				panic("Unhandled palette")
+			}
+
+			var c color.RGBA
+			switch co {
+			case Off:
+				c = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+			case White:
+				c = color.RGBA{R: 166, G: 163, B: 89, A: 255}
+			case LightGray:
+				c = color.RGBA{R: 115, G: 113, B: 51, A: 255}
+			case DarkGray:
+				c = color.RGBA{R: 89, G: 86, B: 51, A: 255}
+			case Black:
+				c = color.RGBA{R: 51, G: 51, B: 51, A: 255}
+			default:
+				panic("")
+			}
+
+			img.Set(tileX, tileY, c)
+		}
+	}
+
+	return img
+}
+
 func (s *Screen) tileNumberToAddress(tileData uint16, tileNum uint16, tileY int) uint16 {
 	tileLocation := tileData
 
