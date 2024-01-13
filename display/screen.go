@@ -247,9 +247,9 @@ func (s *Screen) DumpTile(tileNum uint16, palette Palette) image.Image {
 			case Background:
 				co = s.colorForBGPixel(tile, byte(colourBit))
 			case Obj0:
-				co = s.colorForObjPixel(tile, byte(colourBit), false)
+				co, _ = s.colorForObjPixel(tile, byte(colourBit), false)
 			case Obj1:
-				co = s.colorForObjPixel(tile, byte(colourBit), true)
+				co, _ = s.colorForObjPixel(tile, byte(colourBit), true)
 			default:
 				panic("Unhandled palette")
 			}
@@ -550,10 +550,10 @@ func (s *Screen) renderSprites() {
 
 				// TODO - handle priority
 
-				color := s.colorForObjPixel(tile, byte(colorBit), usePalette1)
+				color, render := s.colorForObjPixel(tile, byte(colorBit), usePalette1)
 
-				// White is transparent for sprites
-				if color == White {
+				// Is transparent for sprites
+				if !render {
 					continue
 				}
 
@@ -599,30 +599,34 @@ func (s *Screen) colorForBGPixel(block uint16, index byte) ScreenColor {
 	}
 }
 
-func (s *Screen) colorForObjPixel(block uint16, index byte, usePalette1 bool) ScreenColor {
+func (s *Screen) colorForObjPixel(block uint16, index byte, usePalette1 bool) (color ScreenColor, render bool) {
 	highFlag := block >> (8 + index) & 0x0001
 	lowFlag := block >> index & 0x0001
+
+	if highFlag == 0x00 && lowFlag == 0x00 {
+		return White, false
+	}
 
 	// TODO - check the order of bytes
 	if usePalette1 {
 		if highFlag == 0x00 && lowFlag == 0x00 {
-			return s.ObjPalette1Index0Color()
+			return s.ObjPalette1Index0Color(), true
 		} else if highFlag == 0x00 && lowFlag == 0x01 {
-			return s.ObjPalette1Index1Color()
+			return s.ObjPalette1Index1Color(), true
 		} else if highFlag == 0x01 && lowFlag == 0x00 {
-			return s.ObjPalette1Index2Color()
+			return s.ObjPalette1Index2Color(), true
 		} else {
-			return s.ObjPalette1Index3Color()
+			return s.ObjPalette1Index3Color(), true
 		}
 	}
 
 	if highFlag == 0x00 && lowFlag == 0x00 {
-		return s.ObjPalette0Index0Color()
+		return s.ObjPalette0Index0Color(), true
 	} else if highFlag == 0x00 && lowFlag == 0x01 {
-		return s.ObjPalette0Index1Color()
+		return s.ObjPalette0Index1Color(), true
 	} else if highFlag == 0x01 && lowFlag == 0x00 {
-		return s.ObjPalette0Index2Color()
+		return s.ObjPalette0Index2Color(), true
 	} else {
-		return s.ObjPalette0Index3Color()
+		return s.ObjPalette0Index3Color(), true
 	}
 }
