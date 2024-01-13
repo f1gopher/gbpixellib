@@ -13,7 +13,11 @@ func (s *Screen) WindowTileMapStart() uint16 {
 }
 
 func (s *Screen) WindowEnable() bool {
-	return s.memory.ReadBit(lcdcRegister, 5)
+	if !s.memory.ReadBit(lcdcRegister, 5) {
+		return s.memory.ReadBit(lcdcRegister, 0)
+	}
+
+	return true
 }
 
 func (s *Screen) BgWindowTileDataArea() uint16 {
@@ -111,41 +115,66 @@ func (s *Screen) WX() byte {
 }
 
 func (s *Screen) BGPIndex3Color() ScreenColor {
-	return s.bgpColor(6)
+	return s.paletteColor(0xFF47, 6)
 }
 
 func (s *Screen) BGPIndex2Color() ScreenColor {
-	return s.bgpColor(4)
+	return s.paletteColor(0xFF47, 4)
 }
 
 func (s *Screen) BGPIndex1Color() ScreenColor {
-	return s.bgpColor(2)
+	return s.paletteColor(0xFF47, 2)
 }
 
 func (s *Screen) BGPIndex0Color() ScreenColor {
-	return s.bgpColor(0)
+	return s.paletteColor(0xFF47, 0)
 }
 
-func (s *Screen) bgpColor(offset byte) ScreenColor {
-	value := s.memory.ReadByte(0xFF47)
+func (s *Screen) ObjPalette0Index3Color() ScreenColor {
+	return s.paletteColor(0xFF48, 6)
+}
 
+func (s *Screen) ObjPalette0Index2Color() ScreenColor {
+	return s.paletteColor(0xFF48, 4)
+}
+
+func (s *Screen) ObjPalette0Index1Color() ScreenColor {
+	return s.paletteColor(0xFF48, 2)
+}
+
+func (s *Screen) ObjPalette0Index0Color() ScreenColor {
+	return s.paletteColor(0xFF48, 0)
+}
+
+func (s *Screen) ObjPalette1Index3Color() ScreenColor {
+	return s.paletteColor(0xFF49, 6)
+}
+
+func (s *Screen) ObjPalette1Index2Color() ScreenColor {
+	return s.paletteColor(0xFF49, 4)
+}
+
+func (s *Screen) ObjPalette1Index1Color() ScreenColor {
+	return s.paletteColor(0xFF49, 2)
+}
+
+func (s *Screen) ObjPalette1Index0Color() ScreenColor {
+	return s.paletteColor(0xFF49, 0)
+}
+
+func (s *Screen) paletteColor(address uint16, offset byte) ScreenColor {
+	value := s.memory.ReadByte(address)
 	value = (value >> offset) & 0b00000011
 
-	if value == 0x01 {
+	if value == 0x00 {
+		return White
+	} else if value == 0x01 {
 		return LightGray
 	} else if value == 0x02 {
 		return DarkGray
 	} else if value == 0x03 {
 		return Black
-	} else {
-		return White
 	}
-}
 
-func (s *Screen) obp0() byte {
-	return s.memory.ReadByte(0xFF48)
-}
-
-func (s *Screen) obp1() byte {
-	return s.memory.ReadByte(0xFF49)
+	panic("Invalid palette color")
 }

@@ -185,7 +185,7 @@ func (s *Screen) DumpTileset() image.Image {
 			colourBit -= 7
 			colourBit = colourBit * -1
 
-			co := s.colorForPixel(tile, byte(colourBit))
+			co := s.colorForBGPixel(tile, byte(colourBit))
 
 			//// if off then the pixel is transparent
 			//if co == White {
