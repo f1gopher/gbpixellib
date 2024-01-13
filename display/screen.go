@@ -23,6 +23,14 @@ const tileSize = 16
 
 const cyclesToDrawScanline = 456
 
+type Palette int
+
+const (
+	Background Palette = iota
+	Obj0
+	Obj1
+)
+
 type lcdStatusMode int
 
 const (
