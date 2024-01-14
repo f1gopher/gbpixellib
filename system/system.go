@@ -180,6 +180,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 		mCyclesCompleted = 1
 		info.StartMCycle = s.dump.mCycle
 		info.ProgramCounter = s.cpu.GetOpcodePC()
+		info.StartCPU = *s.dump.getCPUStateOnly()
 
 		if prevCompleted {
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
@@ -264,6 +265,7 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 	info := ExecutionInfo{
 		StartMCycle:    s.dump.mCycle,
 		ProgramCounter: s.cpu.GetOpcodePC(),
+		StartCPU:       *s.dump.getCPUStateOnly(),
 	}
 
 	if s.memory.ExecuteDMAIfPending() {

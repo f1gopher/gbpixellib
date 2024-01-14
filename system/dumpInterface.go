@@ -15,6 +15,7 @@ type ExecutionInfo struct {
 	Name           string
 	StartMCycle    uint
 	ProgramCounter uint16
+	StartCPU       CPUState
 }
 
 type DebugState struct {
@@ -145,9 +146,7 @@ func (d *dumpInterface) appendExecutionHistory(action *ExecutionInfo) {
 	d.executionHistory = append(d.executionHistory, *action)
 }
 
-func (d *dumpInterface) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
-	_, isCB = d.cpu.GetNextOpcode()
-
+func (d *dumpInterface) getCPUStateOnly() *CPUState {
 	lsb := d.memory.ReadByte(d.regs.Get16(cpu.SP))
 	msb := d.memory.ReadByte(d.regs.Get16(cpu.SP) + 1)
 	spMem := uint16(msb)
@@ -171,7 +170,12 @@ func (d *dumpInterface) GetCPUState() (state *CPUState, prevOpcode uint8, isCB b
 		CFlag: d.regs.GetFlag(cpu.CFlag),
 		SPMem: spMem,
 		Cycle: d.mCycle,
-	}, d.cpu.GetPrevOpcode(), isCB
+	}
+}
+
+func (d *dumpInterface) GetCPUState() (state *CPUState, prevOpcode uint8, isCB bool) {
+	_, isCB = d.cpu.GetNextOpcode()
+	return d.getCPUStateOnly(), d.cpu.GetPrevOpcode(), isCB
 }
 
 func (d *dumpInterface) GetInterruptState() *InterruptState {
