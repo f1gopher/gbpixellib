@@ -15,7 +15,7 @@ func createAND_n(opcode uint8) *opcode_AND_n {
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
 			opcodeName:   "AND n",
-			opcodeLength: 1,
+			opcodeLength: 2,
 		},
 	}
 }

@@ -15,7 +15,7 @@ func createSUB_n(opcode uint8) *opcode_SUB_n {
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
 			opcodeName:   "SUB n",
-			opcodeLength: 1,
+			opcodeLength: 2,
 		},
 	}
 }

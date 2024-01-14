@@ -15,7 +15,7 @@ func createOR_n(opcode uint8) *opcode_OR_n {
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
 			opcodeName:   "OR n",
-			opcodeLength: 1,
+			opcodeLength: 2,
 		},
 	}
 }

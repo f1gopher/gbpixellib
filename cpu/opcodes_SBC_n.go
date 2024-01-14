@@ -15,7 +15,7 @@ func createSBC_n(opcode uint8) *opcode_SBC_n {
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
 			opcodeName:   "SBC n",
-			opcodeLength: 1,
+			opcodeLength: 2,
 		},
 	}
 }

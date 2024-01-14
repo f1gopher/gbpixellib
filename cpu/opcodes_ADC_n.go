@@ -15,7 +15,7 @@ func createADC_n(opcode uint8) *opcode_ADC_n {
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
 			opcodeName:   "ADC n",
-			opcodeLength: 1,
+			opcodeLength: 2,
 		},
 	}
 }

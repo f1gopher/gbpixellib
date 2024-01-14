@@ -15,7 +15,7 @@ func createADD_n(opcode uint8) *opcode_ADD_n {
 		opcodeBase: opcodeBase{
 			opcodeId:     opcode,
 			opcodeName:   "ADD n",
-			opcodeLength: 1,
+			opcodeLength: 2,
 		},
 	}
 }
