@@ -54,6 +54,19 @@ func (s ScreenColor) String() string {
 	return [...]string{"Off", "White", "Light Grey", "Dark Grey", "Black"}[s]
 }
 
+type DisplayConfig struct {
+	Width  int
+	Height int
+
+	Colors map[ScreenColor]color.RGBA
+}
+
+var screenOff = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+var screenBlack = color.RGBA{R: 15, G: 56, B: 15, A: 255}
+var screenWhite = color.RGBA{R: 155, G: 188, B: 15, A: 255}
+var screenLightGrey = color.RGBA{R: 139, G: 172, B: 15, A: 255}
+var screenDarkGrey = color.RGBA{R: 48, G: 98, B: 48, A: 255}
+
 type interuptHandler interface {
 	Request(i interupt.Interupt)
 }
@@ -84,6 +97,19 @@ func (s *Screen) Reset() {
 		s.buffer[x] = Off
 	}
 	s.currentCycleForScanline = 0
+}
+
+func (s *Screen) DisplayConfig() DisplayConfig {
+	return DisplayConfig{
+		Width:  screenWidth,
+		Height: screenHeight,
+		Colors: map[ScreenColor]color.RGBA{
+			White:     screenWhite,
+			Black:     screenBlack,
+			LightGray: screenLightGrey,
+			DarkGray:  screenDarkGrey,
+		},
+	}
 }
 
 // TODO - need to update/set LYC LY compare and LCD status interrupts?
@@ -203,15 +229,15 @@ func (s *Screen) DumpTileset() image.Image {
 			var c color.RGBA
 			switch co {
 			case Off:
-				c = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+				c = screenOff
 			case White:
-				c = color.RGBA{R: 155, G: 188, B: 15, A: 255}
+				c = screenWhite
 			case LightGray:
-				c = color.RGBA{R: 139, G: 172, B: 15, A: 255}
+				c = screenLightGrey
 			case DarkGray:
-				c = color.RGBA{R: 48, G: 98, B: 48, A: 255}
+				c = screenDarkGrey
 			case Black:
-				c = color.RGBA{R: 15, G: 56, B: 15, A: 255}
+				c = screenBlack
 			default:
 				panic("")
 			}
@@ -257,15 +283,15 @@ func (s *Screen) DumpTile(tileNum uint16, palette Palette) image.Image {
 			var c color.RGBA
 			switch co {
 			case Off:
-				c = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+				c = screenOff
 			case White:
-				c = color.RGBA{R: 166, G: 163, B: 89, A: 255}
+				c = screenWhite
 			case LightGray:
-				c = color.RGBA{R: 115, G: 113, B: 51, A: 255}
+				c = screenLightGrey
 			case DarkGray:
-				c = color.RGBA{R: 89, G: 86, B: 51, A: 255}
+				c = screenDarkGrey
 			case Black:
-				c = color.RGBA{R: 51, G: 51, B: 51, A: 255}
+				c = screenBlack
 			default:
 				panic("")
 			}

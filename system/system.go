@@ -359,3 +359,7 @@ func (s *System) Debug() Debug {
 func (s *System) Joypad() Joypad {
 	return s.controller
 }
+
+func (s *System) DisplayConfig() display.DisplayConfig {
+	return s.screen.DisplayConfig()
+}
