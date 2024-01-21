@@ -121,6 +121,7 @@ type Dump interface {
 	DumpCallstack() []string
 	GetExecutionHistory() []ExecutionInfo
 	DumpMemory(area memory.Area, bank uint8) (data []uint8, startAddress uint16)
+	DumpMemoryValue(address uint16) uint8
 }
 
 type dumpInterface struct {
@@ -347,4 +348,8 @@ func (d *dumpInterface) DumpCallstack() []string {
 
 func (d *dumpInterface) DumpMemory(area memory.Area, bank uint8) (data []uint8, startAddress uint16) {
 	return d.memory.DumpCode(area, bank)
+}
+
+func (d *dumpInterface) DumpMemoryValue(address uint16) uint8 {
+	return d.memory.ReadByte(address)
 }
