@@ -18,7 +18,7 @@ func createNOP(opcode uint8) *opcode_NOP {
 	}
 }
 
-func (o *opcode_NOP) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_NOP) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		return true, nil

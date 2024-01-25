@@ -20,7 +20,7 @@ func createLD_HL_SP_plus_e(opcode uint8) *opcode_LD_HL_SP_plus_e {
 	}
 }
 
-func (o *opcode_LD_HL_SP_plus_e) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_HL_SP_plus_e) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.n = int8(readAndIncPC(reg, mem))

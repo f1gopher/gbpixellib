@@ -29,19 +29,27 @@ type RegistersInterface interface {
 	Reset()
 }
 
-type memoryInterface interface {
+type MemoryInterface interface {
+	Reset()
+
 	ReadBit(address uint16, bit uint8) bool
 	ReadByte(address uint16) uint8
 	ReadShort(address uint16) uint16
 
 	WriteByte(address uint16, value uint8)
 	WriteShort(address uint16, value uint16)
+
+	DisplaySetScanline(value uint8)
+	DisplaySetStatus(value uint8)
+
+	WriteDividerRegister(value uint8)
+	ExecuteDMAIfPending() bool
 }
 
 type Cpu struct {
 	log    *log.Log
 	reg    RegistersInterface
-	memory memoryInterface
+	memory MemoryInterface
 
 	executeOpcodePC      uint16
 	prevOpcodePC         uint16
@@ -56,7 +64,7 @@ type Cpu struct {
 	interruptHappened bool
 }
 
-func CreateCPU(log *log.Log, regs RegistersInterface, memory memoryInterface) *Cpu {
+func CreateCPU(log *log.Log, regs RegistersInterface, memory MemoryInterface) *Cpu {
 	return &Cpu{
 		log:       log,
 		reg:       regs,
@@ -188,7 +196,7 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 	// TODO - is this right?
 	if c.interruptHappened {
 		c.interruptHappened = false
-		
+
 		c.prevOpcodePC = c.executeOpcodePC
 		c.executeOpcodePC = c.reg.Get16(PC)
 		c.prevOpcode = c.executeOpcode.opcode()

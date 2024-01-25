@@ -24,7 +24,7 @@ func createCB_SET_b_r(opcode uint8, bit uint8, reg Register) *opcode_CB_SET_b_r 
 	}
 }
 
-func (o *opcode_CB_SET_b_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CB_SET_b_r) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		reg.SetRegBit(o.target, o.bit, true)

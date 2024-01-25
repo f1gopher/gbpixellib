@@ -22,7 +22,7 @@ func createSBC_r(opcode uint8, reg Register) *opcode_SBC_r {
 	}
 }
 
-func (o *opcode_SBC_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_SBC_r) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		result, bit4Carry, noBorrow := subtract8BitWithCarryBit4(reg.Get8(A), reg.Get8(o.src), reg.GetFlag(CFlag))

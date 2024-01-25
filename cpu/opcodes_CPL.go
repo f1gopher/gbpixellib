@@ -16,7 +16,7 @@ func createCPL(opcode uint8) *opcode_CPL {
 	}
 }
 
-func (o *opcode_CPL) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CPL) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		a := reg.Get8(A)

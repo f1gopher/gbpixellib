@@ -37,7 +37,8 @@ type System struct {
 	debugger        debugger.Debugger
 	log             *log.Log
 	screen          *display.Screen
-	memory          *memory.Bus
+	memory          cpu.MemoryInterface
+	bus             *memory.Bus
 	regs            cpu.RegistersInterface
 	cpu             *cpu.Cpu
 	interuptHandler *interupt.Handler
@@ -54,7 +55,7 @@ type System struct {
 
 func CreateSystem(bios string, rom string, useDebugger bool) *System {
 	l := log.CreateLog("./log.txt")
-	debugger, registers, memory := debugger.CreateDebugger(l, useDebugger)
+	debugger, registers, memory, memoryBus := debugger.CreateDebugger(l, useDebugger)
 	system := System{
 		debugger:  debugger,
 		log:       l,
@@ -62,20 +63,21 @@ func CreateSystem(bios string, rom string, useDebugger bool) *System {
 		bios:      bios,
 		rom:       rom,
 		memory:    memory,
+		bus:       memoryBus,
 		regs:      registers,
 	}
 	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
-	system.controller = input.CreateInput(system.memory, system.interuptHandler)
-	system.memory.SetIO(system.controller, system.interuptHandler)
+	system.controller = input.CreateInput(system.bus, system.interuptHandler)
+	memoryBus.SetIO(system.controller, system.interuptHandler)
 	system.timer = timer.CreateTimer(system.memory, system.interuptHandler)
-	system.memory.SetTimer(system.timer)
+	memoryBus.SetTimer(system.timer)
 
 	system.dump = dumpInterface{
 		regs:             system.regs,
 		cpu:              system.cpu,
-		memory:           system.memory,
+		memory:           system.bus,
 		screen:           system.screen,
 		cartridge:        system.cartridge,
 		executionHistory: make([]ExecutionInfo, 0),
@@ -138,7 +140,7 @@ func (s *System) Start() {
 		&rom)
 	s.dump.cartridge = s.cartridge
 
-	s.memory.Load(&bios, s.cartridge)
+	s.bus.Load(&bios, s.cartridge)
 }
 
 func (s *System) Reset() {
@@ -156,7 +158,7 @@ func (s *System) Reset() {
 	s.controller.Reset()
 	s.timer.Reset()
 	s.dump.reset()
-	s.debugger.StartCycle()
+	s.debugger.StartCycle(0)
 	s.Start()
 }
 
@@ -191,7 +193,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 					return true, x, nil
 				}
 
-				s.debugger.StartCycle()
+				s.debugger.StartCycle(s.dump.mCycle)
 			} else {
 				wasHalted = s.regs.GetHALT()
 				if wasHalted {
@@ -220,7 +222,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 							return true, x, nil
 						}
 
-						s.debugger.StartCycle()
+						s.debugger.StartCycle(s.dump.mCycle)
 						continue
 					}
 				}
@@ -251,7 +253,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 				return true, x, nil
 			}
 
-			s.debugger.StartCycle()
+			s.debugger.StartCycle(s.dump.mCycle)
 		}
 	}
 
@@ -260,7 +262,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 
 func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, err error) {
 
-	s.debugger.StartCycle()
+	s.debugger.StartCycle(s.dump.mCycle)
 	mCyclesCompleted = 0
 	info := ExecutionInfo{
 		StartMCycle:    s.dump.mCycle,

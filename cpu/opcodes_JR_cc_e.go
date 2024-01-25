@@ -31,7 +31,7 @@ func createJR_cc_e(opcode uint8, flag RegisterFlags, modifier bool) *opcode_JR_c
 	}
 }
 
-func (o *opcode_JR_cc_e) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_JR_cc_e) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.e = int8(readAndIncPC(reg, mem))

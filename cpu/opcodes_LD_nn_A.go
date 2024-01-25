@@ -19,7 +19,7 @@ func createLD_nn_A(opcode uint8) *opcode_LD_nn_A {
 	}
 }
 
-func (o *opcode_LD_nn_A) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_nn_A) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.lsb = readAndIncPC(reg, mem)

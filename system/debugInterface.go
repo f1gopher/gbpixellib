@@ -12,4 +12,8 @@ type Debug interface {
 	DisableAllBreakpoints()
 
 	BreakpointReason() string
+
+	AddMemoryRecorder(address uint16)
+	DeleteMemoryRecorder(address uint16)
+	MemoryRecordValues(address uint16) []debugger.MemoryRecordEntry
 }

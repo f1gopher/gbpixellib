@@ -23,7 +23,7 @@ func createLD_r_abs_HL(opcode uint8, reg Register) *opcode_LD_r_abs_HL {
 	}
 }
 
-func (o *opcode_LD_r_abs_HL) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_r_abs_HL) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.value = mem.ReadByte(reg.Get16(HL))

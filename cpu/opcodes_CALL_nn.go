@@ -21,7 +21,7 @@ func createCALL_nn(opcode uint8) *opcode_CALL_nn {
 	}
 }
 
-func (o *opcode_CALL_nn) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CALL_nn) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.lsb = readAndIncPC(reg, mem)

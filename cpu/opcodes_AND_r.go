@@ -22,7 +22,7 @@ func createAND_r(opcode uint8, reg Register) *opcode_AND_r {
 	}
 }
 
-func (o *opcode_AND_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_AND_r) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		result := reg.Get8(A) & reg.Get8(o.src)

@@ -22,7 +22,7 @@ func createSUB_r(opcode uint8, reg Register) *opcode_SUB_r {
 	}
 }
 
-func (o *opcode_SUB_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_SUB_r) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		result, bit3Carry, bit7Carry := subtract8BitWithCarry(reg.Get8(A), reg.Get8(o.src))

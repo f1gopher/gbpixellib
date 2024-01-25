@@ -23,7 +23,7 @@ func createPOP_rr(opcode uint8, reg Register) *opcode_POP_rr {
 	}
 }
 
-func (o *opcode_POP_rr) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_POP_rr) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 	if cycleNumber == 1 {
 		o.lsb = readAndIncSP(reg, mem)
 		return false, nil

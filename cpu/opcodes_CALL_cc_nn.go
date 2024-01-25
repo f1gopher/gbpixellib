@@ -32,7 +32,7 @@ func createCALL_cc_nn(opcode uint8, flag RegisterFlags, modifier bool) *opcode_C
 	}
 }
 
-func (o *opcode_CALL_cc_nn) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CALL_cc_nn) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.lsb = readAndIncPC(reg, mem)

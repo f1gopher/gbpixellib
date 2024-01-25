@@ -13,23 +13,38 @@ type memoryBreakpoint struct {
 	comparison BreakpointComparison
 }
 
+type memoryRecord struct {
+	address uint16
+	history []MemoryRecordEntry
+}
+
 type debugMemory struct {
-	memory *memory.Bus
+	memory       *memory.Bus
+	currentCycle uint
 
 	hitBreakpoint bool
 	description   string
 	breakpoints   map[uint16][]memoryBreakpoint
+
+	records map[uint16]*memoryRecord
 }
 
 func (d *debugMemory) Reset() {
+	d.currentCycle = 0
 	d.memory.Reset()
 	d.hitBreakpoint = false
 	d.description = ""
+
+	for x := range d.records {
+		tmp := d.records[x]
+		tmp.history = []MemoryRecordEntry{}
+	}
 }
 
-func (d *debugMemory) startCycle() {
+func (d *debugMemory) startCycle(cycle uint) {
 	d.hitBreakpoint = false
 	d.description = ""
+	d.currentCycle = cycle
 }
 
 func (d *debugMemory) hasHitBreakpoint() bool {
@@ -77,6 +92,38 @@ func (d *debugMemory) hasBP(address uint16) []memoryBreakpoint {
 	return enabledBps
 }
 
+func (d *debugMemory) addRecorder(address uint16) {
+
+	// If a recorder already exists do nothing
+	if _, exists := d.records[address]; exists {
+		return
+	}
+
+	// Store current value as MCycle 0 as the current/starting value
+	d.records[address] = &memoryRecord{
+		address: address,
+		history: []MemoryRecordEntry{
+			{
+				MCycle: 0,
+				Value:  d.memory.ReadByte(address),
+			},
+		},
+	}
+}
+
+func (d *debugMemory) deleteRecorder(address uint16) {
+	delete(d.records, address)
+}
+
+func (d *debugMemory) recordValues(address uint16) []MemoryRecordEntry {
+	entry, exists := d.records[address]
+	if !exists {
+		return nil
+	}
+
+	return entry.history
+}
+
 func (d *debugMemory) ReadBit(address uint16, bit uint8) bool {
 	return d.memory.ReadBit(address, bit)
 }
@@ -86,7 +133,7 @@ func (d *debugMemory) ReadByte(address uint16) uint8 {
 }
 
 func (d *debugMemory) ReadShort(address uint16) uint16 {
-	return d.ReadShort(address)
+	return d.memory.ReadShort(address)
 }
 
 func (d *debugMemory) WriteByte(address uint16, value uint8) {
@@ -102,9 +149,37 @@ func (d *debugMemory) WriteByte(address uint16, value uint8) {
 		}
 	}
 
+	recorder, exists := d.records[address]
+	if exists {
+		recorder.history = append(recorder.history, MemoryRecordEntry{
+			MCycle: d.currentCycle,
+			Value:  value,
+		})
+	}
+
 	d.memory.WriteByte(address, value)
 }
 
 func (d *debugMemory) WriteShort(address uint16, value uint16) {
-	d.WriteShort(address, value)
+	d.memory.WriteShort(address, value)
+}
+
+func (d *debugMemory) DisplaySetScanline(value uint8) {
+	d.memory.DisplaySetScanline(value)
+}
+
+func (d *debugMemory) DisplaySetStatus(value uint8) {
+	d.memory.DisplaySetStatus(value)
+}
+
+func (d *debugMemory) DumpCode(area memory.Area, bank uint8) (data []uint8, startAddress uint16) {
+	return d.memory.DumpCode(area, bank)
+}
+
+func (d *debugMemory) WriteDividerRegister(value uint8) {
+	d.memory.WriteDividerRegister(value)
+}
+
+func (d *debugMemory) ExecuteDMAIfPending() bool {
+	return d.memory.ExecuteDMAIfPending()
 }

@@ -20,7 +20,7 @@ func createADC_n(opcode uint8) *opcode_ADC_n {
 	}
 }
 
-func (o *opcode_ADC_n) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_ADC_n) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.n = readAndIncPC(reg, mem)

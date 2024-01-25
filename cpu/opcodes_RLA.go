@@ -21,7 +21,7 @@ func createRLA(opcode uint8) *opcode_RLA {
 	}
 }
 
-func (o *opcode_RLA) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_RLA) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber != 1 {
 		return false, errors.New("Invalid cycle")

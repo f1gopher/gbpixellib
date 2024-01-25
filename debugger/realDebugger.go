@@ -25,24 +25,27 @@ type realDebugger struct {
 	memory debugMemory
 }
 
-func createRealDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, *memory.Bus) {
+func createRealDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.MemoryInterface, *memory.Bus) {
 	r := debugRegisters{
 		registers:   &cpu.Registers{},
 		breakpoints: make(map[cpu.Register][]registerBreakpoint, 0),
 	}
-	m := debugMemory{memory: memory.CreateBus(log)}
+	m := debugMemory{
+		memory:  memory.CreateBus(log),
+		records: make(map[uint16]*memoryRecord, 0),
+	}
 
 	d := &realDebugger{
 		regs:   r,
 		memory: m,
 	}
 
-	return d, &d.regs, m.memory
+	return d, &d.regs, &d.memory, d.memory.memory
 }
 
-func (d *realDebugger) StartCycle() {
+func (d *realDebugger) StartCycle(cycle uint) {
 	d.regs.startCycle()
-	d.memory.startCycle()
+	d.memory.startCycle(cycle)
 }
 
 func (d *realDebugger) HasHitBreakpoint() bool {
@@ -79,4 +82,16 @@ func (d *realDebugger) AddRegisterValueBP(reg cpu.Register, comparison Breakpoin
 
 func (d *realDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) {
 	d.memory.addBP(address, comparison, value)
+}
+
+func (d *realDebugger) AddMemoryRecorder(address uint16) {
+	d.memory.addRecorder(address)
+}
+
+func (d *realDebugger) DeleteMemoryRecorder(address uint16) {
+	d.memory.deleteRecorder(address)
+}
+
+func (d *realDebugger) MemoryRecordValues(address uint16) []MemoryRecordEntry {
+	return d.memory.recordValues(address)
 }

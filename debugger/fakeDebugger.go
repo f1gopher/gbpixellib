@@ -10,12 +10,12 @@ type fakeDebugger struct {
 	log *log.Log
 }
 
-func createFakeDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, *memory.Bus) {
+func createFakeDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.MemoryInterface, *memory.Bus) {
 	mem := memory.CreateBus(log)
-	return &fakeDebugger{}, &cpu.Registers{}, mem
+	return &fakeDebugger{}, &cpu.Registers{}, mem, mem
 }
 
-func (d *fakeDebugger) StartCycle() {
+func (d *fakeDebugger) StartCycle(cycle uint) {
 }
 
 func (d *fakeDebugger) HasHitBreakpoint() bool {
@@ -35,5 +35,17 @@ func (d *fakeDebugger) AddRegisterValueBP(reg cpu.Register, comparison Breakpoin
 }
 
 func (d *fakeDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) {
+	panic("Not supported")
+}
+
+func (d *fakeDebugger) AddMemoryRecorder(address uint16) {
+	panic("Not supported")
+}
+
+func (d *fakeDebugger) DeleteMemoryRecorder(address uint16) {
+	panic("Not supported")
+}
+
+func (d *fakeDebugger) MemoryRecordValues(address uint16) []MemoryRecordEntry {
 	panic("Not supported")
 }

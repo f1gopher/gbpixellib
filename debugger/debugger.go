@@ -6,8 +6,13 @@ import (
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
+type MemoryRecordEntry struct {
+	Value  uint8
+	MCycle uint
+}
+
 type Debugger interface {
-	StartCycle()
+	StartCycle(cycle uint)
 	HasHitBreakpoint() bool
 	BreakpointReason() string
 
@@ -15,9 +20,13 @@ type Debugger interface {
 	AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8)
 
 	DisableAllBreakpoints()
+
+	AddMemoryRecorder(address uint16)
+	DeleteMemoryRecorder(address uint16)
+	MemoryRecordValues(address uint16) []MemoryRecordEntry
 }
 
-func CreateDebugger(l *log.Log, debug bool) (Debugger, cpu.RegistersInterface, *memory.Bus) {
+func CreateDebugger(l *log.Log, debug bool) (Debugger, cpu.RegistersInterface, cpu.MemoryInterface, *memory.Bus) {
 	if debug {
 		return createRealDebugger(l)
 	}

@@ -16,7 +16,7 @@ func createJP_HL(opcode uint8) *opcode_JP_HL {
 	}
 }
 
-func (o *opcode_JP_HL) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_JP_HL) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		reg.Set16(PC, reg.Get16(HL))

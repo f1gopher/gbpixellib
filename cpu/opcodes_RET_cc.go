@@ -32,7 +32,7 @@ func createRET_cc(opcode uint8, flag RegisterFlags, modifier bool) *opcode_RET_c
 	}
 }
 
-func (o *opcode_RET_cc) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_RET_cc) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		// Do NC or NZ by settings the modifier to false

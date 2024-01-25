@@ -20,7 +20,7 @@ func createJR_e(opcode uint8) *opcode_JR_e {
 	}
 }
 
-func (o *opcode_JR_e) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_JR_e) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		o.e = int8(readAndIncPC(reg, mem))

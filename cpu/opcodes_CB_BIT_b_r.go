@@ -26,7 +26,7 @@ func createCB_BIT_b_r(opcode uint8, bit uint8, reg Register) *opcode_CB_BIT_b_r 
 	}
 }
 
-func (o *opcode_CB_BIT_b_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_CB_BIT_b_r) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		value := reg.Get8(o.target)

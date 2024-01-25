@@ -21,7 +21,7 @@ func createLD_inc_HL_A(opcode uint8) *opcode_LD_inc_HL_A {
 	}
 }
 
-func (o *opcode_LD_inc_HL_A) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_LD_inc_HL_A) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber == 1 {
 		mem.WriteByte(reg.Get16(HL), reg.Get8(A))

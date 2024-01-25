@@ -21,7 +21,7 @@ func createINC_r(opcode uint8, reg Register) *opcode_INC_r {
 	}
 }
 
-func (o *opcode_INC_r) doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error) {
+func (o *opcode_INC_r) doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error) {
 
 	if cycleNumber != 1 {
 		panic("Invalid cycle")

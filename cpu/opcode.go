@@ -1,7 +1,7 @@
 package cpu
 
 type opcode interface {
-	doCycle(cycleNumber int, reg RegistersInterface, mem memoryInterface) (completed bool, err error)
+	doCycle(cycleNumber int, reg RegistersInterface, mem MemoryInterface) (completed bool, err error)
 	name() string
 	opcode() uint8
 	length() uint8

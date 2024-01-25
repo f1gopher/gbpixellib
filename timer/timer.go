@@ -5,7 +5,7 @@ import (
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
-type memoryInterface interface {
+type MemoryInterface interface {
 	ReadByte(address uint16) uint8
 	WriteByte(address uint16, value uint8)
 	WriteDividerRegister(value uint8)
@@ -16,7 +16,7 @@ type interruptInterface interface {
 }
 
 type Timer struct {
-	mem      memoryInterface
+	mem      MemoryInterface
 	interupt interruptInterface
 
 	frequencyCounter int
@@ -26,7 +26,7 @@ const timerCounter = 0xFF05
 const timerModulo = 0xFF06
 const timerControl = 0xFF07
 
-func CreateTimer(mem memoryInterface, interupt interruptInterface) *Timer {
+func CreateTimer(mem MemoryInterface, interupt interruptInterface) *Timer {
 	return &Timer{
 		mem:              mem,
 		interupt:         interupt,

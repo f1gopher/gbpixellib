@@ -7,6 +7,7 @@ import (
 	"image/draw"
 	"os"
 
+	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/interupt"
 	"github.com/f1gopher/gbpixellib/memory"
 	"golang.org/x/image/colornames"
@@ -73,7 +74,7 @@ type interuptHandler interface {
 
 type Screen struct {
 	log             *os.File
-	memory          *memory.Bus
+	memory          cpu.MemoryInterface
 	interuptHandler interuptHandler
 
 	buffer []ScreenColor
@@ -81,7 +82,7 @@ type Screen struct {
 	currentCycleForScanline uint
 }
 
-func CreateScreen(memory *memory.Bus, interuptHandler interuptHandler) *Screen {
+func CreateScreen(memory cpu.MemoryInterface, interuptHandler interuptHandler) *Screen {
 	f, _ := os.Create("./gpu-log.txt")
 	return &Screen{
 		log:                     f,

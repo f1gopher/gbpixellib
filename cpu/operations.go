@@ -99,7 +99,7 @@ func subtract16Bit(original uint16, subtract uint16) (result uint16) {
 	return
 }
 
-func readAndIncPC(reg RegistersInterface, mem memoryInterface) uint8 {
+func readAndIncPC(reg RegistersInterface, mem MemoryInterface) uint8 {
 	pc := reg.Get16(PC)
 	result := mem.ReadByte(pc)
 	pc++
@@ -108,7 +108,7 @@ func readAndIncPC(reg RegistersInterface, mem memoryInterface) uint8 {
 	return result
 }
 
-func readAndIncSP(reg RegistersInterface, mem memoryInterface) uint8 {
+func readAndIncSP(reg RegistersInterface, mem MemoryInterface) uint8 {
 	sp := reg.Get16(SP)
 	result := mem.ReadByte(sp)
 	sp++
@@ -117,7 +117,7 @@ func readAndIncSP(reg RegistersInterface, mem memoryInterface) uint8 {
 	return result
 }
 
-func readAndDecSP(reg RegistersInterface, mem memoryInterface) uint8 {
+func readAndDecSP(reg RegistersInterface, mem MemoryInterface) uint8 {
 	sp := reg.Get16(SP)
 	result := mem.ReadByte(sp)
 	sp--
@@ -126,7 +126,7 @@ func readAndDecSP(reg RegistersInterface, mem memoryInterface) uint8 {
 	return result
 }
 
-func DecAndWriteSP(reg RegistersInterface, mem memoryInterface, value uint8) {
+func DecAndWriteSP(reg RegistersInterface, mem MemoryInterface, value uint8) {
 	sp := reg.Get16(SP)
 	sp--
 	mem.WriteByte(sp, value)
