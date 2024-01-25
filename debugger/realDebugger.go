@@ -43,9 +43,9 @@ func createRealDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.Mem
 	return d, &d.regs, &d.memory, d.memory.memory
 }
 
-func (d *realDebugger) StartCycle(cycle uint) {
+func (d *realDebugger) StartCycle(cycle uint, pc uint16) {
 	d.regs.startCycle()
-	d.memory.startCycle(cycle)
+	d.memory.startCycle(cycle, pc)
 }
 
 func (d *realDebugger) HasHitBreakpoint() bool {

@@ -158,7 +158,7 @@ func (s *System) Reset() {
 	s.controller.Reset()
 	s.timer.Reset()
 	s.dump.reset()
-	s.debugger.StartCycle(0)
+	s.debugger.StartCycle(0, 0)
 	s.Start()
 }
 
@@ -193,7 +193,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 					return true, x, nil
 				}
 
-				s.debugger.StartCycle(s.dump.mCycle)
+				s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
 			} else {
 				wasHalted = s.regs.GetHALT()
 				if wasHalted {
@@ -222,7 +222,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 							return true, x, nil
 						}
 
-						s.debugger.StartCycle(s.dump.mCycle)
+						s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
 						continue
 					}
 				}
@@ -253,7 +253,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 				return true, x, nil
 			}
 
-			s.debugger.StartCycle(s.dump.mCycle)
+			s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
 		}
 	}
 
@@ -262,13 +262,13 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 
 func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, err error) {
 
-	s.debugger.StartCycle(s.dump.mCycle)
 	mCyclesCompleted = 0
 	info := ExecutionInfo{
 		StartMCycle:    s.dump.mCycle,
 		ProgramCounter: s.cpu.GetOpcodePC(),
 		StartCPU:       *s.dump.getCPUStateOnly(),
 	}
+	s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
 
 	if s.memory.ExecuteDMAIfPending() {
 		mCyclesCompleted = dmaMCycles

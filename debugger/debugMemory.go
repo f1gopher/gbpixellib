@@ -21,6 +21,7 @@ type memoryRecord struct {
 type debugMemory struct {
 	memory       *memory.Bus
 	currentCycle uint
+	currentPC    uint16
 
 	hitBreakpoint bool
 	description   string
@@ -41,10 +42,11 @@ func (d *debugMemory) Reset() {
 	}
 }
 
-func (d *debugMemory) startCycle(cycle uint) {
+func (d *debugMemory) startCycle(cycle uint, pc uint16) {
 	d.hitBreakpoint = false
 	d.description = ""
 	d.currentCycle = cycle
+	d.currentPC = pc
 }
 
 func (d *debugMemory) hasHitBreakpoint() bool {
@@ -106,6 +108,7 @@ func (d *debugMemory) addRecorder(address uint16) {
 			{
 				MCycle: 0,
 				Value:  d.memory.ReadByte(address),
+				PC:     0,
 			},
 		},
 	}
@@ -153,6 +156,7 @@ func (d *debugMemory) WriteByte(address uint16, value uint8) {
 	if exists {
 		recorder.history = append(recorder.history, MemoryRecordEntry{
 			MCycle: d.currentCycle,
+			PC:     d.currentPC,
 			Value:  value,
 		})
 	}

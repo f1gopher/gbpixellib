@@ -15,7 +15,7 @@ func createFakeDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.Mem
 	return &fakeDebugger{}, &cpu.Registers{}, mem, mem
 }
 
-func (d *fakeDebugger) StartCycle(cycle uint) {
+func (d *fakeDebugger) StartCycle(cycle uint, pc uint16) {
 }
 
 func (d *fakeDebugger) HasHitBreakpoint() bool {

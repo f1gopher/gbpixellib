@@ -9,10 +9,11 @@ import (
 type MemoryRecordEntry struct {
 	Value  uint8
 	MCycle uint
+	PC     uint16
 }
 
 type Debugger interface {
-	StartCycle(cycle uint)
+	StartCycle(cycle uint, pc uint16)
 	HasHitBreakpoint() bool
 	BreakpointReason() string
 
