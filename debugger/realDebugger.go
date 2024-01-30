@@ -1,6 +1,8 @@
 package debugger
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/f1gopher/gbpixellib/cpu"
@@ -21,6 +23,25 @@ const (
 
 func (b BreakpointComparison) String() string {
 	return [...]string{"==", "!=", ">", "<", ">=", "<="}[b]
+}
+
+func ParseBreakpointComparison(value string) (bp BreakpointComparison, err error) {
+	switch value {
+	case Equal.String():
+		return Equal, nil
+	case NotEqual.String():
+		return NotEqual, nil
+	case LessThan.String():
+		return LessThan, nil
+	case GreaterThan.String():
+		return GreaterThan, nil
+	case LessThanOrEqual.String():
+		return LessThanOrEqual, nil
+	case GreaterThanOrEqual.String():
+		return GreaterThanOrEqual, nil
+	default:
+		return Equal, errors.New(fmt.Sprintf("Unknown breakpoint condition: '%s'", value))
+	}
 }
 
 type realDebugger struct {

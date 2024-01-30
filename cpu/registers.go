@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/f1gopher/gbpixellib/memory"
@@ -27,6 +28,41 @@ const (
 
 func (r Register) String() string {
 	return [...]string{"AF", "BC", "DE", "HL", "SP", "PC", "A", "F", "B", "C", "D", "E", "H", "L"}[r]
+}
+
+func ParseRegister(value string) (reg Register, err error) {
+	switch value {
+	case A.String():
+		return A, nil
+	case F.String():
+		return F, nil
+	case AF.String():
+		return AF, nil
+	case B.String():
+		return B, nil
+	case C.String():
+		return C, nil
+	case BC.String():
+		return BC, nil
+	case D.String():
+		return D, nil
+	case E.String():
+		return E, nil
+	case DE.String():
+		return DE, nil
+	case H.String():
+		return H, nil
+	case L.String():
+		return L, nil
+	case HL.String():
+		return HL, nil
+	case PC.String():
+		return PC, nil
+	case SP.String():
+		return SP, nil
+	default:
+		return A, errors.New(fmt.Sprintf("Unknown register name: '%s'", value))
+	}
 }
 
 type RegisterFlags int
