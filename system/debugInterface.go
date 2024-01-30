@@ -6,8 +6,12 @@ import (
 )
 
 type Debug interface {
-	AddRegisterValueBP(reg cpu.Register, comparison debugger.BreakpointComparison, value uint16)
-	AddMemoryBP(address uint16, comparison debugger.BreakpointComparison, value uint8)
+	AddRegisterValueBP(reg cpu.Register, comparison debugger.BreakpointComparison, value uint16) int
+	DeleteRegisterBP(id int)
+	SetEnabledRegisterBP(id int, enabled bool)
+	AddMemoryBP(address uint16, comparison debugger.BreakpointComparison, value uint8) int
+	DeleteMemoryBP(id int)
+	SetEnabledMemoryBP(id int, enabled bool)
 
 	DisableAllBreakpoints()
 

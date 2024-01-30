@@ -30,11 +30,27 @@ func (d *fakeDebugger) DisableAllBreakpoints() {
 	panic("Not supported")
 }
 
-func (d *fakeDebugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) {
+func (d *fakeDebugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) int {
 	panic("Not supported")
 }
 
-func (d *fakeDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) {
+func (d *fakeDebugger) DeleteRegisterBP(id int) {
+	panic("Not supported")
+}
+
+func (d *fakeDebugger) SetEnabledRegisterBP(id int, enabled bool) {
+	panic("Not supported")
+}
+
+func (d *fakeDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) int {
+	panic("Not supported")
+}
+
+func (d *fakeDebugger) DeleteMemoryBP(id int) {
+	panic("Not supported")
+}
+
+func (d *fakeDebugger) SetEnabledMemoryBP(id int, enabled bool) {
 	panic("Not supported")
 }
 

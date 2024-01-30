@@ -19,6 +19,10 @@ const (
 	LessThanOrEqual
 )
 
+func (b BreakpointComparison) String() string {
+	return [...]string{"==", "!=", ">", "<", ">=", "<="}[b]
+}
+
 type realDebugger struct {
 	log    *log.Log
 	regs   debugRegisters
@@ -31,8 +35,9 @@ func createRealDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.Mem
 		breakpoints: make(map[cpu.Register][]registerBreakpoint, 0),
 	}
 	m := debugMemory{
-		memory:  memory.CreateBus(log),
-		records: make(map[uint16]*memoryRecord, 0),
+		memory:      memory.CreateBus(log),
+		records:     make(map[uint16]*memoryRecord, 0),
+		breakpoints: make(map[uint16][]memoryBreakpoint),
 	}
 
 	d := &realDebugger{
@@ -76,12 +81,28 @@ func (d *realDebugger) DisableAllBreakpoints() {
 	}
 }
 
-func (d *realDebugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) {
-	d.regs.addBP(reg, comparison, value)
+func (d *realDebugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) int {
+	return d.regs.addBP(reg, comparison, value)
 }
 
-func (d *realDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) {
-	d.memory.addBP(address, comparison, value)
+func (d *realDebugger) DeleteRegisterBP(id int) {
+	d.regs.deleteBP(id)
+}
+
+func (d *realDebugger) SetEnabledRegisterBP(id int, enabled bool) {
+	d.regs.setEnabledBP(id, enabled)
+}
+
+func (d *realDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) int {
+	return d.memory.addBP(address, comparison, value)
+}
+
+func (d *realDebugger) DeleteMemoryBP(id int) {
+	d.memory.deleteBP(id)
+}
+
+func (d *realDebugger) SetEnabledMemoryBP(id int, enabled bool) {
+	d.memory.setEnabledBP(id, enabled)
 }
 
 func (d *realDebugger) AddMemoryRecorder(address uint16) {

@@ -2,11 +2,13 @@ package debugger
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
 type memoryBreakpoint struct {
+	id         int
 	enabled    bool
 	address    uint16
 	value      uint8
@@ -23,6 +25,7 @@ type debugMemory struct {
 	currentCycle uint
 	currentPC    uint16
 
+	nextId        int
 	hitBreakpoint bool
 	description   string
 	breakpoints   map[uint16][]memoryBreakpoint
@@ -57,19 +60,45 @@ func (d *debugMemory) BreakpointReason() string {
 	return d.description
 }
 
-func (d *debugMemory) addBP(address uint16, comparison BreakpointComparison, value uint8) {
+func (d *debugMemory) addBP(address uint16, comparison BreakpointComparison, value uint8) int {
 	bp := memoryBreakpoint{
+		id:         d.nextId,
 		enabled:    true,
 		address:    address,
 		value:      value,
 		comparison: comparison,
 	}
+	d.nextId++
 
 	if d.breakpoints[address] == nil {
 		d.breakpoints[address] = make([]memoryBreakpoint, 0)
 	}
 
 	d.breakpoints[address] = append(d.breakpoints[address], bp)
+
+	return bp.id
+}
+
+func (d *debugMemory) deleteBP(id int) {
+	for key := range d.breakpoints {
+		for x := range d.breakpoints[key] {
+			if d.breakpoints[key][x].id == id {
+				d.breakpoints[key] = slices.Delete(d.breakpoints[key], x, +1)
+				return
+			}
+		}
+	}
+}
+
+func (d *debugMemory) setEnabledBP(id int, enabled bool) {
+	for key := range d.breakpoints {
+		for x := range d.breakpoints[key] {
+			if d.breakpoints[key][x].id == id {
+				d.breakpoints[key][id].enabled = enabled
+				return
+			}
+		}
+	}
 }
 
 func (d *debugMemory) hasBP(address uint16) []memoryBreakpoint {
