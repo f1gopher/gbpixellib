@@ -9,7 +9,7 @@ import (
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
-const executionHistorySize = 10
+const executionHistorySize = 23
 
 type ExecutionInfo struct {
 	Name           string
