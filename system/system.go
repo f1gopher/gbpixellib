@@ -178,6 +178,8 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 	var x uint
 	info := ExecutionInfo{}
 
+	s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
+
 	for x = 0; x < mCyclesPerFrame; {
 		mCyclesCompleted = 1
 		info.StartMCycle = s.dump.mCycle
@@ -185,6 +187,8 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 		info.StartCPU = *s.dump.getCPUStateOnly()
 
 		if prevCompleted {
+			s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
+
 			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
 				info.Name = "**DMA**"
 				mCyclesCompleted += dmaMCycles
@@ -193,7 +197,6 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 					return true, x, nil
 				}
 
-				s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
 			} else {
 				wasHalted = s.regs.GetHALT()
 				if wasHalted {
@@ -222,7 +225,6 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 							return true, x, nil
 						}
 
-						s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
 						continue
 					}
 				}
@@ -248,12 +250,8 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 		x += mCyclesCompleted
 		s.dump.mCycle += mCyclesCompleted
 
-		if prevCompleted {
-			if s.debugger.HasHitBreakpoint() {
-				return true, x, nil
-			}
-
-			s.debugger.StartCycle(s.dump.mCycle, info.ProgramCounter)
+		if prevCompleted && s.debugger.HasHitBreakpoint() {
+			return true, x, nil
 		}
 	}
 

@@ -3,6 +3,7 @@ package cpu
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/f1gopher/gbpixellib/memory"
 )
@@ -31,7 +32,7 @@ func (r Register) String() string {
 }
 
 func ParseRegister(value string) (reg Register, err error) {
-	switch value {
+	switch strings.ToUpper(value) {
 	case A.String():
 		return A, nil
 	case F.String():

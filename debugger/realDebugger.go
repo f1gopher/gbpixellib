@@ -3,7 +3,6 @@ package debugger
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/log"
@@ -86,7 +85,15 @@ func (d *realDebugger) BreakpointReason() string {
 		return ""
 	}
 
-	return strings.Join([]string{regBP, memBP}, "\n")
+	if regBP != "" && memBP == "" {
+		return regBP
+	}
+
+	if regBP == "" && memBP != "" {
+		return memBP
+	}
+
+	return regBP + " and " + memBP
 }
 
 func (d *realDebugger) DisableAllBreakpoints() {

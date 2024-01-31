@@ -83,7 +83,7 @@ func (d *debugRegisters) Set16(target cpu.Register, value uint16) {
 		for x := 0; x < len(bps); x++ {
 			if evaluateBp(value, bps[x].comparison, bps[x].value) {
 				d.hitBreakpoint = true
-				d.description = fmt.Sprintf("Setting %s to 0x%02X", target.String(), value)
+				d.description = fmt.Sprintf("Setting %s to 0x%04X", target.String(), value)
 				continue
 			}
 		}
