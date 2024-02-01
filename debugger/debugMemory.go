@@ -3,6 +3,7 @@ package debugger
 import (
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/f1gopher/gbpixellib/memory"
 )
@@ -29,6 +30,7 @@ type debugMemory struct {
 	hitBreakpoint bool
 	description   string
 	breakpoints   map[uint16][]memoryBreakpoint
+	bpLock        sync.RWMutex
 
 	records map[uint16]*memoryRecord
 }
@@ -70,16 +72,21 @@ func (d *debugMemory) addBP(address uint16, comparison BreakpointComparison, val
 	}
 	d.nextId++
 
+	d.bpLock.Lock()
 	if d.breakpoints[address] == nil {
 		d.breakpoints[address] = make([]memoryBreakpoint, 0)
 	}
 
 	d.breakpoints[address] = append(d.breakpoints[address], bp)
+	d.bpLock.Unlock()
 
 	return bp.id
 }
 
 func (d *debugMemory) deleteBP(id int) {
+	d.bpLock.Lock()
+	defer d.bpLock.Unlock()
+
 	for key := range d.breakpoints {
 		for x := range d.breakpoints[key] {
 			if d.breakpoints[key][x].id == id {
@@ -91,6 +98,9 @@ func (d *debugMemory) deleteBP(id int) {
 }
 
 func (d *debugMemory) setEnabledBP(id int, enabled bool) {
+	d.bpLock.Lock()
+	defer d.bpLock.Unlock()
+
 	for key := range d.breakpoints {
 		for x := range d.breakpoints[key] {
 			if d.breakpoints[key][x].id == id {
@@ -102,6 +112,9 @@ func (d *debugMemory) setEnabledBP(id int, enabled bool) {
 }
 
 func (d *debugMemory) hasBP(address uint16) []memoryBreakpoint {
+
+	d.bpLock.RLock()
+	defer d.bpLock.RUnlock()
 	bps := d.breakpoints[address]
 
 	if bps == nil {
@@ -172,6 +185,7 @@ func (d *debugMemory) WriteByte(address uint16, value uint8) {
 	bps := d.hasBP(address)
 
 	if bps != nil {
+		d.bpLock.RLock()
 		for _, bp := range bps {
 			if evaluateBp(value, bp.comparison, bp.value) {
 				d.hitBreakpoint = true
@@ -179,6 +193,7 @@ func (d *debugMemory) WriteByte(address uint16, value uint8) {
 				continue
 			}
 		}
+		d.bpLock.RUnlock()
 	}
 
 	recorder, exists := d.records[address]

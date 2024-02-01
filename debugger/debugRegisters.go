@@ -3,6 +3,7 @@ package debugger
 import (
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/f1gopher/gbpixellib/cpu"
 )
@@ -22,6 +23,7 @@ type debugRegisters struct {
 	hitBreakpoint bool
 	description   string
 	breakpoints   map[cpu.Register][]registerBreakpoint
+	bpLock        sync.RWMutex
 }
 
 func (d *debugRegisters) Reset() {
@@ -136,16 +138,21 @@ func (d *debugRegisters) addBP(reg cpu.Register, comparison BreakpointComparison
 	}
 	d.nextId++
 
+	d.bpLock.Lock()
 	if d.breakpoints[reg] == nil {
 		d.breakpoints[reg] = make([]registerBreakpoint, 0)
 	}
 
 	d.breakpoints[reg] = append(d.breakpoints[reg], bp)
+	d.bpLock.Unlock()
 
 	return bp.id
 }
 
 func (d *debugRegisters) deleteBP(id int) {
+	d.bpLock.Lock()
+	defer d.bpLock.Unlock()
+
 	for key := range d.breakpoints {
 		for x := range d.breakpoints[key] {
 			if d.breakpoints[key][x].id == id {
@@ -157,6 +164,9 @@ func (d *debugRegisters) deleteBP(id int) {
 }
 
 func (d *debugRegisters) setEnabledBP(id int, enabled bool) {
+	d.bpLock.Lock()
+	defer d.bpLock.Unlock()
+
 	for key := range d.breakpoints {
 		for x := range d.breakpoints[key] {
 			if d.breakpoints[key][x].id == id {
@@ -168,6 +178,9 @@ func (d *debugRegisters) setEnabledBP(id int, enabled bool) {
 }
 
 func (d *debugRegisters) hasBP(reg cpu.Register) []registerBreakpoint {
+	d.bpLock.RLock()
+	defer d.bpLock.RUnlock()
+
 	bps := d.breakpoints[reg]
 
 	if bps == nil {

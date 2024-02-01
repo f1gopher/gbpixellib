@@ -3,6 +3,7 @@ package debugger
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/log"
@@ -53,11 +54,13 @@ func createRealDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.Mem
 	r := debugRegisters{
 		registers:   &cpu.Registers{},
 		breakpoints: make(map[cpu.Register][]registerBreakpoint, 0),
+		bpLock:      sync.RWMutex{},
 	}
 	m := debugMemory{
 		memory:      memory.CreateBus(log),
 		records:     make(map[uint16]*memoryRecord, 0),
 		breakpoints: make(map[uint16][]memoryBreakpoint),
+		bpLock:      sync.RWMutex{},
 	}
 
 	d := &realDebugger{
