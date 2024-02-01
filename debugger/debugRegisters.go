@@ -1,6 +1,7 @@
 package debugger
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -9,11 +10,13 @@ import (
 )
 
 type registerBreakpoint struct {
-	id         int
-	enabled    bool
-	reg        cpu.Register
-	value      uint16
-	comparison BreakpointComparison
+	id              int
+	enabled         bool
+	reg             cpu.Register
+	value           uint16
+	comparison      BreakpointComparison
+	targetHitCount  uint
+	currentHitCount uint
 }
 
 type debugRegisters struct {
@@ -30,6 +33,14 @@ func (d *debugRegisters) Reset() {
 	d.registers.Reset()
 	d.hitBreakpoint = false
 	d.description = ""
+
+	d.bpLock.Lock()
+	for bpsForReg := range d.breakpoints {
+		for bpIndex := range d.breakpoints[bpsForReg] {
+			d.breakpoints[bpsForReg][bpIndex].currentHitCount = 1
+		}
+	}
+	d.bpLock.Unlock()
 }
 
 func (d *debugRegisters) startCycle() {
@@ -65,14 +76,25 @@ func (d *debugRegisters) Set8(target cpu.Register, value uint8) {
 	bps := d.hasBP(target)
 
 	if bps != nil {
+		d.bpLock.Lock()
 		for x := 0; x < len(bps); x++ {
 			lsbValue := cpu.Lsb(bps[x].value)
 			if evaluateBp(value, bps[x].comparison, lsbValue) {
+				if bps[x].targetHitCount != bps[x].currentHitCount {
+					bps[x].currentHitCount++
+					continue
+				}
+
 				d.hitBreakpoint = true
-				d.description = fmt.Sprintf("Setting %s to 0x%02X", target.String(), lsbValue)
+				d.description = fmt.Sprintf(
+					"Setting %s to 0x%02X for the %d time",
+					target.String(),
+					lsbValue,
+					bps[x].currentHitCount)
 				continue
 			}
 		}
+		d.bpLock.Unlock()
 	}
 
 	d.registers.Set8(target, value)
@@ -82,13 +104,24 @@ func (d *debugRegisters) Set16(target cpu.Register, value uint16) {
 	bps := d.hasBP(target)
 
 	if bps != nil {
+		d.bpLock.Lock()
 		for x := 0; x < len(bps); x++ {
 			if evaluateBp(value, bps[x].comparison, bps[x].value) {
+				if bps[x].targetHitCount != bps[x].currentHitCount {
+					bps[x].currentHitCount++
+					continue
+				}
+
 				d.hitBreakpoint = true
-				d.description = fmt.Sprintf("Setting %s to 0x%04X", target.String(), value)
+				d.description = fmt.Sprintf(
+					"Setting %s to 0x%04X for the %d time",
+					target.String(),
+					value,
+					bps[x].currentHitCount)
 				continue
 			}
 		}
+		d.bpLock.Unlock()
 	}
 
 	d.registers.Set16(target, value)
@@ -126,15 +159,26 @@ func (d *debugRegisters) GetHALT() bool {
 	return d.registers.GetHALT()
 }
 
-func (d *debugRegisters) addBP(reg cpu.Register, comparison BreakpointComparison, value uint16) int {
+func (d *debugRegisters) addBP(
+	reg cpu.Register,
+	comparison BreakpointComparison,
+	value uint16,
+	hitCount uint) (id int, err error) {
+
+	if hitCount < 1 {
+		return -1, errors.New("hitCount must be >= 1")
+	}
+
 	// TODO - validate value against register (8bit or 16bit)
 
 	bp := registerBreakpoint{
-		id:         d.nextId,
-		enabled:    true,
-		reg:        reg,
-		value:      value,
-		comparison: comparison,
+		id:              d.nextId,
+		enabled:         true,
+		reg:             reg,
+		value:           value,
+		comparison:      comparison,
+		targetHitCount:  hitCount,
+		currentHitCount: 1,
 	}
 	d.nextId++
 
@@ -146,7 +190,7 @@ func (d *debugRegisters) addBP(reg cpu.Register, comparison BreakpointComparison
 	d.breakpoints[reg] = append(d.breakpoints[reg], bp)
 	d.bpLock.Unlock()
 
-	return bp.id
+	return bp.id, nil
 }
 
 func (d *debugRegisters) deleteBP(id int) {

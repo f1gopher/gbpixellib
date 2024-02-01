@@ -17,10 +17,18 @@ type Debugger interface {
 	HasHitBreakpoint() bool
 	BreakpointReason() string
 
-	AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) int
+	AddRegisterValueBP(
+		reg cpu.Register,
+		comparison BreakpointComparison,
+		value uint16,
+		hitCount uint) (id int, err error)
 	DeleteRegisterBP(id int)
 	SetEnabledRegisterBP(id int, enabled bool)
-	AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) int
+	AddMemoryBP(
+		address uint16,
+		comparison BreakpointComparison,
+		value uint8,
+		hitCount uint) (id int, err error)
 	DeleteMemoryBP(id int)
 	SetEnabledMemoryBP(id int, enabled bool)
 

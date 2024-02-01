@@ -112,8 +112,13 @@ func (d *realDebugger) DisableAllBreakpoints() {
 	}
 }
 
-func (d *realDebugger) AddRegisterValueBP(reg cpu.Register, comparison BreakpointComparison, value uint16) int {
-	return d.regs.addBP(reg, comparison, value)
+func (d *realDebugger) AddRegisterValueBP(
+	reg cpu.Register,
+	comparison BreakpointComparison,
+	value uint16,
+	hitCount uint) (id int, err error) {
+
+	return d.regs.addBP(reg, comparison, value, hitCount)
 }
 
 func (d *realDebugger) DeleteRegisterBP(id int) {
@@ -124,8 +129,13 @@ func (d *realDebugger) SetEnabledRegisterBP(id int, enabled bool) {
 	d.regs.setEnabledBP(id, enabled)
 }
 
-func (d *realDebugger) AddMemoryBP(address uint16, comparison BreakpointComparison, value uint8) int {
-	return d.memory.addBP(address, comparison, value)
+func (d *realDebugger) AddMemoryBP(
+	address uint16,
+	comparison BreakpointComparison,
+	value uint8,
+	hitCount uint) (id int, err error) {
+
+	return d.memory.addBP(address, comparison, value, hitCount)
 }
 
 func (d *realDebugger) DeleteMemoryBP(id int) {

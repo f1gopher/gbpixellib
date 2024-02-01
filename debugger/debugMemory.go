@@ -1,6 +1,7 @@
 package debugger
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -9,11 +10,13 @@ import (
 )
 
 type memoryBreakpoint struct {
-	id         int
-	enabled    bool
-	address    uint16
-	value      uint8
-	comparison BreakpointComparison
+	id              int
+	enabled         bool
+	address         uint16
+	value           uint8
+	comparison      BreakpointComparison
+	targetHitCount  uint
+	currentHitCount uint
 }
 
 type memoryRecord struct {
@@ -45,6 +48,14 @@ func (d *debugMemory) Reset() {
 		tmp := d.records[x]
 		tmp.history = []MemoryRecordEntry{}
 	}
+
+	d.bpLock.Lock()
+	for bpsForAddress := range d.breakpoints {
+		for bpIndex := range d.breakpoints[bpsForAddress] {
+			d.breakpoints[bpsForAddress][bpIndex].currentHitCount = 1
+		}
+	}
+	d.bpLock.Unlock()
 }
 
 func (d *debugMemory) startCycle(cycle uint, pc uint16) {
@@ -62,13 +73,24 @@ func (d *debugMemory) BreakpointReason() string {
 	return d.description
 }
 
-func (d *debugMemory) addBP(address uint16, comparison BreakpointComparison, value uint8) int {
+func (d *debugMemory) addBP(
+	address uint16,
+	comparison BreakpointComparison,
+	value uint8,
+	hitCount uint) (id int, err error) {
+
+	if hitCount < 1 {
+		return -1, errors.New("hitCount must be >= 1")
+	}
+
 	bp := memoryBreakpoint{
-		id:         d.nextId,
-		enabled:    true,
-		address:    address,
-		value:      value,
-		comparison: comparison,
+		id:              d.nextId,
+		enabled:         true,
+		address:         address,
+		value:           value,
+		comparison:      comparison,
+		targetHitCount:  hitCount,
+		currentHitCount: 1,
 	}
 	d.nextId++
 
@@ -80,7 +102,7 @@ func (d *debugMemory) addBP(address uint16, comparison BreakpointComparison, val
 	d.breakpoints[address] = append(d.breakpoints[address], bp)
 	d.bpLock.Unlock()
 
-	return bp.id
+	return bp.id, nil
 }
 
 func (d *debugMemory) deleteBP(id int) {
@@ -185,15 +207,20 @@ func (d *debugMemory) WriteByte(address uint16, value uint8) {
 	bps := d.hasBP(address)
 
 	if bps != nil {
-		d.bpLock.RLock()
-		for _, bp := range bps {
-			if evaluateBp(value, bp.comparison, bp.value) {
+		d.bpLock.Lock()
+		for x := range bps {
+			if evaluateBp(value, bps[x].comparison, bps[x].value) {
+				if bps[x].targetHitCount != bps[x].currentHitCount {
+					bps[x].currentHitCount++
+					continue
+				}
+
 				d.hitBreakpoint = true
-				d.description = fmt.Sprintf("Settings 0x%04X to 0x%02X", address, value)
+				d.description = fmt.Sprintf("Setting 0x%04X to 0x%02X for the %d time", address, value, bps[x].currentHitCount)
 				continue
 			}
 		}
-		d.bpLock.RUnlock()
+		d.bpLock.Unlock()
 	}
 
 	recorder, exists := d.records[address]
