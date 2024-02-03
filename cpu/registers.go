@@ -31,6 +31,15 @@ func (r Register) String() string {
 	return [...]string{"AF", "BC", "DE", "HL", "SP", "PC", "A", "F", "B", "C", "D", "E", "H", "L"}[r]
 }
 
+func (r Register) Is8Bit() bool {
+	switch r {
+	case AF, BC, DE, HL, PC, SP:
+		return false
+	default:
+		return true
+	}
+}
+
 func ParseRegister(value string) (reg Register, err error) {
 	switch strings.ToUpper(value) {
 	case A.String():
@@ -227,7 +236,7 @@ func (r *Registers) Set8(target Register, value uint8) {
 }
 
 func (r *Registers) Set16FromTwoBytes(target Register, msb uint8, lsb uint8) {
-	r.Set16(target, combineBytes(msb, lsb))
+	r.Set16(target, CombineBytes(msb, lsb))
 }
 
 func (r *Registers) Set16(target Register, value uint16) {

@@ -42,7 +42,7 @@ func (o *opcode_RST_n) doCycle(cycleNumber int, reg RegistersInterface, mem Memo
 
 	if cycleNumber == 4 {
 		// TODO - is o.value right?
-		reg.Set16(PC, combineBytes(0x00, o.value))
+		reg.Set16(PC, CombineBytes(0x00, o.value))
 		return true, nil
 	}
 

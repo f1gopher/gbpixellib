@@ -31,7 +31,7 @@ func (o *opcode_LD_abs_nn_SP) doCycle(cycleNumber int, reg RegistersInterface, m
 
 	if cycleNumber == 2 {
 		o.msb = readAndIncPC(reg, mem)
-		o.nn = combineBytes(o.msb, o.lsb)
+		o.nn = CombineBytes(o.msb, o.lsb)
 		return false, nil
 	}
 

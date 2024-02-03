@@ -128,7 +128,8 @@ func (d *debugRegisters) Set16(target cpu.Register, value uint16) {
 }
 
 func (d *debugRegisters) Set16FromTwoBytes(target cpu.Register, msb uint8, lsb uint8) {
-	d.registers.Set16FromTwoBytes(target, msb, lsb)
+	// Do this so we check for breakpoints
+	d.Set16(target, cpu.CombineBytes(msb, lsb))
 }
 
 func (d *debugRegisters) SetRegBit(target cpu.Register, bit uint8, value bool) {
@@ -169,7 +170,11 @@ func (d *debugRegisters) addBP(
 		return -1, errors.New("hitCount must be >= 1")
 	}
 
-	// TODO - validate value against register (8bit or 16bit)
+	// We accept a 16bit value for the breakpoint but some registers are 8bit.
+	// When this happens clear the unused 8bits by setting them to 0
+	if reg.Is8Bit() {
+		value = value | 0b0000000011111111
+	}
 
 	bp := registerBreakpoint{
 		id:              d.nextId,

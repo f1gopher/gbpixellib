@@ -143,7 +143,7 @@ func decSP(reg RegistersInterface) {
 	reg.Set16(SP, sp-1)
 }
 
-func combineBytes(msb uint8, lsb uint8) uint16 {
+func CombineBytes(msb uint8, lsb uint8) uint16 {
 	value := uint16(msb)
 	value = value << 8
 	value = value | uint16(lsb)

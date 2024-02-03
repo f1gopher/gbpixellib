@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
@@ -236,7 +237,9 @@ func (d *debugMemory) WriteByte(address uint16, value uint8) {
 }
 
 func (d *debugMemory) WriteShort(address uint16, value uint16) {
-	d.memory.WriteShort(address, value)
+	// To handle breakpoints split the two bytes write into two 1 byte writes
+	d.WriteByte(address, cpu.Msb(value))
+	d.WriteByte(address+1, cpu.Lsb(value))
 }
 
 func (d *debugMemory) DisplaySetScanline(value uint8) {

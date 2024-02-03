@@ -63,7 +63,7 @@ func (o *opcode_RET_cc) doCycle(cycleNumber int, reg RegistersInterface, mem Mem
 	}
 
 	if cycleNumber == 5 {
-		reg.Set16(PC, combineBytes(o.msb, o.lsb))
+		reg.Set16(PC, CombineBytes(o.msb, o.lsb))
 		return true, nil
 	}
 

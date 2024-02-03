@@ -32,7 +32,7 @@ func (o *opcode_LD_rr_nn) doCycle(cycleNumber int, reg RegistersInterface, mem M
 
 	if cycleNumber == 2 {
 		msb := readAndIncPC(reg, mem)
-		reg.Set16(o.target, combineBytes(msb, o.lsb))
+		reg.Set16(o.target, CombineBytes(msb, o.lsb))
 		return false, nil
 	}
 

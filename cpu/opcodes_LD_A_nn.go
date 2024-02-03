@@ -32,7 +32,7 @@ func (o *opcode_LD_A_nn) doCycle(cycleNumber int, reg RegistersInterface, mem Me
 	}
 
 	if cycleNumber == 3 {
-		nn := combineBytes(o.msb, o.lsb)
+		nn := CombineBytes(o.msb, o.lsb)
 		reg.Set8(A, mem.ReadByte(nn))
 		return false, nil
 	}
