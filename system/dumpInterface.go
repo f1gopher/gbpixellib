@@ -13,14 +13,18 @@ const executionHistorySize = 23
 
 type ExecutionInfo struct {
 	Name           string
+	Opcode         uint8
 	StartMCycle    uint
 	ProgramCounter uint16
 	StartCPU       CPUState
 }
 
 type DebugState struct {
-	NextInstruction     string
-	ValueReferencedByPC uint8
+	NextInstruction      string
+	NextInstructionCode  uint8
+	NextInstructionIsCB  bool
+	PCForNextInstruction uint16
+	ValueReferencedByPC  uint8
 }
 
 type CPUState struct {
@@ -111,6 +115,7 @@ type Dump interface {
 	GetGPUState() *LCDControlState
 	GetCartridgeState() *CartridgeState
 	GetDebugState() *DebugState
+
 	DumpTileset() image.Image
 	DumpTile(tileNum uint16, palette display.Palette) image.Image
 	DumpFirstTileMap() *[1024]byte
@@ -253,9 +258,13 @@ func (d *dumpInterface) GetCartridgeState() *CartridgeState {
 }
 
 func (d *dumpInterface) GetDebugState() *DebugState {
+	op, isCB := d.cpu.GetNextOpcode()
 	return &DebugState{
-		NextInstruction:     d.cpu.GetOpcode(),
-		ValueReferencedByPC: d.memory.ReadByte(d.regs.Get16(cpu.PC)),
+		NextInstruction:      d.cpu.GetOpcode(),
+		NextInstructionCode:  op,
+		NextInstructionIsCB:  isCB,
+		PCForNextInstruction: d.cpu.GetOpcodePC(),
+		ValueReferencedByPC:  d.memory.ReadByte(d.regs.Get16(cpu.PC)),
 	}
 }
 

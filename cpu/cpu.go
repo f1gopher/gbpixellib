@@ -77,16 +77,31 @@ func CreateCPU(log *log.Log, regs RegistersInterface, memory MemoryInterface) *C
 func (c *Cpu) InitForTestROM() {
 	c.executeOpcode = nil
 
-	c.reg.Set8(A, 0x01)
-	c.reg.Set8(F, 0xB0)
+	// Test ROM recommended intial values
+	// c.reg.Set8(A, 0x01)
+	// c.reg.Set8(F, 0xB0)
+	// c.reg.Set8(B, 0x00)
+	// c.reg.Set8(C, 0x13)
+	// c.reg.Set8(D, 0x00)
+	// c.reg.Set8(E, 0xD8)
+	// c.reg.Set8(H, 0x01)
+	// c.reg.Set8(L, 0x4D)
+	// c.reg.Set16(SP, 0xFFFE)
+	// c.reg.Set16(PC, 0x0100)
+
+	// Initial values for comparison system
+	c.reg.Set8(A, 0x11)
+	c.reg.Set8(F, 0x80)
 	c.reg.Set8(B, 0x00)
-	c.reg.Set8(C, 0x13)
-	c.reg.Set8(D, 0x00)
-	c.reg.Set8(E, 0xD8)
-	c.reg.Set8(H, 0x01)
-	c.reg.Set8(L, 0x4D)
+	c.reg.Set8(C, 0x00)
+	c.reg.Set8(D, 0xFF)
+	c.reg.Set8(E, 0x56)
+	c.reg.Set8(H, 0x00)
+	c.reg.Set8(L, 0x0D)
 	c.reg.Set16(SP, 0xFFFE)
 	c.reg.Set16(PC, 0x0100)
+
+	c.executeOpcodePC = c.reg.Get16(PC)
 }
 
 func (c *Cpu) Init() {
@@ -129,6 +144,8 @@ func (c *Cpu) Init() {
 	c.memory.WriteByte(0xFF4A, 0x00)
 	c.memory.WriteByte(0xFF4B, 0x00)
 	c.memory.WriteByte(0xFFFF, 0x00)
+
+	c.executeOpcodePC = c.reg.Get16(PC)
 }
 
 func (c *Cpu) Reset() {
@@ -167,7 +184,7 @@ func (c *Cpu) DoInterruptCycle() error {
 	return nil
 }
 
-func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcodeDescription string, err error) {
+func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcode uint8, opcodeDescription string, err error) {
 	// On startup we will have no fetched opcode so
 	// fetch a nw opcode then end the cycle
 	if c.executeOpcode == nil {
@@ -185,7 +202,7 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 		c.executeOpcodesMCycle = 0
 
 		if err != nil {
-			return false, false, "", err
+			return false, false, 0, "", err
 		}
 
 		// TODO - not sure is this is right, hack to match the other app for testing
@@ -214,7 +231,7 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 		c.executeOpcodesMCycle = 0
 
 		if err != nil {
-			return false, false, "", err
+			return false, false, 0, "", err
 		}
 	}
 
@@ -225,7 +242,7 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 		c.memory)
 
 	if err != nil {
-		return false, completed, "", errors.Join(errors.New(fmt.Sprintf("Opcode %s cycle %d", c.executeOpcode.name(), c.executeOpcodesMCycle)), err)
+		return false, completed, 0, "", errors.Join(errors.New(fmt.Sprintf("Opcode %s cycle %d", c.executeOpcode.name(), c.executeOpcodesMCycle)), err)
 	}
 
 	c.executeOpcodesMCycle++
@@ -257,11 +274,11 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 
 		// If we had an error fetching the opcode fail
 		if err != nil {
-			return breakpointHit, completed, "", err
+			return breakpointHit, completed, 0, "", err
 		}
 	}
 
-	return breakpointHit, completed, description, nil
+	return breakpointHit, completed, c.executeOpcode.opcode(), description, nil
 }
 
 func (c *Cpu) GetOpcode() string {

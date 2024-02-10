@@ -182,6 +182,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 
 	for x = 0; x < mCyclesPerFrame; {
 		mCyclesCompleted = 1
+		info.Opcode = 0
 		info.StartMCycle = s.dump.mCycle
 		info.ProgramCounter = s.cpu.GetOpcodePC()
 		info.StartCPU = *s.dump.getCPUStateOnly()
@@ -234,7 +235,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 		}
 
 		if !didDMA && !wasHalted {
-			_, prevCompleted, info.Name, err = s.cpu.ExecuteMCycle()
+			_, prevCompleted, info.Opcode, info.Name, err = s.cpu.ExecuteMCycle()
 
 			if err != nil {
 				return false, x, err
@@ -298,7 +299,7 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 
 			var completed bool
 			for {
-				_, completed, info.Name, err = s.cpu.ExecuteMCycle()
+				_, completed, info.Opcode, info.Name, err = s.cpu.ExecuteMCycle()
 
 				mCyclesCompleted++
 
