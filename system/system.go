@@ -24,6 +24,9 @@ const mCyclesPerFrame = cyclesPerFrame / cyclesPerMCycle
 const dmaMCycles = 160
 const handleInterruptMCycles = 5
 
+const haltExecutionName = "**HALTED**"
+const interruptExecutionName = "**INTERRUPT** - "
+
 type CartridgeState struct {
 	CurrentROMBank uint8
 	CurrentRAMBank uint8
@@ -216,7 +219,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 							return false, mCyclesCompleted, err
 						}
 						mCyclesCompleted = handleInterruptMCycles
-						info.Name = "**INTERUPT** - " + name
+						info.Name = interruptExecutionName + name
 						s.dump.appendExecutionHistory(&info)
 						s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 						x += mCyclesCompleted
@@ -278,7 +281,7 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 				s.regs.SetHALT(false)
 				info.Name = "**UNHALT**"
 			} else {
-				info.Name = "**HALTED**"
+				info.Name = haltExecutionName
 			}
 			mCyclesCompleted++
 
@@ -289,7 +292,7 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 					return false, mCyclesCompleted, err
 				}
 
-				info.Name = "**INTERUPT** - " + name
+				info.Name = interruptExecutionName + name
 				s.dump.appendExecutionHistory(&info)
 				mCyclesCompleted = handleInterruptMCycles
 				s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)

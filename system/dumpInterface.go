@@ -3,13 +3,15 @@ package system
 import (
 	"fmt"
 	"image"
+	"strings"
 
 	"github.com/f1gopher/gbpixellib/cpu"
 	"github.com/f1gopher/gbpixellib/display"
 	"github.com/f1gopher/gbpixellib/memory"
 )
 
-const executionHistorySize = 23
+const executionHistorySize = 200
+const interruptHistorySize = 200
 
 type ExecutionInfo struct {
 	Name           string
@@ -17,6 +19,11 @@ type ExecutionInfo struct {
 	StartMCycle    uint
 	ProgramCounter uint16
 	StartCPU       CPUState
+}
+
+type InterruptInfo struct {
+	Name        string
+	StartMCycle uint
 }
 
 type DebugState struct {
@@ -125,6 +132,7 @@ type Dump interface {
 	DumpCode(area memory.Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int)
 	DumpCallstack() []string
 	GetExecutionHistory() []ExecutionInfo
+	GetInterruptHistory() []InterruptInfo
 	DumpMemory(area memory.Area, bank uint8) (data []uint8, startAddress uint16)
 	DumpMemoryValue(address uint16) uint8
 }
@@ -136,15 +144,42 @@ type dumpInterface struct {
 	screen           *display.Screen
 	cartridge        memory.Cartridge
 	executionHistory []ExecutionInfo
+	interruptHistory []InterruptInfo
 	mCycle           uint
 }
 
 func (d *dumpInterface) reset() {
 	d.executionHistory = make([]ExecutionInfo, 0)
+	d.interruptHistory = make([]InterruptInfo, 0)
 	d.mCycle = 0
 }
 
 func (d *dumpInterface) appendExecutionHistory(action *ExecutionInfo) {
+	// If the previous history entry was HALT and the currnet is a HALT then
+	// don't add a new entry. This makes things more readable and the content
+	// more relavent and useful.
+	if action.Name == haltExecutionName {
+		size := len(d.executionHistory)
+
+		if size > 0 && d.executionHistory[size-1].Name == haltExecutionName {
+			return
+		}
+	}
+
+	// Interrupt History
+	if strings.HasPrefix(action.Name, interruptExecutionName) {
+
+		if len(d.interruptHistory) == interruptHistorySize {
+			d.interruptHistory = d.interruptHistory[1:]
+		}
+
+		d.interruptHistory = append(d.interruptHistory, InterruptInfo{
+			Name:        action.Name,
+			StartMCycle: action.StartMCycle,
+		})
+	}
+
+	// Execution History
 	if len(d.executionHistory) == executionHistorySize {
 		d.executionHistory = d.executionHistory[1:]
 	}
@@ -270,6 +305,10 @@ func (d *dumpInterface) GetDebugState() *DebugState {
 
 func (d *dumpInterface) GetExecutionHistory() []ExecutionInfo {
 	return d.executionHistory
+}
+
+func (d *dumpInterface) GetInterruptHistory() []InterruptInfo {
+	return d.interruptHistory
 }
 
 func (d *dumpInterface) DumpTileset() image.Image {
