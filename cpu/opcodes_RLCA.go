@@ -34,7 +34,7 @@ func (o *opcode_RLCA) doCycle(cycleNumber int, reg RegistersInterface, mem Memor
 	result := value << 1
 	reg.Set8(A, result)
 
-	reg.SetFlag(ZFlag, result == 0)
+	reg.SetFlag(ZFlag, false)
 	reg.SetFlag(NFlag, false)
 	reg.SetFlag(HFlag, false)
 	reg.SetFlag(CFlag, bit7)
