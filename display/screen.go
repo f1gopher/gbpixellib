@@ -377,22 +377,25 @@ func (s *Screen) UpdateForCycles(cyclesCompleted uint) {
 
 	if s.currentCycleForScanline >= cyclesToDrawScanline {
 		currentScanline := s.LY()
+		resetToZero := false
 
 		if currentScanline == 144 {
 			s.interuptHandler.Request(interupt.VBlank)
 		} else if currentScanline > 153 {
 			s.memory.DisplaySetScanline(0)
+			resetToZero = true
 		} else if currentScanline < 144 {
 			s.drawScanline()
 		}
 
-		// Set bit 2 of stat register to 1
 		s.setLcdStatus()
 
 		s.currentCycleForScanline -= cyclesToDrawScanline
 
-		currentScanline = s.LY() + 1
-		s.memory.DisplaySetScanline(currentScanline)
+		if !resetToZero {
+			currentScanline = s.LY() + 1
+			s.memory.DisplaySetScanline(currentScanline)
+		}
 	}
 }
 
