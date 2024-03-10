@@ -109,9 +109,7 @@ func (s *System) LoadTestROM(rom string) {
 }
 
 func (s *System) IsCartridgeSupported() bool {
-	return s.cartridgeHeader.CartridgeType == 0x00 ||
-		s.cartridgeHeader.CartridgeType == 0x01 ||
-		s.cartridgeHeader.CartridgeType == 0x03
+	return memory.IsCartridgeSupported(s.cartridgeHeader.CartridgeType)
 }
 
 func (s *System) Start() {

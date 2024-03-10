@@ -187,6 +187,8 @@ func (c *cartridgeMBC1) isRamEnabled() bool {
 func (c *cartridgeMBC1) romBank() uint8 {
 	bank := (0b00011111 & c.romBankNumber)
 
+	// TODO - if bank number is higher need to ignore some bits and allow
+	// for selecting bank 0
 	if bank == 0 {
 		bank = 1
 	}
