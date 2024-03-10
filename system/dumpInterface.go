@@ -384,6 +384,12 @@ func (d *dumpInterface) DumpCallstack() []string {
 	stackEnd := d.regs.Get16(cpu.SP)
 	result := make([]string, 0)
 
+	// If we are loading and the SP has not been setup yet then don't dump
+	// out the whole memory thinking it is the stack
+	if stackEnd == 0x0000 {
+		return result
+	}
+
 	for x := stackEnd; x < stackStart; x += 2 {
 		value := d.memory.ReadShort(x)
 
