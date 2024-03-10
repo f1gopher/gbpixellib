@@ -246,7 +246,8 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 	}
 
 	c.executeOpcodesMCycle++
-	var description string
+	var opcodeRanDescription string
+	var opcodeRanId uint8
 	breakpointHit := false
 
 	// TODO - directly check registers/memory for breakpoints here (and clear
@@ -257,7 +258,8 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 	if completed {
 		c.executeOpcodesMCycle = 0
 
-		description = c.executeOpcode.name()
+		opcodeRanDescription = c.executeOpcode.name()
+		opcodeRanId = c.executeOpcode.opcode()
 
 		c.prevOpcodePC = c.executeOpcodePC
 		c.executeOpcodePC = c.reg.Get16(PC)
@@ -278,7 +280,7 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 		}
 	}
 
-	return breakpointHit, completed, c.executeOpcode.opcode(), description, nil
+	return breakpointHit, completed, opcodeRanId, opcodeRanDescription, nil
 }
 
 func (c *Cpu) GetOpcode() string {
@@ -291,7 +293,15 @@ func (c *Cpu) GetOpcode() string {
 
 func (c *Cpu) GetNextOpcode() (opcode uint8, isCB bool) {
 	if c.executeOpcode == nil {
-		return 0, false
+		pc := c.reg.Get16(PC)
+		opcode := c.memory.ReadByte(pc)
+		var cbOpcode uint8 = 0x00
+		if opcode == 0xCB {
+			cbOpcode = c.memory.ReadByte(pc + 1)
+		}
+
+		nextOpcode, _ := c.getOpcode(opcode, cbOpcode)
+		return nextOpcode.opcode(), opcode == 0xCB
 	}
 
 	return c.executeOpcode.opcode(), c.isCB
