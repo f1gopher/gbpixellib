@@ -274,9 +274,9 @@ func (s *Screen) DumpTile(tileNum uint16, palette Palette) image.Image {
 			case Background:
 				co = s.colorForBGPixel(tile, byte(colourBit))
 			case Obj0:
-				co, _ = s.colorForObjPixel(tile, byte(colourBit), false)
+				co, _ = s.colorForObjPixel(tile, byte(colourBit), false, false)
 			case Obj1:
-				co, _ = s.colorForObjPixel(tile, byte(colourBit), true)
+				co, _ = s.colorForObjPixel(tile, byte(colourBit), true, false)
 			default:
 				panic("Unhandled palette")
 			}
@@ -548,8 +548,8 @@ func (s *Screen) renderSprites() {
 
 		usePalette1 := memory.GetBit(attributes, 4)
 		xFlip := memory.GetBit(attributes, 5)
-		// yFlip := memory.GetBit(attributes, 6)
-		//priority := memory.GetBit(attributes, 7)
+		yFlip := memory.GetBit(attributes, 6)
+		priority := memory.GetBit(attributes, 7)
 
 		ySize := s.ObjSize()
 		scanline := s.LY()
@@ -558,7 +558,16 @@ func (s *Screen) renderSprites() {
 
 			line := scanline - yPos
 
+			if xFlip {
+				if line <= 3 {
+					line += (7 - line)
+				} else {
+					line = (7 - line)
+				}
+			}
+
 			line *= 2
+
 			dataAddress := (0x8000 + (uint16(tileLocation) * 16)) + uint16(line)
 
 			tile := s.memory.ReadShort(dataAddress)
@@ -566,16 +575,13 @@ func (s *Screen) renderSprites() {
 			for tilePixel := 7; tilePixel >= 0; tilePixel-- {
 
 				colorBit := tilePixel
-				if xFlip {
+				if yFlip {
 					colorBit -= 7
 					colorBit *= -1
 				}
 
-				// TODO - do y flip
-
-				// TODO - handle priority
-
-				color, render := s.colorForObjPixel(tile, byte(colorBit), usePalette1)
+				// If priority is true and color is 1,2,3 then we don't render
+				color, render := s.colorForObjPixel(tile, byte(colorBit), usePalette1, priority)
 
 				// Is transparent for sprites
 				if !render {
@@ -624,7 +630,7 @@ func (s *Screen) colorForBGPixel(block uint16, index byte) ScreenColor {
 	}
 }
 
-func (s *Screen) colorForObjPixel(block uint16, index byte, usePalette1 bool) (color ScreenColor, render bool) {
+func (s *Screen) colorForObjPixel(block uint16, index byte, usePalette1 bool, priority bool) (color ScreenColor, render bool) {
 	highFlag := block >> (8 + index) & 0x0001
 	lowFlag := block >> index & 0x0001
 
@@ -637,21 +643,21 @@ func (s *Screen) colorForObjPixel(block uint16, index byte, usePalette1 bool) (c
 		if highFlag == 0x00 && lowFlag == 0x00 {
 			return s.ObjPalette1Index0Color(), true
 		} else if highFlag == 0x00 && lowFlag == 0x01 {
-			return s.ObjPalette1Index1Color(), true
+			return s.ObjPalette1Index1Color(), !priority
 		} else if highFlag == 0x01 && lowFlag == 0x00 {
-			return s.ObjPalette1Index2Color(), true
+			return s.ObjPalette1Index2Color(), !priority
 		} else {
-			return s.ObjPalette1Index3Color(), true
+			return s.ObjPalette1Index3Color(), !priority
 		}
 	}
 
 	if highFlag == 0x00 && lowFlag == 0x00 {
 		return s.ObjPalette0Index0Color(), true
 	} else if highFlag == 0x00 && lowFlag == 0x01 {
-		return s.ObjPalette0Index1Color(), true
+		return s.ObjPalette0Index1Color(), !priority
 	} else if highFlag == 0x01 && lowFlag == 0x00 {
-		return s.ObjPalette0Index2Color(), true
+		return s.ObjPalette0Index2Color(), !priority
 	} else {
-		return s.ObjPalette0Index3Color(), true
+		return s.ObjPalette0Index3Color(), !priority
 	}
 }
