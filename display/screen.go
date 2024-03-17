@@ -366,16 +366,13 @@ func (s *Screen) Debug() string {
 }
 
 func (s *Screen) UpdateForCycles(cyclesCompleted uint) {
-
-	s.setLcdMode()
-
-	s.currentCycleForScanline += cyclesCompleted
-
 	if !s.LCDEnable() {
 		return
 	}
 
-	if s.currentCycleForScanline >= cyclesToDrawScanline {
+	s.currentCycleForScanline += cyclesCompleted
+
+	if s.currentCycleForScanline > cyclesToDrawScanline {
 		currentScanline := s.LY()
 		resetToZero := false
 
@@ -388,8 +385,6 @@ func (s *Screen) UpdateForCycles(cyclesCompleted uint) {
 			s.drawScanline()
 		}
 
-		s.setLcdStatus()
-
 		s.currentCycleForScanline -= cyclesToDrawScanline
 
 		if !resetToZero {
@@ -397,6 +392,8 @@ func (s *Screen) UpdateForCycles(cyclesCompleted uint) {
 			s.memory.DisplaySetScanline(currentScanline)
 		}
 	}
+
+	s.setLcdMode()
 }
 
 func (s *Screen) Cycles() uint {
@@ -408,52 +405,50 @@ func (s *Screen) setLcdMode() {
 
 	currentLine := s.memory.ReadByte(lcdScanline)
 
-	if currentLine > 144 {
+	// Set LYC == LY flag
+	lycSelect := s.LY() == s.LYC()
+	status = memory.SetBit(status, 2, lycSelect)
+	if lycSelect && memory.GetBit(status, 6) {
+		s.interuptHandler.Request(interupt.LCD)
+	}
+
+	currentMode := s.LCDStatusMode()
+
+	if currentLine >= 144 {
 		// VBlank - 1
 		status = memory.SetBit(status, 0, true)
 		status = memory.SetBit(status, 1, false)
 
-	} else {
-		if s.currentCycleForScanline <= 80 {
-			// Searching OAM Mode - 2
-			status = memory.SetBit(status, 0, false)
-			status = memory.SetBit(status, 1, true)
-		} else if s.currentCycleForScanline >= 167 && s.currentCycleForScanline <= 291 {
-			// Transfering Data - 3
-			status = memory.SetBit(status, 0, true)
-			status = memory.SetBit(status, 1, true)
-		} else {
-			// HBlank Mode - 0
-			status = memory.SetBit(status, 0, false)
-			status = memory.SetBit(status, 1, false)
-
-			// Bit 3 is hblank interrupt request
-			reqInt := memory.GetBit(status, 3)
-			if reqInt {
-				s.interuptHandler.Request(interupt.LCD)
-			}
-		}
-	}
-
-	s.memory.DisplaySetStatus(status)
-}
-
-func (s *Screen) setLcdStatus() {
-	status := s.memory.ReadByte(lcdStatus)
-
-	// LCD interrupt
-	a := s.LY()
-	b := s.memory.ReadByte(0xFF45)
-	bob := a == b
-
-	if bob { //s.LY() == s.memory.ReadByte(0xFF45) {
-		status = memory.SetBit(status, 2, true)
-
-		if memory.GetBit(status, 6) {
+		if currentMode != vblank && memory.GetBit(status, 4) {
 			s.interuptHandler.Request(interupt.LCD)
 		}
+
 	} else {
-		status = memory.SetBit(status, 2, false)
+		const mode2Duration = 80
+		// TODO - this value varies so is atleast 172 but can be more
+		const mode3Duration = 172
+
+		if s.currentCycleForScanline < mode2Duration {
+			status = memory.SetBit(status, 0, false)
+			status = memory.SetBit(status, 1, true)
+
+			if currentMode != searchOAM && memory.GetBit(status, 5) {
+				s.interuptHandler.Request(interupt.LCD)
+			}
+		} else {
+			if s.currentCycleForScanline < mode2Duration+mode3Duration {
+				status = memory.SetBit(status, 0, true)
+				status = memory.SetBit(status, 1, true)
+
+			} else {
+				status = memory.SetBit(status, 0, false)
+				status = memory.SetBit(status, 1, false)
+
+				if currentMode != hblank && memory.GetBit(status, 3) {
+					s.interuptHandler.Request(interupt.LCD)
+				}
+			}
+		}
 	}
 
 	s.memory.DisplaySetStatus(status)

@@ -62,12 +62,6 @@ func (r *ram) ReadByte(address uint16) byte {
 	//		return reg | 0x0F
 	//	}
 
-	// LCD status register
-	if address == 0xFF41 {
-		value := r.mem.ReadByte(address)
-		return value&0xFB | 0x80
-	}
-
 	return r.mem.ReadByte(address)
 }
 
@@ -114,13 +108,13 @@ func (r *ram) WriteByte(address uint16, value byte) {
 	if address == 0xFF41 {
 		reg := r.mem.ReadByte(address)
 		// Keep the existing values for the first 3 bits
-		reg = reg & 0b00000111
-		reg = reg | value
-		r.mem.WriteByte(address, reg)
+		value = SetBit(value, 0, reg&0b0000001 == 0b00000001)
+		value = SetBit(value, 1, reg&0b0000010 == 0b00000010)
+		value = SetBit(value, 2, reg&0b0000100 == 0b00000100)
+		r.mem.WriteByte(address, value)
 		return
 	}
 
-	//m.buffer[address] = value
 	r.mem.WriteByte(address, value)
 
 	// Echo RAM - might not need this
