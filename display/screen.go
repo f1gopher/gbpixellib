@@ -558,7 +558,7 @@ func (s *Screen) renderSprites() {
 
 			line := scanline - yPos
 
-			if xFlip {
+			if yFlip {
 				if line <= 3 {
 					line += (7 - line)
 				} else {
@@ -575,7 +575,7 @@ func (s *Screen) renderSprites() {
 			for tilePixel := 7; tilePixel >= 0; tilePixel-- {
 
 				colorBit := tilePixel
-				if yFlip {
+				if xFlip {
 					colorBit -= 7
 					colorBit *= -1
 				}
