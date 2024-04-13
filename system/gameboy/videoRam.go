@@ -1,13 +1,17 @@
-package memory
+package gameboy
+
+import (
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type videoRam struct {
-	mem *Memory
+	mem *memory.Memory
 }
 
 func CreateVideoRam() *videoRam {
 	data := make([]byte, 0x2000)
 	return &videoRam{
-		mem: CreateMemory("video ram", &data, 0x8000),
+		mem: memory.CreateMemory("video ram", &data, 0x8000),
 	}
 }
 

@@ -1,8 +1,7 @@
-package debugger
+package gameboy
 
 import (
 	"github.com/f1gopher/gbpixellib/hardware/z80"
-	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
 )
 
@@ -10,8 +9,8 @@ type fakeDebugger struct {
 	log *log.Log
 }
 
-func createFakeDebugger(log *log.Log) (Debugger, z80.RegistersInterface, z80.MemoryInterface, *memory.Bus) {
-	mem := memory.CreateBus(log)
+func createFakeDebugger(log *log.Log) (Debugger, z80.RegistersInterface, z80.MemoryInterface, *Bus) {
+	mem := CreateBus(log)
 	return &fakeDebugger{}, &z80.Registers{}, mem, mem
 }
 

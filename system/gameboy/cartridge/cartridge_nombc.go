@@ -1,10 +1,13 @@
-package memory
+package cartridge
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type CartridgeNoMBC struct {
-	rom *Memory
-	ram *Memory
+	rom *memory.Memory
+	ram *memory.Memory
 }
 
 const NoMBCRamOffset = 0xA000
@@ -12,8 +15,8 @@ const NoMBCRamOffset = 0xA000
 func createCartridgeNoMBC(romSize uint32, ramSize uint32, data *[]byte) *CartridgeNoMBC {
 	ram := make([]byte, ramSize)
 	return &CartridgeNoMBC{
-		rom: CreateReadOnlyMemory("cartridge rom", data, 0),
-		ram: CreateMemory("cartridge ram", &ram, NoMBCRamOffset),
+		rom: memory.CreateReadOnlyMemory("cartridge rom", data, 0),
+		ram: memory.CreateMemory("cartridge ram", &ram, NoMBCRamOffset),
 	}
 }
 
@@ -70,9 +73,9 @@ func (c *CartridgeNoMBC) CurrentRAMBank() uint8 {
 	return 0
 }
 
-func (c *CartridgeNoMBC) memoryBank(address uint16) *Memory {
+func (c *CartridgeNoMBC) memoryBank(address uint16) *memory.Memory {
 	if address >= NoMBCRamOffset {
-		if int(address) >= int(NoMBCRamOffset)+c.ram.size() {
+		if int(address) >= int(NoMBCRamOffset)+c.ram.Size() {
 			panic(fmt.Sprintf("Invalid address for NoMBC cartridge: 0x%2X", address))
 		}
 		return c.ram

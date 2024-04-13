@@ -1,32 +1,36 @@
-package memory
+package gameboy
+
+import (
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type inputOutput interface {
 	ReadDirectional() uint8
 	ReadStandard() uint8
 }
 
-type interupt interface {
+type overflowInterupt interface {
 	TriggerTimerOverflow()
 }
 
 const DividerRegister = 0xFF04
 
 type ram struct {
-	mem *Memory
+	mem *memory.Memory
 
 	io       inputOutput
-	interupt interupt
+	interupt overflowInterupt
 }
 
 func CreateRam() *ram {
 	data := make([]byte, ramSize)
 	return &ram{
-		mem: CreateMemory("ram", &data, ramOffset),
+		mem: memory.CreateMemory("ram", &data, ramOffset),
 		io:  nil,
 	}
 }
 
-func (r *ram) SetIO(io inputOutput, interupt interupt) {
+func (r *ram) SetIO(io inputOutput, interupt overflowInterupt) {
 	r.io = io
 	r.interupt = interupt
 }
@@ -108,9 +112,9 @@ func (r *ram) WriteByte(address uint16, value byte) {
 	if address == 0xFF41 {
 		reg := r.mem.ReadByte(address)
 		// Keep the existing values for the first 3 bits
-		value = SetBit(value, 0, reg&0b0000001 == 0b00000001)
-		value = SetBit(value, 1, reg&0b0000010 == 0b00000010)
-		value = SetBit(value, 2, reg&0b0000100 == 0b00000100)
+		value = memory.SetBit(value, 0, reg&0b0000001 == 0b00000001)
+		value = memory.SetBit(value, 1, reg&0b0000010 == 0b00000010)
+		value = memory.SetBit(value, 2, reg&0b0000100 == 0b00000100)
 		r.mem.WriteByte(address, value)
 		return
 	}

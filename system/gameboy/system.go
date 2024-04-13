@@ -3,16 +3,14 @@ package gameboy
 import (
 	"errors"
 	"fmt"
+	"github.com/f1gopher/gbpixellib/system/gameboy/cartridge"
 	"github.com/f1gopher/gbpixellib/system/gameboy/display"
 	"github.com/f1gopher/gbpixellib/system/gameboy/input"
 	"github.com/f1gopher/gbpixellib/system/gameboy/interupt"
-	"github.com/f1gopher/gbpixellib/system/gameboy/timer"
 	"os"
 	"sync"
 
-	"github.com/f1gopher/gbpixellib/debugger"
 	"github.com/f1gopher/gbpixellib/hardware/z80"
-	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
 )
 
@@ -37,18 +35,18 @@ type System struct {
 	rom       string
 	isTestROM bool
 
-	debugger        debugger.Debugger
+	debugger        Debugger
 	log             *log.Log
 	screen          *display.Screen
 	memory          z80.MemoryInterface
-	bus             *memory.Bus
+	bus             *Bus
 	regs            z80.RegistersInterface
 	cpu             *z80.Cpu
 	interuptHandler *interupt.Handler
 	controller      *input.Input
-	timer           *timer.Timer
+	timer           *Timer
 	cartridgeHeader *CartridgeHeader
-	cartridge       memory.Cartridge
+	cartridge       cartridge.Cartridge
 
 	currentDisplay string
 	displayLock    sync.Mutex
@@ -58,7 +56,7 @@ type System struct {
 
 func CreateSystem(bios string, rom string, useDebugger bool) *System {
 	l := log.CreateLog("./log.txt")
-	debugger, registers, memory, memoryBus := debugger.CreateDebugger(l, useDebugger)
+	debugger, registers, memory, memoryBus := CreateDebugger(l, useDebugger)
 	system := System{
 		debugger:  debugger,
 		log:       l,
@@ -74,7 +72,7 @@ func CreateSystem(bios string, rom string, useDebugger bool) *System {
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	system.controller = input.CreateInput(system.bus, system.interuptHandler)
 	memoryBus.SetIO(system.controller, system.interuptHandler)
-	system.timer = timer.CreateTimer(system.memory, system.interuptHandler)
+	system.timer = CreateTimer(system.memory, system.interuptHandler)
 	memoryBus.SetTimer(system.timer)
 
 	system.dump = dumpInterface{
@@ -109,7 +107,7 @@ func (s *System) LoadTestROM(rom string) {
 }
 
 func (s *System) IsCartridgeSupported() bool {
-	return memory.IsCartridgeSupported(s.cartridgeHeader.CartridgeType)
+	return cartridge.IsCartridgeSupported(s.cartridgeHeader.CartridgeType)
 }
 
 func (s *System) Start() {
@@ -134,7 +132,7 @@ func (s *System) Start() {
 		s.log.Debug(fmt.Sprintf("Unsupported cartridge type: %s", s.cartridgeHeader.CartridgeType))
 	}
 
-	s.cartridge = memory.CreateCartridge(
+	s.cartridge = cartridge.CreateCartridge(
 		s.cartridgeHeader.CartridgeType,
 		s.cartridgeHeader.ROMSizeBytes,
 		s.cartridgeHeader.RAMSizeBytes,

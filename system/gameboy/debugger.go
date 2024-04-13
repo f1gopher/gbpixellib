@@ -1,8 +1,7 @@
-package debugger
+package gameboy
 
 import (
 	"github.com/f1gopher/gbpixellib/hardware/z80"
-	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
 )
 
@@ -39,7 +38,7 @@ type Debugger interface {
 	MemoryRecordValues(address uint16) []MemoryRecordEntry
 }
 
-func CreateDebugger(l *log.Log, debug bool) (Debugger, z80.RegistersInterface, z80.MemoryInterface, *memory.Bus) {
+func CreateDebugger(l *log.Log, debug bool) (Debugger, z80.RegistersInterface, z80.MemoryInterface, *Bus) {
 	if debug {
 		return createRealDebugger(l)
 	}

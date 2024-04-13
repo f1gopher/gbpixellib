@@ -2,7 +2,7 @@ package gameboy
 
 import (
 	"fmt"
-	"github.com/f1gopher/gbpixellib/hardware/memory"
+	"github.com/f1gopher/gbpixellib/system/gameboy/cartridge"
 )
 
 type CartridgeHeader struct {
@@ -315,23 +315,23 @@ func cartridgeTypeName(code uint8) string {
 func romSizeInfo(code uint8) (string, uint32) {
 	switch code {
 	case 0x00:
-		return "32 KiB", 32 * memory.M_1Kb
+		return "32 KiB", 32 * cartridge.M_1Kb
 	case 0x01:
-		return "64 KiB", 64 * memory.M_1Kb
+		return "64 KiB", 64 * cartridge.M_1Kb
 	case 0x02:
-		return "128 KiB", 128 * memory.M_1Kb
+		return "128 KiB", 128 * cartridge.M_1Kb
 	case 0x03:
-		return "256 KiB", 256 * memory.M_1Kb
+		return "256 KiB", 256 * cartridge.M_1Kb
 	case 0x04:
-		return "512 KiB", 512 * memory.M_1Kb
+		return "512 KiB", 512 * cartridge.M_1Kb
 	case 0x05:
-		return "1 MiB", 1 * memory.M_1MiB
+		return "1 MiB", 1 * cartridge.M_1MiB
 	case 0x06:
-		return "2 MiB", 2 * memory.M_1MiB
+		return "2 MiB", 2 * cartridge.M_1MiB
 	case 0x07:
-		return "4 MiB", 4 * memory.M_1MiB
+		return "4 MiB", 4 * cartridge.M_1MiB
 	case 0x08:
-		return "8 MiB", 8 * memory.M_1MiB
+		return "8 MiB", 8 * cartridge.M_1MiB
 	case 0x52, 0x53, 0x54:
 		panic(fmt.Sprintf("Unsupported rom size: 0x%X", code))
 	default:
@@ -346,13 +346,13 @@ func ramSizeInfo(code uint8) (string, uint32) {
 	case 0x01:
 		panic(fmt.Sprintf("Unsupported rom size: 0x%X", code))
 	case 0x02:
-		return "8 KiB -	1 bank", 8 * memory.M_1Kb
+		return "8 KiB -	1 bank", 8 * cartridge.M_1Kb
 	case 0x03:
-		return "32 KiB - 4 banks of 8 KiB each", 32 * memory.M_1Kb
+		return "32 KiB - 4 banks of 8 KiB each", 32 * cartridge.M_1Kb
 	case 0x04:
-		return "128 KiB	- 16 banks of 8 KiB each", 128 * memory.M_1Kb
+		return "128 KiB	- 16 banks of 8 KiB each", 128 * cartridge.M_1Kb
 	case 0x05:
-		return "64 KiB - 8 banks of 8 KiB each", 64 * memory.M_1Kb
+		return "64 KiB - 8 banks of 8 KiB each", 64 * cartridge.M_1Kb
 	default:
 		return fmt.Sprintf("Unknown code: 0xX", code), 0
 	}

@@ -1,9 +1,8 @@
-package debugger
+package gameboy
 
 import (
 	"errors"
 	"fmt"
-	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"slices"
 	"sync"
 
@@ -26,7 +25,7 @@ type memoryRecord struct {
 }
 
 type debugMemory struct {
-	memory       *memory.Bus
+	memory       *Bus
 	currentCycle uint
 	currentPC    uint16
 
@@ -250,7 +249,7 @@ func (d *debugMemory) DisplaySetStatus(value uint8) {
 	d.memory.DisplaySetStatus(value)
 }
 
-func (d *debugMemory) DumpCode(area memory.Area, bank uint8) (data []uint8, startAddress uint16) {
+func (d *debugMemory) DumpCode(area Area, bank uint8) (data []uint8, startAddress uint16) {
 	return d.memory.DumpCode(area, bank)
 }
 

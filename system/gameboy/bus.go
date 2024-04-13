@@ -1,7 +1,9 @@
-package memory
+package gameboy
 
 import (
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
+	"github.com/f1gopher/gbpixellib/system/gameboy/cartridge"
 )
 
 type Area int
@@ -34,10 +36,10 @@ type timerDivide interface {
 type Bus struct {
 	log *log.Log
 
-	bios      *Memory
+	bios      *memory.Memory
 	video     *videoRam
 	ram       *ram
-	cartridge Cartridge
+	cartridge cartridge.Cartridge
 	timer     timerDivide
 
 	dmaPending bool
@@ -62,9 +64,9 @@ func (b *Bus) SetTimer(timer timerDivide) {
 	b.timer = timer
 }
 
-func (b *Bus) Load(bios *[]byte, cartridge Cartridge) {
+func (b *Bus) Load(bios *[]byte, cartridge cartridge.Cartridge) {
 	if bios != nil {
-		b.bios = CreateReadOnlyMemory("bios", bios, 0)
+		b.bios = memory.CreateReadOnlyMemory("bios", bios, 0)
 	} else {
 		b.bios = nil
 	}
@@ -117,7 +119,7 @@ func (b *Bus) WriteShort(address uint16, value uint16) {
 	b.target(address).WriteShort(address, value)
 }
 
-func (b *Bus) SetIO(io inputOutput, interupt interupt) {
+func (b *Bus) SetIO(io inputOutput, interupt overflowInterupt) {
 	b.ram.SetIO(io, interupt)
 }
 
@@ -169,7 +171,7 @@ func (b *Bus) DumpCode(area Area, bank uint8) (data []uint8, startAddress uint16
 	}
 }
 
-func (b *Bus) target(address uint16) RWMemory {
+func (b *Bus) target(address uint16) memory.RWMemory {
 	if address <= 0xBFFF {
 
 		// Video ram

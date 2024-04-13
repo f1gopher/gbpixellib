@@ -1,4 +1,4 @@
-package timer
+package gameboy
 
 import (
 	"github.com/f1gopher/gbpixellib/hardware/memory"
@@ -49,7 +49,7 @@ func (t *Timer) TimerDivideWrite() {
 
 func (t *Timer) Update(cycles uint8) {
 	// Divider Register
-	current := t.mem.ReadByte(memory.DividerRegister)
+	current := t.mem.ReadByte(DividerRegister)
 	current += cycles / 2
 	t.mem.WriteDividerRegister(current)
 

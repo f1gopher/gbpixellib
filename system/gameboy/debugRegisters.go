@@ -1,4 +1,4 @@
-package debugger
+package gameboy
 
 import (
 	"errors"
@@ -11,9 +11,9 @@ import (
 
 type registerBreakpoint struct {
 	id              int
-	enabled bool
-	reg     z80.Register
-	value   uint16
+	enabled         bool
+	reg             z80.Register
+	value           uint16
 	comparison      BreakpointComparison
 	targetHitCount  uint
 	currentHitCount uint

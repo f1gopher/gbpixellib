@@ -3,6 +3,7 @@ package gameboy
 import (
 	"fmt"
 	"github.com/f1gopher/gbpixellib/hardware/memory"
+	"github.com/f1gopher/gbpixellib/system/gameboy/cartridge"
 	"github.com/f1gopher/gbpixellib/system/gameboy/display"
 	"image"
 	"strings"
@@ -129,20 +130,20 @@ type Dump interface {
 	DumpSecondTileMap() *[1024]byte
 	DumpWindowTileMap() *[1024]byte
 	DumpBackgroundTileMap() *[1024]byte
-	DumpCode(area memory.Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int)
+	DumpCode(area Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int)
 	DumpCallstack() []string
 	GetExecutionHistory() []ExecutionInfo
 	GetInterruptHistory() []InterruptInfo
-	DumpMemory(area memory.Area, bank uint8) (data []uint8, startAddress uint16)
+	DumpMemory(area Area, bank uint8) (data []uint8, startAddress uint16)
 	DumpMemoryValue(address uint16) uint8
 }
 
 type dumpInterface struct {
-	regs   z80.RegistersInterface
-	cpu    *z80.Cpu
-	memory *memory.Bus
+	regs             z80.RegistersInterface
+	cpu              *z80.Cpu
+	memory           *Bus
 	screen           *display.Screen
-	cartridge        memory.Cartridge
+	cartridge        cartridge.Cartridge
 	executionHistory []ExecutionInfo
 	interruptHistory []InterruptInfo
 	mCycle           uint
@@ -335,7 +336,7 @@ func (d *dumpInterface) DumpBackgroundTileMap() *[1024]byte {
 	return d.screen.DumpBackgroundTileMap()
 }
 
-func (d *dumpInterface) DumpCode(area memory.Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int) {
+func (d *dumpInterface) DumpCode(area Area, bank uint8) (instructions []string, previousPCIndex int, currentPCIndex int) {
 	bios, _ := d.memory.DumpCode(area, bank)
 	current := d.cpu.GetOpcodePC()
 	previous := d.cpu.GetPrevOpcodePC()
@@ -400,7 +401,7 @@ func (d *dumpInterface) DumpCallstack() []string {
 	return result
 }
 
-func (d *dumpInterface) DumpMemory(area memory.Area, bank uint8) (data []uint8, startAddress uint16) {
+func (d *dumpInterface) DumpMemory(area Area, bank uint8) (data []uint8, startAddress uint16) {
 	return d.memory.DumpCode(area, bank)
 }
 

@@ -29,7 +29,7 @@ func CreateMemory(name string, data *[]byte, addressOffset uint16) *Memory {
 	}
 }
 
-func (m *Memory) size() int {
+func (m *Memory) Size() int {
 	return len(m.buffer)
 }
 
