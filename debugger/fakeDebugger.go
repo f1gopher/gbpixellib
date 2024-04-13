@@ -1,9 +1,9 @@
 package debugger
 
 import (
-	"github.com/f1gopher/gbpixellib/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
-	"github.com/f1gopher/gbpixellib/memory"
 )
 
 type fakeDebugger struct {

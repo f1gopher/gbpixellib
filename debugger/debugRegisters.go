@@ -6,7 +6,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/f1gopher/gbpixellib/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/cpu"
 )
 
 type registerBreakpoint struct {

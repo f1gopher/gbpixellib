@@ -3,11 +3,11 @@ package debugger
 import (
 	"errors"
 	"fmt"
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"slices"
 	"sync"
 
-	"github.com/f1gopher/gbpixellib/cpu"
-	"github.com/f1gopher/gbpixellib/memory"
+	"github.com/f1gopher/gbpixellib/hardware/cpu"
 )
 
 type memoryBreakpoint struct {
