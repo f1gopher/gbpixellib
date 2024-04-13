@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/f1gopher/gbpixellib/debugger"
-	"github.com/f1gopher/gbpixellib/hardware/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
 )
@@ -40,10 +40,10 @@ type System struct {
 	debugger        debugger.Debugger
 	log             *log.Log
 	screen          *display.Screen
-	memory          cpu.MemoryInterface
+	memory          z80.MemoryInterface
 	bus             *memory.Bus
-	regs            cpu.RegistersInterface
-	cpu             *cpu.Cpu
+	regs            z80.RegistersInterface
+	cpu             *z80.Cpu
 	interuptHandler *interupt.Handler
 	controller      *input.Input
 	timer           *timer.Timer
@@ -69,7 +69,7 @@ func CreateSystem(bios string, rom string, useDebugger bool) *System {
 		bus:       memoryBus,
 		regs:      registers,
 	}
-	system.cpu = cpu.CreateCPU(l, system.regs, system.memory)
+	system.cpu = z80.CreateCPU(l, system.regs, system.memory)
 	system.interuptHandler = interupt.CreateHandler(system.memory, system.regs)
 	system.screen = display.CreateScreen(system.memory, system.interuptHandler)
 	system.controller = input.CreateInput(system.bus, system.interuptHandler)

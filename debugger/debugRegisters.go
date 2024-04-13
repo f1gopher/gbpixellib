@@ -6,26 +6,26 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/f1gopher/gbpixellib/hardware/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/z80"
 )
 
 type registerBreakpoint struct {
 	id              int
-	enabled         bool
-	reg             cpu.Register
-	value           uint16
+	enabled bool
+	reg     z80.Register
+	value   uint16
 	comparison      BreakpointComparison
 	targetHitCount  uint
 	currentHitCount uint
 }
 
 type debugRegisters struct {
-	registers cpu.RegistersInterface
+	registers z80.RegistersInterface
 
 	nextId        int
 	hitBreakpoint bool
 	description   string
-	breakpoints   map[cpu.Register][]registerBreakpoint
+	breakpoints   map[z80.Register][]registerBreakpoint
 	bpLock        sync.RWMutex
 }
 
@@ -56,29 +56,29 @@ func (d *debugRegisters) BreakpointReason() string {
 	return d.description
 }
 
-func (d *debugRegisters) Get8(source cpu.Register) uint8 {
+func (d *debugRegisters) Get8(source z80.Register) uint8 {
 	return d.registers.Get8(source)
 }
 
-func (d *debugRegisters) Get16(source cpu.Register) uint16 {
+func (d *debugRegisters) Get16(source z80.Register) uint16 {
 	return d.registers.Get16(source)
 }
 
-func (d *debugRegisters) Get16Msb(source cpu.Register) uint8 {
+func (d *debugRegisters) Get16Msb(source z80.Register) uint8 {
 	return d.registers.Get16Msb(source)
 }
 
-func (d *debugRegisters) Get16Lsb(source cpu.Register) uint8 {
+func (d *debugRegisters) Get16Lsb(source z80.Register) uint8 {
 	return d.registers.Get16Lsb(source)
 }
 
-func (d *debugRegisters) Set8(target cpu.Register, value uint8) {
+func (d *debugRegisters) Set8(target z80.Register, value uint8) {
 	bps := d.hasBP(target)
 
 	if bps != nil {
 		d.bpLock.Lock()
 		for x := 0; x < len(bps); x++ {
-			lsbValue := cpu.Lsb(bps[x].value)
+			lsbValue := z80.Lsb(bps[x].value)
 			if evaluateBp(value, bps[x].comparison, lsbValue) {
 				if bps[x].targetHitCount != bps[x].currentHitCount {
 					bps[x].currentHitCount++
@@ -100,7 +100,7 @@ func (d *debugRegisters) Set8(target cpu.Register, value uint8) {
 	d.registers.Set8(target, value)
 }
 
-func (d *debugRegisters) Set16(target cpu.Register, value uint16) {
+func (d *debugRegisters) Set16(target z80.Register, value uint16) {
 	bps := d.hasBP(target)
 
 	if bps != nil {
@@ -127,20 +127,20 @@ func (d *debugRegisters) Set16(target cpu.Register, value uint16) {
 	d.registers.Set16(target, value)
 }
 
-func (d *debugRegisters) Set16FromTwoBytes(target cpu.Register, msb uint8, lsb uint8) {
+func (d *debugRegisters) Set16FromTwoBytes(target z80.Register, msb uint8, lsb uint8) {
 	// Do this so we check for breakpoints
-	d.Set16(target, cpu.CombineBytes(msb, lsb))
+	d.Set16(target, z80.CombineBytes(msb, lsb))
 }
 
-func (d *debugRegisters) SetRegBit(target cpu.Register, bit uint8, value bool) {
+func (d *debugRegisters) SetRegBit(target z80.Register, bit uint8, value bool) {
 	d.registers.SetRegBit(target, bit, value)
 }
 
-func (d *debugRegisters) GetFlag(flag cpu.RegisterFlags) bool {
+func (d *debugRegisters) GetFlag(flag z80.RegisterFlags) bool {
 	return d.registers.GetFlag(flag)
 }
 
-func (d *debugRegisters) SetFlag(flag cpu.RegisterFlags, value bool) {
+func (d *debugRegisters) SetFlag(flag z80.RegisterFlags, value bool) {
 	d.registers.SetFlag(flag, value)
 }
 
@@ -161,7 +161,7 @@ func (d *debugRegisters) GetHALT() bool {
 }
 
 func (d *debugRegisters) addBP(
-	reg cpu.Register,
+	reg z80.Register,
 	comparison BreakpointComparison,
 	value uint16,
 	hitCount uint) (id int, err error) {
@@ -226,7 +226,7 @@ func (d *debugRegisters) setEnabledBP(id int, enabled bool) {
 	}
 }
 
-func (d *debugRegisters) hasBP(reg cpu.Register) []registerBreakpoint {
+func (d *debugRegisters) hasBP(reg z80.Register) []registerBreakpoint {
 	d.bpLock.RLock()
 	defer d.bpLock.RUnlock()
 

@@ -1,7 +1,7 @@
 package debugger
 
 import (
-	"github.com/f1gopher/gbpixellib/hardware/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
 )
@@ -10,9 +10,9 @@ type fakeDebugger struct {
 	log *log.Log
 }
 
-func createFakeDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.MemoryInterface, *memory.Bus) {
+func createFakeDebugger(log *log.Log) (Debugger, z80.RegistersInterface, z80.MemoryInterface, *memory.Bus) {
 	mem := memory.CreateBus(log)
-	return &fakeDebugger{}, &cpu.Registers{}, mem, mem
+	return &fakeDebugger{}, &z80.Registers{}, mem, mem
 }
 
 func (d *fakeDebugger) StartCycle(cycle uint, pc uint16) {
@@ -31,7 +31,7 @@ func (d *fakeDebugger) DisableAllBreakpoints() {
 }
 
 func (d *fakeDebugger) AddRegisterValueBP(
-	reg cpu.Register,
+	reg z80.Register,
 	comparison BreakpointComparison,
 	value uint16,
 	hitCount uint) (id int, err error) {

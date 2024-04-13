@@ -1,7 +1,7 @@
 package interupt
 
 import (
-	"github.com/f1gopher/gbpixellib/hardware/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
@@ -23,11 +23,11 @@ func (i Interupt) String() string {
 }
 
 type Handler struct {
-	memory cpu.MemoryInterface
-	regs   cpu.RegistersInterface
+	memory z80.MemoryInterface
+	regs   z80.RegistersInterface
 }
 
-func CreateHandler(memory cpu.MemoryInterface, registers cpu.RegistersInterface) *Handler {
+func CreateHandler(memory z80.MemoryInterface, registers z80.RegistersInterface) *Handler {
 	return &Handler{
 		memory: memory,
 		regs:   registers,
@@ -131,8 +131,8 @@ func (h *Handler) serviceInterupt(currentPC uint16, interupt uint8) string {
 		panic("Unhandled service interupt")
 	}
 
-	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Msb(currentPC))
-	cpu.DecAndWriteSP(h.regs, h.memory, cpu.Lsb(currentPC))
-	h.regs.Set16(cpu.PC, programCounter)
+	z80.DecAndWriteSP(h.regs, h.memory, z80.Msb(currentPC))
+	z80.DecAndWriteSP(h.regs, h.memory, z80.Lsb(currentPC))
+	h.regs.Set16(z80.PC, programCounter)
 	return name
 }

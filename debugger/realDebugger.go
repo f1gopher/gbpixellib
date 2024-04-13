@@ -6,7 +6,7 @@ import (
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"sync"
 
-	"github.com/f1gopher/gbpixellib/hardware/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"github.com/f1gopher/gbpixellib/log"
 )
 
@@ -50,10 +50,10 @@ type realDebugger struct {
 	memory debugMemory
 }
 
-func createRealDebugger(log *log.Log) (Debugger, cpu.RegistersInterface, cpu.MemoryInterface, *memory.Bus) {
+func createRealDebugger(log *log.Log) (Debugger, z80.RegistersInterface, z80.MemoryInterface, *memory.Bus) {
 	r := debugRegisters{
-		registers:   &cpu.Registers{},
-		breakpoints: make(map[cpu.Register][]registerBreakpoint, 0),
+		registers:   &z80.Registers{},
+		breakpoints: make(map[z80.Register][]registerBreakpoint, 0),
 		bpLock:      sync.RWMutex{},
 	}
 	m := debugMemory{
@@ -113,7 +113,7 @@ func (d *realDebugger) DisableAllBreakpoints() {
 }
 
 func (d *realDebugger) AddRegisterValueBP(
-	reg cpu.Register,
+	reg z80.Register,
 	comparison BreakpointComparison,
 	value uint16,
 	hitCount uint) (id int, err error) {

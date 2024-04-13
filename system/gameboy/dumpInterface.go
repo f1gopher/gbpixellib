@@ -7,7 +7,7 @@ import (
 	"image"
 	"strings"
 
-	"github.com/f1gopher/gbpixellib/hardware/cpu"
+	"github.com/f1gopher/gbpixellib/hardware/z80"
 )
 
 const executionHistorySize = 200
@@ -138,9 +138,9 @@ type Dump interface {
 }
 
 type dumpInterface struct {
-	regs             cpu.RegistersInterface
-	cpu              *cpu.Cpu
-	memory           *memory.Bus
+	regs   z80.RegistersInterface
+	cpu    *z80.Cpu
+	memory *memory.Bus
 	screen           *display.Screen
 	cartridge        memory.Cartridge
 	executionHistory []ExecutionInfo
@@ -188,27 +188,27 @@ func (d *dumpInterface) appendExecutionHistory(action *ExecutionInfo) {
 }
 
 func (d *dumpInterface) getCPUStateOnly() *CPUState {
-	lsb := d.memory.ReadByte(d.regs.Get16(cpu.SP))
-	msb := d.memory.ReadByte(d.regs.Get16(cpu.SP) + 1)
+	lsb := d.memory.ReadByte(d.regs.Get16(z80.SP))
+	msb := d.memory.ReadByte(d.regs.Get16(z80.SP) + 1)
 	spMem := uint16(msb)
 	spMem = spMem << 8
 	spMem = spMem | uint16(lsb)
 
 	return &CPUState{
-		A:     d.regs.Get8(cpu.A),
-		F:     d.regs.Get8(cpu.F),
-		B:     d.regs.Get8(cpu.B),
-		C:     d.regs.Get8(cpu.C),
-		D:     d.regs.Get8(cpu.D),
-		E:     d.regs.Get8(cpu.E),
-		H:     d.regs.Get8(cpu.H),
-		L:     d.regs.Get8(cpu.L),
-		SP:    d.regs.Get16(cpu.SP),
-		PC:    d.regs.Get16(cpu.PC),
-		ZFlag: d.regs.GetFlag(cpu.ZFlag),
-		NFlag: d.regs.GetFlag(cpu.NFlag),
-		HFlag: d.regs.GetFlag(cpu.HFlag),
-		CFlag: d.regs.GetFlag(cpu.CFlag),
+		A:     d.regs.Get8(z80.A),
+		F:     d.regs.Get8(z80.F),
+		B:     d.regs.Get8(z80.B),
+		C:     d.regs.Get8(z80.C),
+		D:     d.regs.Get8(z80.D),
+		E:     d.regs.Get8(z80.E),
+		H:     d.regs.Get8(z80.H),
+		L:     d.regs.Get8(z80.L),
+		SP:    d.regs.Get16(z80.SP),
+		PC:    d.regs.Get16(z80.PC),
+		ZFlag: d.regs.GetFlag(z80.ZFlag),
+		NFlag: d.regs.GetFlag(z80.NFlag),
+		HFlag: d.regs.GetFlag(z80.HFlag),
+		CFlag: d.regs.GetFlag(z80.CFlag),
 		SPMem: spMem,
 		Cycle: d.mCycle,
 	}
@@ -299,7 +299,7 @@ func (d *dumpInterface) GetDebugState() *DebugState {
 		NextInstructionCode:  op,
 		NextInstructionIsCB:  isCB,
 		PCForNextInstruction: d.cpu.GetOpcodePC(),
-		ValueReferencedByPC:  d.memory.ReadByte(d.regs.Get16(cpu.PC)),
+		ValueReferencedByPC:  d.memory.ReadByte(d.regs.Get16(z80.PC)),
 	}
 }
 
@@ -381,7 +381,7 @@ func (d *dumpInterface) DumpCode(area memory.Area, bank uint8) (instructions []s
 
 func (d *dumpInterface) DumpCallstack() []string {
 	var stackStart uint16 = 0xFFFE
-	stackEnd := d.regs.Get16(cpu.SP)
+	stackEnd := d.regs.Get16(z80.SP)
 	result := make([]string, 0)
 
 	// If we are loading and the SP has not been setup yet then don't dump
