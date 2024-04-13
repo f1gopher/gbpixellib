@@ -2,11 +2,12 @@ package gameboy
 
 import (
 	"fmt"
+	"image"
+	"strings"
+
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/system/gameboy/cartridge"
 	"github.com/f1gopher/gbpixellib/system/gameboy/display"
-	"image"
-	"strings"
 
 	"github.com/f1gopher/gbpixellib/hardware/z80"
 )
@@ -55,6 +56,9 @@ type CPUState struct {
 	SPMem uint16
 
 	Cycle uint
+
+	NValue  uint8
+	NNValue uint16
 }
 
 type InterruptState struct {
@@ -194,24 +198,36 @@ func (d *dumpInterface) getCPUStateOnly() *CPUState {
 	spMem := uint16(msb)
 	spMem = spMem << 8
 	spMem = spMem | uint16(lsb)
+	pc := d.regs.Get16(z80.PC)
+	var nValue uint8 = 0x00
+	var nnValue uint16 = 0x0000
+	if pc <= 0xFFFE {
+		nValue = d.memory.ReadByte(pc + 1)
+	}
+	// 0xFE is the end of the bios so reading two bytes crosses the memory system boundary
+	if pc != 0xFE && pc <= 0xFFFD {
+		nnValue = d.memory.ReadShort(pc + 1)
+	}
 
 	return &CPUState{
-		A:     d.regs.Get8(z80.A),
-		F:     d.regs.Get8(z80.F),
-		B:     d.regs.Get8(z80.B),
-		C:     d.regs.Get8(z80.C),
-		D:     d.regs.Get8(z80.D),
-		E:     d.regs.Get8(z80.E),
-		H:     d.regs.Get8(z80.H),
-		L:     d.regs.Get8(z80.L),
-		SP:    d.regs.Get16(z80.SP),
-		PC:    d.regs.Get16(z80.PC),
-		ZFlag: d.regs.GetFlag(z80.ZFlag),
-		NFlag: d.regs.GetFlag(z80.NFlag),
-		HFlag: d.regs.GetFlag(z80.HFlag),
-		CFlag: d.regs.GetFlag(z80.CFlag),
-		SPMem: spMem,
-		Cycle: d.mCycle,
+		A:       d.regs.Get8(z80.A),
+		F:       d.regs.Get8(z80.F),
+		B:       d.regs.Get8(z80.B),
+		C:       d.regs.Get8(z80.C),
+		D:       d.regs.Get8(z80.D),
+		E:       d.regs.Get8(z80.E),
+		H:       d.regs.Get8(z80.H),
+		L:       d.regs.Get8(z80.L),
+		SP:      d.regs.Get16(z80.SP),
+		PC:      d.regs.Get16(z80.PC),
+		ZFlag:   d.regs.GetFlag(z80.ZFlag),
+		NFlag:   d.regs.GetFlag(z80.NFlag),
+		HFlag:   d.regs.GetFlag(z80.HFlag),
+		CFlag:   d.regs.GetFlag(z80.CFlag),
+		SPMem:   spMem,
+		Cycle:   d.mCycle,
+		NValue:  nValue,
+		NNValue: nnValue,
 	}
 }
 
