@@ -16,7 +16,7 @@ type overflowInterupt interface {
 const DividerRegister = 0xFF04
 
 type ram struct {
-	mem *memory.Memory
+	mem memory.Memory
 
 	io       inputOutput
 	interupt overflowInterupt

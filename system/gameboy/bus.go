@@ -36,7 +36,7 @@ type timerDivide interface {
 type Bus struct {
 	log *log.Log
 
-	bios      *memory.Memory
+	bios      memory.Memory
 	video     *videoRam
 	ram       *ram
 	cartridge cartridge.Cartridge

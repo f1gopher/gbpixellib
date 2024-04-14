@@ -2,12 +2,13 @@ package cartridge
 
 import (
 	"fmt"
+
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
 type cartridgeMBC2 struct {
-	romBanks    map[uint8]*memory.Memory
-	ramBank     *memory.Memory
+	romBanks    map[uint8]memory.Memory
+	ramBank     memory.Memory
 	romBankMask uint8
 
 	ramEnable         uint8
@@ -153,7 +154,7 @@ func (c *cartridgeMBC2) CurrentRAMBank() uint8 {
 	return 0
 }
 
-func (c *cartridgeMBC2) memoryBank(address uint16) *memory.Memory {
+func (c *cartridgeMBC2) memoryBank(address uint16) memory.Memory {
 	if address >= c.ramStart && address <= 0xBFFF {
 		// bankNumber := c.ramBank()
 		// bank, exists := c.ramBanks[bankNumber]

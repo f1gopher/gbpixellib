@@ -2,11 +2,12 @@ package cartridge
 
 import (
 	"fmt"
+
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
-func splitDataIntoBanks(bank0StartAddress uint16, otherBankStartAddress uint16, bankSize uint16, data *[]byte, name string) map[uint8]*memory.Memory {
-	banks := make(map[uint8]*memory.Memory)
+func splitDataIntoBanks(bank0StartAddress uint16, otherBankStartAddress uint16, bankSize uint16, data *[]byte, name string) map[uint8]memory.Memory {
+	banks := make(map[uint8]memory.Memory)
 	var currentBank uint8 = 0
 
 	// Iterate the data and split into chunks of 0x4000 bytes per bank

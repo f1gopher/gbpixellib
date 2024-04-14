@@ -5,7 +5,7 @@ import (
 )
 
 type videoRam struct {
-	mem *memory.Memory
+	mem memory.Memory
 }
 
 func CreateVideoRam() *videoRam {
