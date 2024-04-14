@@ -30,7 +30,7 @@ type CartridgeState struct {
 	CurrentRAMBank uint8
 }
 
-type System struct {
+type Gameboy struct {
 	bios      string
 	rom       string
 	isTestROM bool
@@ -54,10 +54,10 @@ type System struct {
 	dump dumpInterface
 }
 
-func CreateSystem(bios string, rom string, useDebugger bool) *System {
+func CreateGameboy(bios string, rom string, useDebugger bool) *Gameboy {
 	l := log.CreateLog("./log.txt")
 	debugger, registers, memory, memoryBus := CreateDebugger(l, useDebugger)
-	system := System{
+	system := Gameboy{
 		debugger:  debugger,
 		log:       l,
 		isTestROM: false,
@@ -89,14 +89,14 @@ func CreateSystem(bios string, rom string, useDebugger bool) *System {
 	return &system
 }
 
-func (s *System) LoadGame(bios string, rom string) {
+func (s *Gameboy) LoadGame(bios string, rom string) {
 	s.isTestROM = false
 	s.bios = bios
 	s.rom = rom
 	s.Reset()
 }
 
-func (s *System) LoadTestROM(rom string) {
+func (s *Gameboy) LoadTestROM(rom string) {
 	s.isTestROM = true
 	s.bios = ""
 	s.rom = rom
@@ -106,11 +106,11 @@ func (s *System) LoadTestROM(rom string) {
 	s.memory.WriteByte(0xFF50, 0xFF)
 }
 
-func (s *System) IsCartridgeSupported() bool {
+func (s *Gameboy) IsCartridgeSupported() bool {
 	return cartridge.IsCartridgeSupported(s.cartridgeHeader.CartridgeType)
 }
 
-func (s *System) Start() {
+func (s *Gameboy) Start() {
 	var rom []byte
 	var bios []byte
 	var err error
@@ -142,7 +142,7 @@ func (s *System) Start() {
 	s.bus.Load(&bios, s.cartridge)
 }
 
-func (s *System) Reset() {
+func (s *Gameboy) Reset() {
 	s.memory.Reset()
 	s.cpu.Reset()
 	s.interuptHandler.Reset()
@@ -161,14 +161,14 @@ func (s *System) Reset() {
 	s.Start()
 }
 
-func (s *System) Render(callback func(x int, y int, color display.ScreenColor)) {
+func (s *Gameboy) Render(callback func(x int, y int, color display.ScreenColor)) {
 	s.displayLock.Lock()
 	defer s.displayLock.Unlock()
 
 	s.screen.Render(callback)
 }
 
-func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err error) {
+func (s *Gameboy) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err error) {
 
 	prevCompleted := false
 	didDMA := false
@@ -258,7 +258,7 @@ func (s *System) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err erro
 	return false, mCyclesCompleted, nil
 }
 
-func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, err error) {
+func (s *Gameboy) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, err error) {
 
 	mCyclesCompleted = 0
 	info := ExecutionInfo{
@@ -325,7 +325,7 @@ func (s *System) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, er
 	return s.debugger.HasHitBreakpoint(), mCyclesCompleted, nil
 }
 
-func (s *System) State() string {
+func (s *Gameboy) State() string {
 	//info := s.cpu.Debug()
 
 	//parts := strings.Split(info, "->")
@@ -336,30 +336,30 @@ func (s *System) State() string {
 	return "<Not implemented>"
 }
 
-func (s *System) OpcodesUsed() {
+func (s *Gameboy) OpcodesUsed() {
 	// s.cpu.DumpOpcodesUsed()
 }
 
-func (s *System) PreviousPC() uint16 {
+func (s *Gameboy) PreviousPC() uint16 {
 	return s.cpu.GetPrevOpcodePC()
 }
 
-func (s *System) CartridgeHeader() CartridgeHeader {
+func (s *Gameboy) CartridgeHeader() CartridgeHeader {
 	return *s.cartridgeHeader
 }
 
-func (s *System) Dump() Dump {
+func (s *Gameboy) Dump() Dump {
 	return &s.dump
 }
 
-func (s *System) Debug() Debug {
+func (s *Gameboy) Debug() Debug {
 	return s.debugger
 }
 
-func (s *System) Joypad() Joypad {
+func (s *Gameboy) Joypad() Joypad {
 	return s.controller
 }
 
-func (s *System) DisplayConfig() display.DisplayConfig {
+func (s *Gameboy) DisplayConfig() display.DisplayConfig {
 	return s.screen.DisplayConfig()
 }
