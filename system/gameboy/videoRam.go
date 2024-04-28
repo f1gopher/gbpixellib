@@ -5,13 +5,13 @@ import (
 )
 
 type videoRam struct {
-	mem memory.Memory
+	mem memory.Memory[uint16]
 }
 
 func CreateVideoRam() *videoRam {
 	data := make([]byte, 0x2000)
 	return &videoRam{
-		mem: memory.CreateMemory("video ram", &data, 0x8000),
+		mem: memory.CreateMemory[uint16]("video ram", &data, 0x8000),
 	}
 }
 

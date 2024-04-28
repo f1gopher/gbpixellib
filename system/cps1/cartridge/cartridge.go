@@ -1,12 +1,15 @@
 package cartridge
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/f1gopher/gbpixellib/log"
 )
 
 type systemMemory interface {
-	Load(offset uint16, data []uint8) error
+	LoadData(offset uint32, data []uint8) error
 }
 
 type cartridge interface {
@@ -15,7 +18,7 @@ type cartridge interface {
 	load(memory systemMemory) error
 }
 
-func LoadGame(romFolder string, memory systemMemory) error {
+func LoadGame(log *log.Log, romFolder string, memory systemMemory) error {
 
 	parts := filepath.SplitList(romFolder)
 	folderName := parts[len(parts)-1]
@@ -24,7 +27,7 @@ func LoadGame(romFolder string, memory systemMemory) error {
 
 	cart.init(folderName)
 
-	if err := cart.isValid(romFolder); err != nil {
+	if err := cart.isValid(); err != nil {
 		return err
 	}
 
@@ -37,5 +40,7 @@ func findCart(name string) cartridge {
 	switch name {
 	case "ffight":
 		return &finalfight{}
+	default:
+		panic(fmt.Sprintf("Unknown game '%s'", name))
 	}
 }

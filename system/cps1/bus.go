@@ -2,21 +2,19 @@ package cps1
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
-	"github.com/f1gopher/gbpixellib/memory"
 )
 
 type bus struct {
 	log *log.Log
 
-	rom    memory.Memory
-	jamma  memory.Memory
-	kick   memory.Memory
-	gfxRam memory.Memory
-	ram    memory.Memory
+	rom    memory.Memory[uint32]
+	jamma  memory.Memory[uint32]
+	kick   memory.Memory[uint32]
+	gfxRam memory.Memory[uint32]
+	ram    memory.Memory[uint32]
 }
 
 func CreateBus(log *log.Log) *bus {
@@ -28,11 +26,11 @@ func CreateBus(log *log.Log) *bus {
 
 	return &bus{
 		log:    log,
-		rom:    memory.CreateReadOnlyMemory("rom", rom, 0x00000000),
-		jamma:  memory.CreateMemory("jamma", jamma, 0x00800000),
-		kick:   memory.CreateMemory("kick", kick, 0x00800176),
-		gfxRam: memory.CreateMemory("gfx", gfxRam, 0x00900000),
-		ram:    memory.CreateMemory("ram", ram, 0x00FF0000),
+		rom:    memory.CreateReadOnlyMemory[uint32]("rom", &rom, 0x000000),
+		jamma:  memory.CreateMemory[uint32]("jamma", &jamma, 0x800000),
+		kick:   memory.CreateMemory[uint32]("kick", &kick, 0x800176),
+		gfxRam: memory.CreateMemory[uint32]("gfx", &gfxRam, 0x900000),
+		ram:    memory.CreateMemory[uint32]("ram", &ram, 0xFF0000),
 	}
 }
 
@@ -42,40 +40,40 @@ func (b *bus) Reset() {
 	// TODO - what else?
 }
 
-func (b *bus) ReadBit(address uint16, bit uint8) bool {
+func (b *bus) ReadBit(address uint32, bit uint8) bool {
 	return b.target(address).ReadBit(address, bit)
 }
 
-func (b *bus) ReadByte(address uint16) byte {
+func (b *bus) ReadByte(address uint32) byte {
 	return b.target(address).ReadByte(address)
 }
 
-func (b *bus) ReadShort(address uint16) uint16 {
+func (b *bus) ReadShort(address uint32) uint16 {
 	return b.target(address).ReadShort(address)
 }
 
-func (b *bus) WriteBit(address uint16, bit uint8, value bool) {
+func (b *bus) WriteBit(address uint32, bit uint8, value bool) {
 	b.target(address).WriteBit(address, bit, value)
 }
 
-func (b *bus) WriteByte(address uint16, value byte) {
+func (b *bus) WriteByte(address uint32, value byte) {
 	b.target(address).WriteByte(address, value)
 }
 
-func (b *bus) WriteShort(address uint16, value uint16) {
+func (b *bus) WriteShort(address uint32, value uint16) {
 	b.target(address).WriteShort(address, value)
 }
 
-func (b *bus) LoadData(offset uint16, data []uint8) error {
+func (b *bus) LoadData(offset uint32, data []uint8) error {
 	dest := b.target(offset)
 	return dest.LoadData(offset, data)
 }
 
-func (b *bus) target(address uint16) memory.Memory {
-	switch address {
+func (b *bus) target(address uint32) memory.Memory[uint32] {
+	switch {
 	case address <= 0x003FFFFF:
 		return b.rom
-	case address >= 0x008000000 && address <= 0x00800037:
+	case address >= 0x00800000 && address <= 0x00800037:
 		return b.jamma
 	case address >= 0x00800176 && address <= 0x00800177:
 		return b.kick
@@ -85,7 +83,7 @@ func (b *bus) target(address uint16) memory.Memory {
 		panic("CPS-B not implemented")
 	case address >= 0x00900000 && address <= 0x0092FFFF:
 		return b.gfxRam
-	case address >= 0x00FF00000 && address <= 0x00FFFFFF:
+	case address >= 0x00FF0000 && address <= 0x00FFFFFF:
 		return b.ram
 	default:
 		panic(fmt.Sprintf("Invalid address 0x%8X", address))

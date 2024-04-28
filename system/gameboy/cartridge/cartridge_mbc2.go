@@ -7,8 +7,8 @@ import (
 )
 
 type cartridgeMBC2 struct {
-	romBanks    map[uint8]memory.Memory
-	ramBank     memory.Memory
+	romBanks    map[uint8]memory.Memory[uint16]
+	ramBank     memory.Memory[uint16]
 	romBankMask uint8
 
 	ramEnable         uint8
@@ -21,7 +21,7 @@ func createCartridgeMBC2(romSize uint32, ramSize uint32, data *[]byte) Cartridge
 	ram := make([]byte, 512)
 	return &cartridgeMBC2{
 		romBanks:          splitDataIntoBanks(0x0000, 0x4000, M_16Kb, data, "ROM"),
-		ramBank:           memory.CreateReadOnlyMemory("RAM", &ram, 0xA000),
+		ramBank:           memory.CreateReadOnlyMemory[uint16]("RAM", &ram, 0xA000),
 		romBankMask:       0b00000111,
 		ramEnable:         0x00,
 		romBankNumber:     0x01,
@@ -154,7 +154,7 @@ func (c *cartridgeMBC2) CurrentRAMBank() uint8 {
 	return 0
 }
 
-func (c *cartridgeMBC2) memoryBank(address uint16) memory.Memory {
+func (c *cartridgeMBC2) memoryBank(address uint16) memory.Memory[uint16] {
 	if address >= c.ramStart && address <= 0xBFFF {
 		// bankNumber := c.ramBank()
 		// bank, exists := c.ramBanks[bankNumber]

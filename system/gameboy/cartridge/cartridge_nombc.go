@@ -7,8 +7,8 @@ import (
 )
 
 type CartridgeNoMBC struct {
-	rom memory.Memory
-	ram memory.Memory
+	rom memory.Memory[uint16]
+	ram memory.Memory[uint16]
 }
 
 const NoMBCRamOffset = 0xA000
@@ -16,8 +16,8 @@ const NoMBCRamOffset = 0xA000
 func createCartridgeNoMBC(romSize uint32, ramSize uint32, data *[]byte) *CartridgeNoMBC {
 	ram := make([]byte, ramSize)
 	return &CartridgeNoMBC{
-		rom: memory.CreateReadOnlyMemory("cartridge rom", data, 0),
-		ram: memory.CreateMemory("cartridge ram", &ram, NoMBCRamOffset),
+		rom: memory.CreateReadOnlyMemory[uint16]("cartridge rom", data, 0),
+		ram: memory.CreateMemory[uint16]("cartridge ram", &ram, NoMBCRamOffset),
 	}
 }
 
@@ -74,7 +74,7 @@ func (c *CartridgeNoMBC) CurrentRAMBank() uint8 {
 	return 0
 }
 
-func (c *CartridgeNoMBC) memoryBank(address uint16) memory.Memory {
+func (c *CartridgeNoMBC) memoryBank(address uint16) memory.Memory[uint16] {
 	if address >= NoMBCRamOffset {
 		if int(address) >= int(NoMBCRamOffset)+c.ram.Size() {
 			panic(fmt.Sprintf("Invalid address for NoMBC cartridge: 0x%2X", address))

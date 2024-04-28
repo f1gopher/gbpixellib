@@ -16,7 +16,7 @@ type overflowInterupt interface {
 const DividerRegister = 0xFF04
 
 type ram struct {
-	mem memory.Memory
+	mem memory.Memory[uint16]
 
 	io       inputOutput
 	interupt overflowInterupt
@@ -25,7 +25,7 @@ type ram struct {
 func CreateRam() *ram {
 	data := make([]byte, ramSize)
 	return &ram{
-		mem: memory.CreateMemory("ram", &data, ramOffset),
+		mem: memory.CreateMemory[uint16]("ram", &data, ramOffset),
 		io:  nil,
 	}
 }

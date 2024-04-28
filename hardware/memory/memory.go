@@ -5,28 +5,28 @@ import (
 	"fmt"
 )
 
-type Memory interface {
+type Memory[T uint16 | uint32] interface {
 	Size() int
 	Reset()
-	ReadBit(address uint16, bit uint8) bool
-	ReadByte(address uint16) byte
-	ReadShort(address uint16) uint16
-	WriteBit(address uint16, bit uint8, value bool)
-	WriteByte(address uint16, value byte)
-	WriteShort(address uint16, value uint16)
-	DumpCode() (data []uint8, startAddress uint16)
-	LoadData(offset uint16, data []uint8) error
+	ReadBit(address T, bit uint8) bool
+	ReadByte(address T) byte
+	ReadShort(address T) uint16
+	WriteBit(address T, bit uint8, value bool)
+	WriteByte(address T, value byte)
+	WriteShort(address T, value uint16)
+	DumpCode() (data []uint8, startAddress T)
+	LoadData(offset T, data []uint8) error
 }
 
-type memory struct {
+type memory[T uint16 | uint32] struct {
 	name          string
 	buffer        []uint8
-	addressOffset uint16
+	addressOffset T
 	readonly      bool
 }
 
-func CreateReadOnlyMemory(name string, data *[]byte, addressOffset uint16) Memory {
-	return &memory{
+func CreateReadOnlyMemory[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+	return &memory[T]{
 		name:          name,
 		buffer:        *data,
 		addressOffset: addressOffset,
@@ -34,8 +34,8 @@ func CreateReadOnlyMemory(name string, data *[]byte, addressOffset uint16) Memor
 	}
 }
 
-func CreateMemory(name string, data *[]byte, addressOffset uint16) Memory {
-	return &memory{
+func CreateMemory[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+	return &memory[T]{
 		name:          name,
 		buffer:        *data,
 		addressOffset: addressOffset,
@@ -43,21 +43,21 @@ func CreateMemory(name string, data *[]byte, addressOffset uint16) Memory {
 	}
 }
 
-func (m *memory) Size() int {
+func (m *memory[T]) Size() int {
 	return len(m.buffer)
 }
 
-func (m *memory) offset(address uint16) uint16 {
+func (m *memory[T]) offset(address T) T {
 	return address - m.addressOffset
 }
 
-func (m *memory) Reset() {
+func (m *memory[T]) Reset() {
 	for x := 0; x < len(m.buffer); x++ {
 		m.buffer[x] = 0x00
 	}
 }
 
-func (m *memory) ReadBit(address uint16, bit uint8) bool {
+func (m *memory[T]) ReadBit(address T, bit uint8) bool {
 	if bit < 0 || bit > 7 {
 		panic(fmt.Sprintf("Invalid bit: %d", bit))
 	}
@@ -66,11 +66,11 @@ func (m *memory) ReadBit(address uint16, bit uint8) bool {
 	return (value>>bit)&0x01 == 0x01
 }
 
-func (m *memory) ReadByte(address uint16) byte {
+func (m *memory[T]) ReadByte(address T) byte {
 	return m.buffer[m.offset(address)]
 }
 
-func (m *memory) ReadShort(address uint16) uint16 {
+func (m *memory[T]) ReadShort(address T) uint16 {
 	var result uint16
 	lsb := m.ReadByte(address)
 	msb := m.ReadByte(address + 1)
@@ -81,7 +81,7 @@ func (m *memory) ReadShort(address uint16) uint16 {
 	return result
 }
 
-func (m *memory) WriteBit(address uint16, bit uint8, value bool) {
+func (m *memory[T]) WriteBit(address T, bit uint8, value bool) {
 	if m.readonly {
 		return
 	}
@@ -95,7 +95,7 @@ func (m *memory) WriteBit(address uint16, bit uint8, value bool) {
 	m.WriteByte(address, currentByte)
 }
 
-func (m *memory) WriteByte(address uint16, value byte) {
+func (m *memory[T]) WriteByte(address T, value byte) {
 	if m.readonly {
 		return
 	}
@@ -103,7 +103,7 @@ func (m *memory) WriteByte(address uint16, value byte) {
 	m.buffer[m.offset(address)] = value
 }
 
-func (m *memory) WriteShort(address uint16, value uint16) {
+func (m *memory[T]) WriteShort(address T, value uint16) {
 	if m.readonly {
 		return
 	}
@@ -115,13 +115,13 @@ func (m *memory) WriteShort(address uint16, value uint16) {
 	m.WriteByte(address+1, msb)
 }
 
-func (m *memory) DumpCode() (data []uint8, startAddress uint16) {
+func (m *memory[T]) DumpCode() (data []uint8, startAddress T) {
 	code := make([]uint8, len(m.buffer))
 	copy(code, m.buffer)
 	return code, m.addressOffset
 }
 
-func (m *memory) LoadData(offset uint16, data []uint8) error {
+func (m *memory[T]) LoadData(offset T, data []uint8) error {
 	if int(offset)+len(data) > len(m.buffer) {
 		return errors.New(fmt.Sprintf("Unable to LoadData(%d, %d) when buffer is %d", offset, len(data), len(m.buffer)))
 	}

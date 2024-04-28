@@ -7,8 +7,8 @@ import (
 )
 
 type cartridgeMBC1 struct {
-	romBanks map[uint8]memory.Memory
-	ramBanks map[uint8]memory.Memory
+	romBanks map[uint8]memory.Memory[uint16]
+	ramBanks map[uint8]memory.Memory[uint16]
 
 	ramEnable         uint8
 	romBankNumber     uint8
@@ -160,7 +160,7 @@ func (c *cartridgeMBC1) CurrentROMBank() uint8 {
 func (c *cartridgeMBC1) CurrentRAMBank() uint8 {
 	return c.ramBank()
 }
-func (c *cartridgeMBC1) memoryBank(address uint16) memory.Memory {
+func (c *cartridgeMBC1) memoryBank(address uint16) memory.Memory[uint16] {
 	if address >= c.ramStart && address <= 0xBFFF {
 		bankNumber := c.ramBank()
 		bank, exists := c.ramBanks[bankNumber]

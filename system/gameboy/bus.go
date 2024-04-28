@@ -36,7 +36,7 @@ type timerDivide interface {
 type Bus struct {
 	log *log.Log
 
-	bios      memory.Memory
+	bios      memory.Memory[uint16]
 	video     *videoRam
 	ram       *ram
 	cartridge cartridge.Cartridge
@@ -66,7 +66,7 @@ func (b *Bus) SetTimer(timer timerDivide) {
 
 func (b *Bus) Load(bios *[]byte, cartridge cartridge.Cartridge) {
 	if bios != nil {
-		b.bios = memory.CreateReadOnlyMemory("bios", bios, 0)
+		b.bios = memory.CreateReadOnlyMemory[uint16]("bios", bios, 0)
 	} else {
 		b.bios = nil
 	}
