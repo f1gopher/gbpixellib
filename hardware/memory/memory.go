@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -14,6 +15,7 @@ type Memory interface {
 	WriteByte(address uint16, value byte)
 	WriteShort(address uint16, value uint16)
 	DumpCode() (data []uint8, startAddress uint16)
+	LoadData(offset uint16, data []uint8) error
 }
 
 type memory struct {
@@ -117,4 +119,13 @@ func (m *memory) DumpCode() (data []uint8, startAddress uint16) {
 	code := make([]uint8, len(m.buffer))
 	copy(code, m.buffer)
 	return code, m.addressOffset
+}
+
+func (m *memory) LoadData(offset uint16, data []uint8) error {
+	if int(offset)+len(data) > len(m.buffer) {
+		return errors.New(fmt.Sprintf("Unable to LoadData(%d, %d) when buffer is %d", offset, len(data), len(m.buffer)))
+	}
+
+	copy(m.buffer[offset:], data)
+	return nil
 }

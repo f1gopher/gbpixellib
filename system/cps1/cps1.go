@@ -11,6 +11,8 @@ import (
 type CPS1 struct {
 	log       *log.Log
 	romFolder string
+
+	bus *bus
 }
 
 func CreateCPS1(romFolder string, useDebugger bool) *CPS1 {
@@ -18,6 +20,7 @@ func CreateCPS1(romFolder string, useDebugger bool) *CPS1 {
 	system := CPS1{
 		log:       l,
 		romFolder: romFolder,
+		bus:       CreateBus(l),
 	}
 
 	system.Reset()
@@ -34,7 +37,7 @@ func (c *CPS1) Start() {
 }
 
 func (c *CPS1) Reset() {
-	err := cartridge.LoadGame(c.log, c.romFolder)
+	err := cartridge.LoadGame(c.log, c.romFolder, c.bus)
 	if err != nil {
 
 	}

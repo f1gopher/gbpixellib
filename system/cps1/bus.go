@@ -66,6 +66,11 @@ func (b *bus) WriteShort(address uint16, value uint16) {
 	b.target(address).WriteShort(address, value)
 }
 
+func (b *bus) LoadData(offset uint16, data []uint8) error {
+	dest := b.target(offset)
+	return dest.LoadData(offset, data)
+}
+
 func (b *bus) target(address uint16) memory.Memory {
 	switch address {
 	case address <= 0x003FFFFF:
