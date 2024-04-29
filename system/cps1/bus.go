@@ -40,6 +40,10 @@ func (b *bus) Reset() {
 	// TODO - what else?
 }
 
+func (b *bus) Size() int {
+	return 0xFFFFFF
+}
+
 func (b *bus) ReadBit(address uint32, bit uint8) bool {
 	return b.target(address).ReadBit(address, bit)
 }
@@ -62,6 +66,11 @@ func (b *bus) WriteByte(address uint32, value byte) {
 
 func (b *bus) WriteShort(address uint32, value uint16) {
 	b.target(address).WriteShort(address, value)
+}
+
+func (b *bus) DumpCode() (data []uint8, startAddress uint32) {
+	panic("Not Implemented")
+	return nil, 0
 }
 
 func (b *bus) LoadData(offset uint32, data []uint8) error {

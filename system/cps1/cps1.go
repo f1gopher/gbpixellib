@@ -18,11 +18,13 @@ type CPS1 struct {
 
 func CreateCPS1(romFolder string, useDebugger bool) *CPS1 {
 	l := log.CreateLog("./log.txt")
+	bus := CreateBus(l)
+
 	system := CPS1{
 		log:       l,
 		romFolder: romFolder,
-		bus:       CreateBus(l),
-		cpu:       m68000.CreateM68000(l),
+		bus:       bus,
+		cpu:       m68000.CreateM68000(l, bus),
 	}
 
 	system.Reset()
@@ -44,6 +46,7 @@ func (c *CPS1) Start() {
 
 func (c *CPS1) Reset() {
 	c.bus.Reset()
+	c.cpu.Reset()
 
 	c.Start()
 }
@@ -56,5 +59,6 @@ func (c *CPS1) SingleFrame() (breakpoint bool, err error) {
 }
 
 func (c *CPS1) SingleInstruction() (breakpoint bool, err error) {
+	c.cpu.ExecuteCycle()
 	return false, nil
 }
