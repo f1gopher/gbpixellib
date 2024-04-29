@@ -23,6 +23,26 @@ const (
 	SR
 )
 
+func (r register) string() string {
+	return [...]string{"A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "PC", "SR"}[r]
+}
+
+type flag int
+
+const (
+	C flag = iota
+	V
+	Z
+	N
+	X
+	S
+	T
+)
+
+func (f flag) string() string {
+	return [...]string{"C", "V", "Z", "N", "X", "S", "T"}[f]
+}
+
 type registers struct {
 	d0 uint32
 	d1 uint32
@@ -68,6 +88,50 @@ func (r *registers) reset() {
 	r.pc = 0x00000000
 	r.sr = 0x00000000
 }
+
+func (r *registers) getFlag(flag flag) bool {
+	switch flag {
+	case C:
+		return getBit(r.sr, 0)
+	case V:
+		return getBit(r.sr, 1)
+	case Z:
+		return getBit(r.sr, 2)
+	case N:
+		return getBit(r.sr, 3)
+	case X:
+		return getBit(r.sr, 4)
+	case S:
+		return getBit(r.sr, 13)
+	case T:
+		return getBit(r.sr, 15)
+	default:
+		panic("Unhandled flag")
+	}
+}
+
+func (r *registers) setFlag(flag flag, value bool) {
+	switch flag {
+	case C:
+		setBit(&r.sr, 0, value)
+	case V:
+		setBit(&r.sr, 1, value)
+	case Z:
+		setBit(&r.sr, 2, value)
+	case N:
+		setBit(&r.sr, 3, value)
+	case X:
+		setBit(&r.sr, 4, value)
+	case S:
+		setBit(&r.sr, 13, value)
+	case T:
+		setBit(&r.sr, 15, value)
+	default:
+		panic("Unhandled flag")
+	}
+}
+
+// TODO - interrupt mask
 
 func (r *registers) get8(target register) uint8 {
 	switch target {
@@ -345,4 +409,24 @@ func setRegisterSignExtend(reg *uint32, value uint16) {
 
 	// Default to 0's padding
 	*reg = uint32(value)
+}
+
+func getBit(input uint32, bit uint8) bool {
+	if bit > 31 {
+		panic("Invalid bit")
+	}
+
+	return (input>>bit)&0x0001 == 0x0001
+}
+
+func setBit(input *uint32, bit uint8, value bool) {
+	if bit > 31 {
+		panic("Invalid bit")
+	}
+
+	if value {
+		*input = *input | 0x0001<<bit
+	} else {
+		*input = *input &^ (0x0001 << bit)
+	}
 }
