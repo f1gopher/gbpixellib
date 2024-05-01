@@ -53,14 +53,15 @@ type registers struct {
 	d6 uint32
 	d7 uint32
 
-	a0 uint32
-	a1 uint32
-	a2 uint32
-	a3 uint32
-	a4 uint32
-	a5 uint32
-	a6 uint32
-	a7 uint32
+	a0              uint32
+	a1              uint32
+	a2              uint32
+	a3              uint32
+	a4              uint32
+	a5              uint32
+	a6              uint32
+	userStack       uint32
+	supervisorStack uint32
 
 	pc uint32
 	sr uint32
@@ -83,7 +84,8 @@ func (r *registers) reset() {
 	r.a4 = 0x00000000
 	r.a5 = 0x00000000
 	r.a6 = 0x00000000
-	r.a7 = 0x00000000
+	r.userStack = 0x00000000
+	r.supervisorStack = 0x00000000
 
 	r.pc = 0x00000000
 	r.sr = 0x00000000
@@ -150,7 +152,7 @@ func (r *registers) get8(target register) uint8 {
 	case A6:
 		return getRegister[uint8](&r.a6)
 	case A7:
-		return getRegister[uint8](&r.a7)
+		return getRegister[uint8](r.getA7())
 	case D0:
 		return getRegister[uint8](&r.d0)
 	case D1:
@@ -193,7 +195,7 @@ func (r *registers) get16(target register) uint16 {
 	case A6:
 		return getRegister[uint16](&r.a6)
 	case A7:
-		return getRegister[uint16](&r.a7)
+		return getRegister[uint16](r.getA7())
 	case D0:
 		return getRegister[uint16](&r.d0)
 	case D1:
@@ -236,7 +238,7 @@ func (r *registers) get32(target register) uint32 {
 	case A6:
 		return getRegister[uint32](&r.a6)
 	case A7:
-		return getRegister[uint32](&r.a7)
+		return getRegister[uint32](r.getA7())
 	case D0:
 		return getRegister[uint32](&r.d0)
 	case D1:
@@ -306,7 +308,7 @@ func (r *registers) set16(target register, value uint16) {
 	case A6:
 		setRegisterSignExtend(&r.a6, value)
 	case A7:
-		setRegisterSignExtend(&r.a7, value)
+		setRegisterSignExtend(r.getA7(), value)
 	case D0:
 		setRegister[uint16](&r.d0, value)
 	case D1:
@@ -347,7 +349,7 @@ func (r *registers) set32(target register, value uint32) {
 	case A6:
 		setRegister[uint32](&r.a6, value)
 	case A7:
-		setRegister[uint32](&r.a7, value)
+		setRegister[uint32](r.getA7(), value)
 	case D0:
 		setRegister[uint32](&r.d0, value)
 	case D1:
@@ -369,6 +371,14 @@ func (r *registers) set32(target register, value uint32) {
 	case SR:
 		setRegister[uint32](&r.sr, value)
 	}
+}
+
+func (r *registers) getA7() *uint32 {
+	if r.getFlag(S) {
+		return &r.supervisorStack
+	}
+
+	return &r.userStack
 }
 
 func getRegister[T uint8 | uint16 | uint32](reg *uint32) T {
