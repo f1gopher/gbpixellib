@@ -64,7 +64,7 @@ type registers struct {
 	supervisorStack uint32
 
 	pc uint32
-	sr uint32
+	sr uint16
 }
 
 func (r *registers) reset() {
@@ -88,7 +88,7 @@ func (r *registers) reset() {
 	r.supervisorStack = 0x00000000
 
 	r.pc = 0x00000000
-	r.sr = 0x00000000
+	r.sr = 0x0000
 }
 
 func (r *registers) getFlag(flag flag) bool {
@@ -172,7 +172,7 @@ func (r *registers) get8(target register) uint8 {
 	case PC:
 		return getRegister[uint8](&r.pc)
 	case SR:
-		return getRegister[uint8](&r.sr)
+		panic("Not implemented")
 	default:
 		panic("Unhandled register")
 	}
@@ -215,7 +215,7 @@ func (r *registers) get16(target register) uint16 {
 	case PC:
 		return getRegister[uint16](&r.pc)
 	case SR:
-		return getRegister[uint16](&r.sr)
+		panic("Not implemented")
 	default:
 		panic("Unhandled register")
 	}
@@ -258,7 +258,7 @@ func (r *registers) get32(target register) uint32 {
 	case PC:
 		return getRegister[uint32](&r.pc)
 	case SR:
-		return getRegister[uint32](&r.sr)
+		panic("Not implemented")
 	default:
 		panic("Unhandled register")
 	}
@@ -287,7 +287,7 @@ func (r *registers) set8(target register, value uint8) {
 	case PC:
 		setRegister[uint8](&r.pc, value)
 	case SR:
-		setRegister[uint8](&r.sr, value)
+		panic("Not implemented")
 	}
 }
 
@@ -328,7 +328,7 @@ func (r *registers) set16(target register, value uint16) {
 	case PC:
 		setRegister[uint16](&r.pc, value)
 	case SR:
-		setRegister[uint16](&r.sr, value)
+		panic("Not implemented")
 	}
 }
 
@@ -369,7 +369,7 @@ func (r *registers) set32(target register, value uint32) {
 	case PC:
 		setRegister[uint32](&r.pc, value)
 	case SR:
-		setRegister[uint32](&r.sr, value)
+		panic("Not implemented")
 	}
 }
 
@@ -421,7 +421,7 @@ func setRegisterSignExtend(reg *uint32, value uint16) {
 	*reg = uint32(value)
 }
 
-func getBit(input uint32, bit uint8) bool {
+func getBit(input uint16, bit uint8) bool {
 	if bit > 31 {
 		panic("Invalid bit")
 	}
@@ -429,7 +429,7 @@ func getBit(input uint32, bit uint8) bool {
 	return (input>>bit)&0x0001 == 0x0001
 }
 
-func setBit(input *uint32, bit uint8, value bool) {
+func setBit(input *uint16, bit uint8, value bool) {
 	if bit > 31 {
 		panic("Invalid bit")
 	}
