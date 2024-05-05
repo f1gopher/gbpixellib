@@ -20,10 +20,8 @@ func (f *finalfight) isValid() error {
 
 func (f *finalfight) load(memory systemMemory) error {
 	// Load CPU
-	f.loadFile(memory, "ff_36.11f", 0x00000000)
-	f.loadFile(memory, "ff_42.11h", 0x00002000)
-	f.loadFile(memory, "ff_37.12f", 0x00004000)
-	f.loadFile(memory, "ffe_43.12h", 0x00006000)
+	f.loadFilesInterlaced(memory, "ff_36.11f", "ff_42.11h", 0x00000000)
+	f.loadFilesInterlaced(memory, "ff_37.12f", "ffe_43.12h", 0x00004000)
 	// TODO - word swap??
 	f.loadFile(memory, "ff_32m.8h", 0x00008000)
 
@@ -62,4 +60,25 @@ func (f *finalfight) loadFile(memory systemMemory, file string, address uint32) 
 	}
 
 	return memory.LoadData(address, data)
+}
+
+func (f *finalfight) loadFilesInterlaced(memory systemMemory, file1 string, file2 string, address uint32) error {
+	data1, err := os.ReadFile(path.Join(f.romFolder, file1))
+	if err != nil {
+		panic(err)
+	}
+	data2, err := os.ReadFile(path.Join(f.romFolder, file2))
+	if err != nil {
+		panic(err)
+	}
+
+	result := make([]uint8, len(data1)+len(data2))
+
+	// Take alternating bytes from each file to assemble the complete buffer
+	for x := 0; x < len(data1); x++ {
+		result[x*2] = data1[x]
+		result[(x*2)+1] = data2[x]
+	}
+
+	return memory.LoadData(address, result)
 }
