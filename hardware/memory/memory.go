@@ -7,6 +7,7 @@ import (
 
 type Memory[T uint16 | uint32] interface {
 	Size() int
+	Offset() T
 	Reset()
 	ReadBit(address T, bit uint8) bool
 	ReadByte(address T) byte
@@ -45,6 +46,10 @@ func CreateMemory[T uint16 | uint32](name string, data *[]byte, addressOffset T)
 
 func (m *memory[T]) Size() int {
 	return len(m.buffer)
+}
+
+func (m *memory[T]) Offset() T {
+	return m.addressOffset
 }
 
 func (m *memory[T]) offset(address T) T {
