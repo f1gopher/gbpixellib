@@ -25,7 +25,7 @@ func (f *finalfight) load(memory systemMemory) error {
 	f.loadFile(memory, "ff_37.12f", 0x00004000)
 	f.loadFile(memory, "ffe_43.12h", 0x00006000)
 	// TODO - word swap??
-	f.loadFile(memory, "ff_32m.8h", 0x00008000)
+	f.loadFile(memory, "ff-32m.8h", 0x00008000)
 
 	// Gfx
 	f.loadFile(memory, "ff-5m.7a", 0x00000000)
@@ -34,11 +34,11 @@ func (f *finalfight) load(memory systemMemory) error {
 	f.loadFile(memory, "ff-3m.5a", 0x00000000)
 
 	// Audio
-	f.loadFile(memory, "ff-09.12b", 0x00000000)
+	f.loadFile(memory, "ff_09.12b", 0x00000000)
 
 	// OKI samples
-	f.loadFile(memory, "ff-18.11c", 0x00000000)
-	f.loadFile(memory, "ff-19.12c", 0x00000000)
+	f.loadFile(memory, "ff_18.11c", 0x00000000)
+	f.loadFile(memory, "ff_19.12c", 0x00000000)
 
 	// A board
 	f.loadFile(memory, "buf1", 0x00000000)

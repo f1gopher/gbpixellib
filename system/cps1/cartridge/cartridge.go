@@ -20,12 +20,11 @@ type cartridge interface {
 
 func LoadGame(log *log.Log, romFolder string, memory systemMemory) error {
 
-	parts := filepath.SplitList(romFolder)
-	folderName := parts[len(parts)-1]
+	folderName := filepath.Base(romFolder)
 
 	cart := findCart(folderName)
 
-	cart.init(folderName)
+	cart.init(romFolder)
 
 	if err := cart.isValid(); err != nil {
 		return err

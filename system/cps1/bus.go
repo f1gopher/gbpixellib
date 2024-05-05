@@ -41,7 +41,11 @@ func (b *bus) Reset() {
 }
 
 func (b *bus) Size() int {
-	return 0xFFFFFF
+	return int(b.ram.Offset()) + b.ram.Size()
+}
+
+func (b *bus) Offset() uint32 {
+	return 0
 }
 
 func (b *bus) ReadBit(address uint32, bit uint8) bool {
@@ -69,8 +73,20 @@ func (b *bus) WriteShort(address uint32, value uint16) {
 }
 
 func (b *bus) DumpCode() (data []uint8, startAddress uint32) {
-	panic("Not Implemented")
-	return nil, 0
+	dump := make([]uint8, b.Size())
+
+	mem, startAddress := b.rom.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = b.jamma.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = b.kick.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = b.gfxRam.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = b.ram.DumpCode()
+	copy(dump[startAddress:], mem)
+
+	return dump, 0
 }
 
 func (b *bus) LoadData(offset uint32, data []uint8) error {
