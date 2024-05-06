@@ -11,6 +11,10 @@ type finalfight struct {
 	romFolder string
 }
 
+func (f *finalfight) game() CPS1Game {
+	return FFight
+}
+
 func (f *finalfight) init(romFolder string) {
 	f.romFolder = romFolder
 }

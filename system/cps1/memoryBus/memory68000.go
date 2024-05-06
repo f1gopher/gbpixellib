@@ -23,8 +23,8 @@ func create68000(log *log.Log) (_680000 *memory68000, jammaMemory memory.Memory[
 	kick := make([]byte, 0x00000002)
 	gfxRam := make([]byte, 0x00930000)
 	ram := make([]byte, 0x00010000)
-	jammaMemory = memory.CreateMemory[uint32]("jamma", &jamma, 0x800000)
-	kickMemory = memory.CreateMemory[uint32]("kick", &kick, 0x800176)
+	jammaMemory = memory.CreateMemory[uint32]("jamma", &jamma, JammaInputAddress)
+	kickMemory = memory.CreateMemory[uint32]("kick", &kick, KickAddress)
 
 	return &memory68000{
 		log:    log,

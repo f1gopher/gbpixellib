@@ -44,10 +44,12 @@ func (c *CPS1) LoadGame(romFolder string) {
 }
 
 func (c *CPS1) Start() {
-	err := cartridge.LoadGame(c.log, c.romFolder, c.bus.Memory68000(), c.bus.MemoryGfx())
+	game, err := cartridge.LoadGame(c.log, c.romFolder, c.bus.Memory68000(), c.bus.MemoryGfx())
 	if err != nil {
 
 	}
+
+	c.jamma.InitForGame(game)
 }
 
 func (c *CPS1) Reset() {
