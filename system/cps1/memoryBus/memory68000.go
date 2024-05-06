@@ -17,21 +17,31 @@ type memory68000 struct {
 	ram    memory.Memory[uint32]
 }
 
-func create68000(log *log.Log) *memory68000 {
+func create68000(log *log.Log) (_680000 *memory68000, jammaMemory memory.Memory[uint32], kickMemory memory.Memory[uint32]) {
 	rom := make([]byte, 0x00400000)
 	jamma := make([]byte, 0x00000018)
 	kick := make([]byte, 0x00000002)
 	gfxRam := make([]byte, 0x00930000)
 	ram := make([]byte, 0x00010000)
+	jammaMemory = memory.CreateMemory[uint32]("jamma", &jamma, 0x800000)
+	kickMemory = memory.CreateMemory[uint32]("kick", &kick, 0x800176)
 
 	return &memory68000{
 		log:    log,
 		rom:    memory.CreateReadOnlyMemory[uint32]("rom", &rom, 0x000000),
-		jamma:  memory.CreateMemory[uint32]("jamma", &jamma, 0x800000),
-		kick:   memory.CreateMemory[uint32]("kick", &kick, 0x800176),
+		jamma:  jammaMemory,
+		kick:   kickMemory,
 		gfxRam: memory.CreateMemory[uint32]("gfx ram", &gfxRam, 0x900000),
 		ram:    memory.CreateMemory[uint32]("ram", &ram, 0xFF0000),
-	}
+	}, jammaMemory, kickMemory
+}
+
+func (m *memory68000) Jamma() memory.Memory[uint32] {
+	return m.jamma
+}
+
+func (m *memory68000) Kick() memory.Memory[uint32] {
+	return m.kick
 }
 
 func (m *memory68000) Reset() {

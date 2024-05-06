@@ -15,19 +15,22 @@ type CPS1 struct {
 	log       *log.Log
 	romFolder string
 
-	bus *memoryBus.Bus
-	cpu *m68000.M68000
+	bus   *memoryBus.Bus
+	cpu   *m68000.M68000
+	jamma *jamma
 }
 
 func CreateCPS1(romFolder string, useDebugger bool) *CPS1 {
 	l := log.CreateLog("./log.txt")
-	bus := memoryBus.CreateBus(l)
+	bus, jammaMemory, kickMemory := memoryBus.CreateBus(l)
+	jamma := createJamma(l, jammaMemory, kickMemory)
 
 	system := CPS1{
 		log:       l,
 		romFolder: romFolder,
 		bus:       bus,
 		cpu:       m68000.CreateM68000(l, bus.Memory68000()),
+		jamma:     jamma,
 	}
 
 	system.Reset()

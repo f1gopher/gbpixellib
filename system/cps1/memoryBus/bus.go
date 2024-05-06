@@ -12,14 +12,15 @@ type Bus struct {
 	gfxRam memory.Memory[uint32]
 }
 
-func CreateBus(log *log.Log) *Bus {
+func CreateBus(log *log.Log) (bus *Bus, jammaMemory memory.Memory[uint32], kickMemory memory.Memory[uint32]) {
 	ram := make([]uint8, 0x200000)
+	_68000, jamma, kick := create68000(log)
 
 	return &Bus{
 		log:    log,
-		_68000: create68000(log),
+		_68000: _68000,
 		gfxRam: memory.CreateMemory[uint32]("gfx ram", &ram, 0x000000),
-	}
+	}, jamma, kick
 }
 
 func (b *Bus) Reset() {
