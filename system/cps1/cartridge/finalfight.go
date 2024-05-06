@@ -3,6 +3,8 @@ package cartridge
 import (
 	"os"
 	"path"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
 type finalfight struct {
@@ -18,40 +20,40 @@ func (f *finalfight) isValid() error {
 	return nil
 }
 
-func (f *finalfight) load(memory systemMemory) error {
+func (f *finalfight) load(_68000 memory.Memory[uint32], gfx memory.Memory[uint32]) error {
 	// Load CPU
-	f.loadFilesInterlaced(memory, "ff_36.11f", "ff_42.11h", 0x00000000)
-	f.loadFilesInterlaced(memory, "ff_37.12f", "ffe_43.12h", 0x00004000)
-	f.loadFileSwapUint16(memory, "ff-32m.8h", 0x00008000)
+	f.loadFilesInterlaced(_68000, "ff_36.11f", "ff_42.11h", 0x00000000)
+	f.loadFilesInterlaced(_68000, "ff_37.12f", "ffe_43.12h", 0x00040000)
+	f.loadFileSwapUint16(_68000, "ff-32m.8h", 0x00080000)
 
 	// Gfx
-	f.loadFilesInterlacedMad(memory, "ff-5m.7a", "ff-7m.9a", "ff-1m.3a", "ff-3m.5a", 0x00000000)
+	f.loadFilesInterlacedMad(gfx, "ff-5m.7a", "ff-7m.9a", "ff-1m.3a", "ff-3m.5a", 0x00000000)
 
 	// Audio
-	f.loadFile(memory, "ff_09.12b", 0x00000000)
+	// f.loadFile(memory, "ff_09.12b", 0x00000000)
 
 	// OKI samples
-	f.loadFile(memory, "ff_18.11c", 0x00000000)
-	f.loadFile(memory, "ff_19.12c", 0x00000000)
+	// f.loadFile(memory, "ff_18.11c", 0x00000000)
+	// f.loadFile(memory, "ff_19.12c", 0x00020000)
 
 	// A board
 	// TODO - this isn't right - same as B board
-	f.loadFile(memory, "buf1", 0x00000000)
-	f.loadFile(memory, "ioa1", 0x00000000)
-	f.loadFile(memory, "prg1", 0x00000000)
-	f.loadFile(memory, "rom1", 0x00000000)
-	f.loadFile(memory, "sou1", 0x00000000)
+	// f.loadFile(memory, "buf1", 0x00000000)
+	// f.loadFile(memory, "ioa1", 0x00000000)
+	// f.loadFile(memory, "prg1", 0x00000000)
+	// f.loadFile(memory, "rom1", 0x00000000)
+	// f.loadFile(memory, "sou1", 0x00000000)
 
 	// B board
 	// TODO - load one file over the top of the other and last file wins???!
 	// has an extra 0A at the end for some reason
-	f.loadFile(memory, "s224b.1a", 0x00000000)
-	f.loadFile(memory, "iob1.11e", 0x00000000)
+	// f.loadFile(memory, "s224b.1a", 0x00000000)
+	// f.loadFile(memory, "iob1.11e", 0x00000000)
 
 	return nil
 }
 
-func (f *finalfight) loadFile(memory systemMemory, file string, address uint32) error {
+func (f *finalfight) loadFile(memory memory.Memory[uint32], file string, address uint32) error {
 	a := path.Join(f.romFolder, file)
 	data, err := os.ReadFile(a)
 	if err != nil {
@@ -61,7 +63,7 @@ func (f *finalfight) loadFile(memory systemMemory, file string, address uint32) 
 	return memory.LoadData(address, data)
 }
 
-func (f *finalfight) loadFilesInterlaced(memory systemMemory, file1 string, file2 string, address uint32) error {
+func (f *finalfight) loadFilesInterlaced(memory memory.Memory[uint32], file1 string, file2 string, address uint32) error {
 	data1, err := os.ReadFile(path.Join(f.romFolder, file1))
 	if err != nil {
 		panic(err)
@@ -82,7 +84,7 @@ func (f *finalfight) loadFilesInterlaced(memory systemMemory, file1 string, file
 	return memory.LoadData(address, result)
 }
 
-func (f *finalfight) loadFilesInterlacedMad(memory systemMemory, file1 string, file2 string, file3 string, file4 string, address uint32) error {
+func (f *finalfight) loadFilesInterlacedMad(memory memory.Memory[uint32], file1 string, file2 string, file3 string, file4 string, address uint32) error {
 	data1, err := os.ReadFile(path.Join(f.romFolder, file1))
 	if err != nil {
 		panic(err)
@@ -119,7 +121,7 @@ func (f *finalfight) loadFilesInterlacedMad(memory systemMemory, file1 string, f
 	return memory.LoadData(address, result)
 }
 
-func (f *finalfight) loadFileSwapUint16(memory systemMemory, file string, address uint32) error {
+func (f *finalfight) loadFileSwapUint16(memory memory.Memory[uint32], file string, address uint32) error {
 	data, err := os.ReadFile(path.Join(f.romFolder, file))
 	if err != nil {
 		panic(err)

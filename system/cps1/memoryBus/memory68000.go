@@ -1,0 +1,118 @@
+package memoryBus
+
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+	"github.com/f1gopher/gbpixellib/log"
+)
+
+type memory68000 struct {
+	log *log.Log
+
+	rom    memory.Memory[uint32]
+	jamma  memory.Memory[uint32]
+	kick   memory.Memory[uint32]
+	gfxRam memory.Memory[uint32]
+	ram    memory.Memory[uint32]
+}
+
+func create68000(log *log.Log) *memory68000 {
+	rom := make([]byte, 0x00400000)
+	jamma := make([]byte, 0x00000018)
+	kick := make([]byte, 0x00000002)
+	gfxRam := make([]byte, 0x00930000)
+	ram := make([]byte, 0x00010000)
+
+	return &memory68000{
+		log:    log,
+		rom:    memory.CreateReadOnlyMemory[uint32]("rom", &rom, 0x000000),
+		jamma:  memory.CreateMemory[uint32]("jamma", &jamma, 0x800000),
+		kick:   memory.CreateMemory[uint32]("kick", &kick, 0x800176),
+		gfxRam: memory.CreateMemory[uint32]("gfx ram", &gfxRam, 0x900000),
+		ram:    memory.CreateMemory[uint32]("ram", &ram, 0xFF0000),
+	}
+}
+
+func (m *memory68000) Reset() {
+	m.jamma.Reset()
+	m.kick.Reset()
+	m.gfxRam.Reset()
+	m.ram.Reset()
+	// TODO - what else?
+}
+
+func (m *memory68000) Size() int {
+	return int(m.ram.Offset()) + m.ram.Size()
+}
+
+func (m *memory68000) Offset() uint32 {
+	return 0
+}
+
+func (m *memory68000) ReadBit(address uint32, bit uint8) bool {
+	return m.target(address).ReadBit(address, bit)
+}
+
+func (m *memory68000) ReadByte(address uint32) byte {
+	return m.target(address).ReadByte(address)
+}
+
+func (m *memory68000) ReadShort(address uint32) uint16 {
+	return m.target(address).ReadShort(address)
+}
+
+func (m *memory68000) WriteBit(address uint32, bit uint8, value bool) {
+	m.target(address).WriteBit(address, bit, value)
+}
+
+func (m *memory68000) WriteByte(address uint32, value byte) {
+	m.target(address).WriteByte(address, value)
+}
+
+func (m *memory68000) WriteShort(address uint32, value uint16) {
+	m.target(address).WriteShort(address, value)
+}
+
+func (m *memory68000) DumpCode() (data []uint8, startAddress uint32) {
+	dump := make([]uint8, m.Size())
+
+	mem, startAddress := m.rom.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = m.jamma.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = m.kick.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = m.gfxRam.DumpCode()
+	copy(dump[startAddress:], mem)
+	mem, startAddress = m.ram.DumpCode()
+	copy(dump[startAddress:], mem)
+
+	return dump, 0
+}
+
+func (m *memory68000) LoadData(offset uint32, data []uint8) error {
+	dest := m.target(offset)
+	return dest.LoadData(offset, data)
+}
+
+func (m *memory68000) target(address uint32) memory.Memory[uint32] {
+	switch {
+	case address <= 0x003FFFFF:
+		return m.rom
+	case address >= 0x00800000 && address <= 0x00800037:
+		return m.jamma
+	case address >= 0x00800176 && address <= 0x00800177:
+		return m.kick
+	case address >= 0x00800100 && address <= 0x0080013F:
+		panic("CPS-A not implemented")
+	case address >= 0x00800140 && address <= 0x0080017F:
+		panic("CPS-m.not implemented")
+	case address >= 0x00900000 && address <= 0x0092FFFF:
+		return m.gfxRam
+	case address >= 0x00FF0000 && address <= 0x00FFFFFF:
+		return m.ram
+	default:
+		panic(fmt.Sprintf("Invalid address 0x%8X", address))
+	}
+}

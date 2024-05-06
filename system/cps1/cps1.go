@@ -8,25 +8,26 @@ import (
 	"github.com/f1gopher/gbpixellib/hardware/m68000"
 	"github.com/f1gopher/gbpixellib/log"
 	"github.com/f1gopher/gbpixellib/system/cps1/cartridge"
+	"github.com/f1gopher/gbpixellib/system/cps1/memoryBus"
 )
 
 type CPS1 struct {
 	log       *log.Log
 	romFolder string
 
-	bus *bus
+	bus *memoryBus.Bus
 	cpu *m68000.M68000
 }
 
 func CreateCPS1(romFolder string, useDebugger bool) *CPS1 {
 	l := log.CreateLog("./log.txt")
-	bus := CreateBus(l)
+	bus := memoryBus.CreateBus(l)
 
 	system := CPS1{
 		log:       l,
 		romFolder: romFolder,
 		bus:       bus,
-		cpu:       m68000.CreateM68000(l, bus),
+		cpu:       m68000.CreateM68000(l, bus.Memory68000()),
 	}
 
 	system.Reset()
@@ -40,7 +41,7 @@ func (c *CPS1) LoadGame(romFolder string) {
 }
 
 func (c *CPS1) Start() {
-	err := cartridge.LoadGame(c.log, c.romFolder, c.bus)
+	err := cartridge.LoadGame(c.log, c.romFolder, c.bus.Memory68000(), c.bus.MemoryGfx())
 	if err != nil {
 
 	}
@@ -68,7 +69,7 @@ func (c *CPS1) SingleInstruction() (breakpoint bool, err error) {
 func (c *CPS1) Dump() string {
 	var sb strings.Builder
 
-	data, _ := c.bus.DumpCode()
+	data, _ := c.bus.Memory68000().DumpCode()
 
 	for x := 0; x < len(data); x += 16 {
 		sb.WriteString(fmt.Sprintf("%06X:  %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X  %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",

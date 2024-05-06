@@ -5,20 +5,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
 )
-
-type systemMemory interface {
-	LoadData(offset uint32, data []uint8) error
-}
 
 type cartridge interface {
 	init(romFolder string)
 	isValid() error
-	load(memory systemMemory) error
+	load(_68000 memory.Memory[uint32], gfx memory.Memory[uint32]) error
 }
 
-func LoadGame(log *log.Log, romFolder string, memory systemMemory) error {
+func LoadGame(
+	log *log.Log,
+	romFolder string,
+	_68000Memory memory.Memory[uint32],
+	gfxMemory memory.Memory[uint32]) error {
 
 	folderName := filepath.Base(romFolder)
 
@@ -30,7 +31,7 @@ func LoadGame(log *log.Log, romFolder string, memory systemMemory) error {
 		return err
 	}
 
-	return cart.load(memory)
+	return cart.load(_68000Memory, gfxMemory)
 }
 
 func findCart(name string) cartridge {
