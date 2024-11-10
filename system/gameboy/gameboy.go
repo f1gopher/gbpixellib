@@ -3,12 +3,13 @@ package gameboy
 import (
 	"errors"
 	"fmt"
+	"os"
+	"sync"
+
 	"github.com/f1gopher/gbpixellib/system/gameboy/cartridge"
 	"github.com/f1gopher/gbpixellib/system/gameboy/display"
 	"github.com/f1gopher/gbpixellib/system/gameboy/input"
 	"github.com/f1gopher/gbpixellib/system/gameboy/interupt"
-	"os"
-	"sync"
 
 	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"github.com/f1gopher/gbpixellib/log"
@@ -362,4 +363,12 @@ func (s *Gameboy) Joypad() Joypad {
 
 func (s *Gameboy) DisplayConfig() display.DisplayConfig {
 	return s.screen.DisplayConfig()
+}
+
+func (s *Gameboy) BreakpointReason() string {
+	return s.debugger.BreakpointReason()
+}
+
+func (s *Gameboy) Name() string {
+	return "Gameboy"
 }
