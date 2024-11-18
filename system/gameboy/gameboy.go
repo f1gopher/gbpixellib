@@ -3,6 +3,7 @@ package gameboy
 import (
 	"errors"
 	"fmt"
+	"image/color"
 	"os"
 	"sync"
 
@@ -162,7 +163,7 @@ func (s *Gameboy) Reset() {
 	s.Start()
 }
 
-func (s *Gameboy) Render(callback func(x int, y int, color display.ScreenColor)) {
+func (s *Gameboy) Render(callback func(x int, y int, color color.RGBA)) {
 	s.displayLock.Lock()
 	defer s.displayLock.Unlock()
 

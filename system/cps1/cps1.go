@@ -9,6 +9,7 @@ import (
 	"github.com/f1gopher/gbpixellib/log"
 	"github.com/f1gopher/gbpixellib/system/cps1/cartridge"
 	"github.com/f1gopher/gbpixellib/system/cps1/memoryBus"
+	"github.com/f1gopher/gbpixellib/system/gameboy/display"
 )
 
 type CPS1 struct {
@@ -62,13 +63,13 @@ func (c *CPS1) Reset() {
 func (c *CPS1) Render(callback func(x int, y int, color color.RGBA)) {
 }
 
-func (c *CPS1) SingleFrame() (breakpoint bool, err error) {
-	return false, nil
+func (c *CPS1) SingleFrame() (breakpoint bool, cyclesCompleted uint, err error) {
+	return false, 0, nil
 }
 
-func (c *CPS1) SingleInstruction() (breakpoint bool, err error) {
+func (c *CPS1) SingleInstruction() (breakpoint bool, cyclesCompleted uint, err error) {
 	c.cpu.ExecuteCycle()
-	return false, nil
+	return false, 0, nil
 }
 
 func (c *CPS1) Dump() string {
@@ -114,6 +115,28 @@ func (c *CPS1) Dump() string {
 	}
 
 	return sb.String()
+}
+
+func (c *CPS1) LoadTestROM(rom string) {
+}
+
+// func (c *CPS1) Joypad() Joypad {
+// 	return nil
+// }
+
+func (c *CPS1) DisplayConfig() display.DisplayConfig {
+	return display.DisplayConfig{
+		Width:  320,
+		Height: 224,
+	}
+}
+
+func (c *CPS1) BreakpointReason() string {
+	return ""
+}
+
+func (c *CPS1) Name() string {
+	return "CPS-1"
 }
 
 func displayChar(value uint8) rune {

@@ -2,12 +2,13 @@ package display
 
 import (
 	"fmt"
-	"github.com/f1gopher/gbpixellib/hardware/memory"
-	"github.com/f1gopher/gbpixellib/system/gameboy/interupt"
 	"image"
 	"image/color"
 	"image/draw"
 	"os"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+	"github.com/f1gopher/gbpixellib/system/gameboy/interupt"
 
 	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"golang.org/x/image/colornames"
@@ -58,8 +59,6 @@ func (s ScreenColor) String() string {
 type DisplayConfig struct {
 	Width  int
 	Height int
-
-	Colors map[ScreenColor]color.RGBA
 }
 
 var screenOff = color.RGBA{R: 255, G: 0, B: 0, A: 255}
@@ -104,12 +103,6 @@ func (s *Screen) DisplayConfig() DisplayConfig {
 	return DisplayConfig{
 		Width:  screenWidth,
 		Height: screenHeight,
-		Colors: map[ScreenColor]color.RGBA{
-			White:     screenWhite,
-			Black:     screenBlack,
-			LightGray: screenLightGrey,
-			DarkGray:  screenDarkGrey,
-		},
 	}
 }
 
@@ -605,10 +598,24 @@ func (s *Screen) renderSprites() {
 	}
 }
 
-func (s *Screen) Render(callback func(x int, y int, color ScreenColor)) {
+func (s *Screen) Render(callback func(x int, y int, color color.RGBA)) {
 	for y := 0; y < screenHeight; y++ {
 		for x := 0; x < screenWidth; x++ {
-			callback(x, y, s.buffer[(y*screenWidth)+x])
+			var c color.RGBA
+			switch s.buffer[(y*screenWidth)+x] {
+			case Off:
+				c = color.RGBA{255, 0, 0, 255}
+			case White:
+				c = screenWhite
+			case LightGray:
+				c = screenLightGrey
+			case DarkGray:
+				c = screenDarkGrey
+			case Black:
+				c = screenBlack
+			}
+
+			callback(x, y, c)
 		}
 	}
 }
