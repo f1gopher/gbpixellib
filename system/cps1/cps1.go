@@ -139,6 +139,10 @@ func (c *CPS1) Name() string {
 	return "CPS-1"
 }
 
+func (c *CPS1) DumpCallstack() []string {
+	return make([]string, 0)
+}
+
 func displayChar(value uint8) rune {
 	if value < 32 || value > 126 {
 		return rune(46)
