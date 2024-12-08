@@ -143,6 +143,10 @@ func (c *CPS1) DumpCallstack() []string {
 	return make([]string, 0)
 }
 
+func (c *CPS1) DumpMemory(address uint32, length uint32) []uint8 {
+	return make([]uint8, 0)
+}
+
 func displayChar(value uint8) rune {
 	if value < 32 || value > 126 {
 		return rune(46)
