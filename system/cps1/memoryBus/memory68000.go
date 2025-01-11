@@ -1,6 +1,7 @@
 package memoryBus
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/f1gopher/gbpixellib/hardware/memory"
@@ -60,6 +61,10 @@ func (m *memory68000) Offset() uint32 {
 	return 0
 }
 
+func (m *memory68000) LastAddress() uint32 {
+	return m.Offset() + uint32(m.Size()-1)
+}
+
 func (m *memory68000) ReadBit(address uint32, bit uint8) bool {
 	return m.target(address).ReadBit(address, bit)
 }
@@ -99,6 +104,16 @@ func (m *memory68000) DumpCode() (data []uint8, startAddress uint32) {
 	copy(dump[startAddress:], mem)
 
 	return dump, 0
+}
+
+func (m *memory68000) DumpRegionsCode(address uint32) (data []uint8, err error) {
+	memory := m.target(address)
+	if memory.Offset() != address {
+		return nil, errors.New("Invalid dump address")
+	}
+
+	mem, _ := memory.DumpCode()
+	return mem, nil
 }
 
 func (m *memory68000) LoadData(offset uint32, data []uint8) error {

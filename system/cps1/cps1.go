@@ -143,8 +143,8 @@ func (c *CPS1) DumpCallstack() []string {
 	return make([]string, 0)
 }
 
-func (c *CPS1) DumpMemory(address uint32, length uint32) []uint8 {
-	return make([]uint8, 0)
+func (c *CPS1) DumpMemory(address uint32, length uint32) (data []uint8, err error) {
+	return c.bus.DumpMemory(address, length)
 }
 
 func displayChar(value uint8) rune {
