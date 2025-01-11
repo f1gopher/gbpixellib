@@ -17,6 +17,7 @@ type Memory[T uint16 | uint32] interface {
 	WriteByte(address T, value byte)
 	WriteShort(address T, value uint16)
 	DumpCode() (data []uint8, startAddress T)
+	DumpRegionsCode(address T) (data []uint8, err error)
 	LoadData(offset T, data []uint8) error
 }
 
@@ -129,6 +130,11 @@ func (m *memory[T]) DumpCode() (data []uint8, startAddress T) {
 	code := make([]uint8, len(m.buffer))
 	copy(code, m.buffer)
 	return code, m.addressOffset
+}
+
+func (m *memory[T]) DumpRegionsCode(address T) (data []uint8, err error) {
+	code, _ := m.DumpCode()
+	return code, nil
 }
 
 func (m *memory[T]) LoadData(offset T, data []uint8) error {

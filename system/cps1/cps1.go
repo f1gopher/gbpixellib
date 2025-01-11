@@ -47,7 +47,6 @@ func (c *CPS1) LoadGame(romFolder string) {
 func (c *CPS1) Start() {
 	game, err := cartridge.LoadGame(c.log, c.romFolder, c.bus.Memory68000(), c.bus.MemoryGfx())
 	if err != nil {
-
 	}
 
 	c.jamma.InitForGame(game)
@@ -143,8 +142,8 @@ func (c *CPS1) DumpCallstack() []string {
 	return make([]string, 0)
 }
 
-func (c *CPS1) DumpMemory(address uint32, length uint32) (data []uint8, err error) {
-	return c.bus.DumpMemory(address, length)
+func (c *CPS1) DumpMemory(address uint32) (data []uint8, err error) {
+	return c.bus.DumpMemory(address)
 }
 
 func displayChar(value uint8) rune {
