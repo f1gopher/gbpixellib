@@ -26,6 +26,8 @@ func (i *instructionParser) dump(code []uint8) []string {
 }
 
 const (
+	illegalInstruction uint16 = 0b0100101011111100
+	rteInstruction     uint16 = 0b0100111001110011
 	dcPrefix           uint16 = 0x00FF
 	moveMask           uint16 = 0b1111000000000000
 	moveBPrefix        uint16 = 0b0001000000000000
@@ -33,8 +35,8 @@ const (
 	moveLPrefix        uint16 = 0b0010000000000000
 	oriMask            uint16 = 0b1111111100000000
 	oriPrefix          uint16 = 0b0000000000000000
-	illegalInstruction uint16 = 0b0100101011111100
-	rteInstruction     uint16 = 0b0100111001110011
+	leaMask            uint16 = 0b1111000000000000
+	leaPrefix          uint16 = 0b0100000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -54,6 +56,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		instruction&moveMask == moveWPrefix ||
 		instruction&moveMask == moveLPrefix {
 		return instructions.CreateMOVEB(instruction)
+	} else if instruction&leaMask == leaPrefix {
+		return instructions.CreateLEA(instruction, code, offset)
 	}
 
 	return &instructions.Unknown{}

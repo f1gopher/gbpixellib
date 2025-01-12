@@ -53,15 +53,33 @@ type addressMode int
 
 const (
 	dataRegisterDirect addressMode = iota
+	addressRegisterDirect
+	addressRegisterIndirect
+	addressRegisterIndirectWithPostIncrement
+	addressRegisterIndirectWithPreDecrement
+	addressRegisterIndirectWithDisplacement
+	addressRegisterIndirectWithIndexAnd8BitDisplacement
+	addressRegisterIndirectWithIndexAndBaseDisplacement
+	memoryIndirectPostIndexed
+	memoryIndirectPreIndexed
+	absoluteShort
+	absoluteLong
+	programCounterIndirectWithDisplacement
 )
 
 func (d addressMode) string() string {
 	switch d {
 	case dataRegisterDirect:
 		return "D"
+	case addressRegisterDirect:
+		return "A"
+	case addressRegisterIndirect:
+		return "(A)"
+	case absoluteShort, absoluteLong:
+		return "A"
 	}
 
-	panic("")
+	panic(fmt.Sprintf("Unknown address mode %d", d))
 }
 
 func effective(value uint16, offset byte) (mode addressMode, register byte) {
@@ -86,6 +104,25 @@ func addressingMode(modeBits uint16) addressMode {
 	switch modeBits & 0b00000000000000111 {
 	case 0b0000000000000000:
 		return dataRegisterDirect
+	case 0b0000000000000001:
+		return addressRegisterDirect
+	case 0b0000000000000010:
+		return addressRegisterIndirect
+	case 0b0000000000000011:
+		return addressRegisterIndirectWithPostIncrement
+	case 0b0000000000000100:
+		return addressRegisterIndirectWithPreDecrement
+	case 0b0000000000000101:
+		return addressRegisterIndirectWithDisplacement
+	case 0b0000000000000110:
+		return addressRegisterIndirectWithIndexAnd8BitDisplacement
+		// return addressRegisterIndirectWithIndexAndBaseDisplacement
+		// return memoryIndirectPostIndexed
+		// return memoryIndirectPreIndexed
+	case 0b0000000000000111:
+		return absoluteShort
+		// return absoluteLong
+		// return programCounterIndirectWithDisplacement
 	}
 
 	panic(fmt.Sprintf("Unknown address mode: %016b", modeBits))
