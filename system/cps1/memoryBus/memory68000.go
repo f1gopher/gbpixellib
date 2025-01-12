@@ -133,7 +133,7 @@ func (m *memory68000) target(address uint32) memory.Memory[uint32] {
 	case address >= 0x00800100 && address <= 0x0080013F:
 		panic("CPS-A not implemented")
 	case address >= 0x00800140 && address <= 0x0080017F:
-		panic("CPS-m.not implemented")
+		panic("CPS-B.not implemented")
 	case address >= 0x00900000 && address <= 0x0092FFFF:
 		return m.gfxRam
 	case address >= 0x00FF0000 && address <= 0x00FFFFFF:

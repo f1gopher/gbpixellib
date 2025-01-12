@@ -1,0 +1,106 @@
+package instructions
+
+import (
+	"encoding/binary"
+	"fmt"
+)
+
+type instSize int
+
+const (
+	byteSize instSize = iota
+	wordSize
+	longSize
+)
+
+func (i instSize) string() string {
+	switch i {
+	case byteSize:
+		return "b"
+	case wordSize:
+		return "w"
+	case longSize:
+		return "l"
+	}
+	panic("")
+}
+
+func (i instSize) bytesUsed() int {
+	switch i {
+	case byteSize, wordSize:
+		return 2
+	case longSize:
+		return 4
+	}
+	panic("")
+}
+
+func size(value uint16, offset byte) instSize {
+	bits := (value >> offset) & 0b0000000000000011
+	switch bits {
+	case 0b0000000000000000:
+		return byteSize
+	case 0b0000000000000001:
+		return wordSize
+	case 0b0000000000000010:
+		return longSize
+	}
+
+	panic(fmt.Sprintf("Unknown size: %016b", bits))
+}
+
+type addressMode int
+
+const (
+	dataRegisterDirect addressMode = iota
+)
+
+func (d addressMode) string() string {
+	switch d {
+	case dataRegisterDirect:
+		return "D"
+	}
+
+	panic("")
+}
+
+func effective(value uint16, offset byte) (mode addressMode, register byte) {
+	return source(value, offset)
+}
+
+func source(value uint16, offset byte) (mode addressMode, register byte) {
+	modeBits := value >> (offset + 3)
+	register = byte((value >> offset) & 0b0000000000000111)
+
+	return addressingMode(modeBits), register
+}
+
+func destination(value uint16, offset byte) (mode addressMode, register byte) {
+	modeBits := value >> offset
+	register = byte((value >> (offset + 3)) & 0b0000000000000111)
+
+	return addressingMode(modeBits), register
+}
+
+func addressingMode(modeBits uint16) addressMode {
+	switch modeBits & 0b00000000000000111 {
+	case 0b0000000000000000:
+		return dataRegisterDirect
+	}
+
+	panic(fmt.Sprintf("Unknown address mode: %016b", modeBits))
+}
+
+func readData(code []uint8, offset int, size instSize) uint32 {
+	switch size {
+	case byteSize:
+		// We want the lower byte
+		return uint32(code[offset+1])
+	case wordSize:
+		return uint32(binary.BigEndian.Uint16(code[offset:]))
+	case longSize:
+		return binary.BigEndian.Uint32(code[offset:])
+	default:
+		panic("")
+	}
+}
