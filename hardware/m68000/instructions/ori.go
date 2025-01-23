@@ -23,7 +23,11 @@ func CreateORI(value uint16, code []uint8, offset int) *ori {
 }
 
 func (o *ori) Name() string {
-	return fmt.Sprintf("ori.%s   #$%x, %s%d", o.size.string(), o.data, o.mode.string(), o.reg)
+	return fmt.Sprintf(
+		"ori.%s   #$%x, %s",
+		o.size.string(),
+		o.data,
+		addressString(o.mode, o.reg, 0))
 }
 
 func (o *ori) Length() int {

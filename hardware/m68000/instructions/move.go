@@ -28,11 +28,11 @@ func CreateMOVE(value uint16, code []uint8, offset int) *move {
 }
 
 func (m *move) Name() string {
-	if m.srcMode == absoluteShort || m.srcMode == absoluteLong {
-		return fmt.Sprintf("move.%s  %s%04x, %s%d", m.size.string(), m.srcMode.string(), m.data, m.destMode.string(), m.destReg)
-	}
-
-	return fmt.Sprintf("move.%s  %s%d, %s%d", m.size.string(), m.srcMode.string(), m.srcReg, m.destMode.string(), m.destReg)
+	return fmt.Sprintf(
+		"move.%s  %s, %s",
+		m.size.string(),
+		addressString(m.srcMode, m.srcReg, m.data),
+		addressString(m.destMode, m.destReg, m.data))
 }
 
 func (m *move) Length() int {

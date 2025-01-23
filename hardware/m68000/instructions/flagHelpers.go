@@ -82,21 +82,23 @@ const (
 	preIndexedImediate
 )
 
-func (d addressMode) string() string {
-	switch d {
+func addressString(mode addressMode, reg uint8, value uint32) string {
+	switch mode {
 	case dataRegisterDirect:
-		return "D"
+		return fmt.Sprintf("D%d", reg)
 	case addressRegisterDirect:
-		return "A"
+		return fmt.Sprintf("A%d", reg)
 	case addressRegisterIndirect:
-		return "(A)"
+		return fmt.Sprintf("(A)%d", reg)
+	case addressRegisterIndirectWithPostIncrement:
+		return fmt.Sprintf("(A%d)+", reg)
 	case absoluteShort, absoluteLong:
-		return "#$"
+		return fmt.Sprintf("#$%x", value)
 	case preIndexedImediate:
-		return "#$"
+		return fmt.Sprintf("#$%d", value)
 	}
 
-	panic(fmt.Sprintf("Unknown address mode %d", d))
+	panic(fmt.Sprintf("Unknown address mode %d", mode))
 }
 
 func effective(value uint16, offset byte) (mode addressMode, register byte) {
