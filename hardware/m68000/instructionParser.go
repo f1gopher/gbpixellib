@@ -37,6 +37,8 @@ const (
 	oriPrefix          uint16 = 0b0000000000000000
 	leaMask            uint16 = 0b1111000000000000
 	leaPrefix          uint16 = 0b0100000000000000
+	moveaMask          uint16 = 0b1110000111000000
+	moveaPrefix        uint16 = 0b0010000001000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -52,10 +54,12 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		return instructions.CreateDC(instruction)
 	} else if instruction&oriMask == oriPrefix {
 		return instructions.CreateORI(instruction, code, offset)
+	} else if instruction&moveaMask == moveaPrefix {
+		return instructions.CreateMOVEA(instruction, code, offset)
 	} else if instruction&moveMask == moveBPrefix ||
 		instruction&moveMask == moveWPrefix ||
 		instruction&moveMask == moveLPrefix {
-		return instructions.CreateMOVEB(instruction)
+		return instructions.CreateMOVE(instruction, code, offset)
 	} else if instruction&leaMask == leaPrefix {
 		return instructions.CreateLEA(instruction, code, offset)
 	}

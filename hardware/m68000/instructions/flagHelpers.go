@@ -35,12 +35,26 @@ func (i instSize) bytesUsed() int {
 	panic("")
 }
 
-func size(value uint16, offset byte) instSize {
+func twoBitSize(value uint16, offset byte) instSize {
 	bits := (value >> offset) & 0b0000000000000011
 	switch bits {
 	case 0b0000000000000000:
 		return byteSize
 	case 0b0000000000000001:
+		return wordSize
+	case 0b0000000000000010:
+		return longSize
+	}
+
+	panic(fmt.Sprintf("Unknown size: %016b", bits))
+}
+
+func moveSize(value uint16, offset byte) instSize {
+	bits := (value >> offset) & 0b0000000000000011
+	switch bits {
+	case 0b0000000000000001:
+		return byteSize
+	case 0b0000000000000011:
 		return wordSize
 	case 0b0000000000000010:
 		return longSize
@@ -65,6 +79,7 @@ const (
 	absoluteShort
 	absoluteLong
 	programCounterIndirectWithDisplacement
+	preIndexedImediate
 )
 
 func (d addressMode) string() string {
@@ -76,7 +91,9 @@ func (d addressMode) string() string {
 	case addressRegisterIndirect:
 		return "(A)"
 	case absoluteShort, absoluteLong:
-		return "A"
+		return "#$"
+	case preIndexedImediate:
+		return "#$"
 	}
 
 	panic(fmt.Sprintf("Unknown address mode %d", d))
@@ -87,6 +104,10 @@ func effective(value uint16, offset byte) (mode addressMode, register byte) {
 }
 
 func source(value uint16, offset byte) (mode addressMode, register byte) {
+	if value&0b0000000000111111 == 0b000000000011110 {
+		return preIndexedImediate, 0
+	}
+
 	modeBits := value >> (offset + 3)
 	register = byte((value >> offset) & 0b0000000000000111)
 

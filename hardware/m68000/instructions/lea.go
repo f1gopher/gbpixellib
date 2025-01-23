@@ -15,6 +15,7 @@ func CreateLEA(value uint16, code []uint8, offset int) *lea {
 	size := wordSize
 	srcMode, srcReg := effective(value, 0)
 	dstReg := byte((value >> 9) & 0b0000000000000111)
+
 	return &lea{
 		size:    size,
 		data:    readData(code, offset, size),
@@ -25,7 +26,7 @@ func CreateLEA(value uint16, code []uint8, offset int) *lea {
 }
 
 func (l *lea) Name() string {
-	return fmt.Sprintf("lea     $%4x.%s, %s%d", l.data, l.size.string(), l.srcMode.string(), l.dstReg)
+	return fmt.Sprintf("lea     $%4x.%s, A%d", l.data, l.size.string(), l.dstReg)
 }
 
 func (l *lea) Length() int {

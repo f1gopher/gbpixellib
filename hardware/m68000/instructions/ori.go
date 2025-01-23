@@ -12,7 +12,7 @@ type ori struct {
 
 func CreateORI(value uint16, code []uint8, offset int) *ori {
 	mode, reg := effective(value, 0)
-	size := size(value, 6)
+	size := twoBitSize(value, 6)
 
 	return &ori{
 		size: size,
