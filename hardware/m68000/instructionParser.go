@@ -50,61 +50,70 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 	instruction := binary.BigEndian.Uint16(code[offset:])
 	offset += 2
 
-	// Bits 15 – 12
-	// Operation
-	// 0000
-	// Bit Manipulation/MOVEP/Immed iate
-	// 0001
-	// Move Byte
-	// 0010
-	// Move Long
-	// 0011
-	// Move Word
-	// 0100
-	// Miscellaneous
-	// 0101
-	// ADDQ/SUBQ/Scc/DBcc/TRAPc c
-	// 0110
-	// Bcc/BSR/BRA
-	// 0111
-	// MOVEQ
-	// 1000
-	// OR/DIV/SBCD
-	// 1001
-	// SUB/SUBX
-	// 1010
-	// (Unassigned, Reserved)
-	// 1011
-	// CMP/EOR
-	// 1100
-	// AND/MUL/ABCD/EXG
-	// 1101
-	// ADD/ADDX
-	// 1110
-	// Shift/Rotate/Bit Field
-	// 1111
-	// Coprocessor Interface/MC68040 and CPU32 Extensions
-
-	if instruction == illegalInstruction {
-		return instructions.CreateILLEGAL()
-	} else if instruction == rteInstruction {
-		return instructions.CreateRTE()
-	} else if instruction&dcPrefix == dcPrefix {
-		return instructions.CreateDC(instruction)
-	} else if instruction&oriMask == oriPrefix {
-		return instructions.CreateORI(instruction, code, offset)
-	} else if instruction&moveaMask == moveaPrefix {
-		return instructions.CreateMOVEA(instruction, code, offset)
-	} else if instruction&moveMask == moveBPrefix ||
-		instruction&moveMask == moveWPrefix ||
-		instruction&moveMask == moveLPrefix {
+	operation := instruction >> 12 & 0b0000000000001111
+	switch operation {
+	case 0b0000000000000000:
+		// Bit Manipulation/MOVEP/Immed iate
+		if instruction&dcPrefix == dcPrefix {
+			return instructions.CreateDC(instruction)
+		} else if instruction&oriMask == oriPrefix {
+			return instructions.CreateORI(instruction, code, offset)
+		}
+	case 0b0000000000000001:
+		// Move Byte
 		return instructions.CreateMOVE(instruction, code, offset)
-	} else if instruction&leaMask == leaPrefix {
-		return instructions.CreateLEA(instruction, code, offset)
-	} else if instruction&moveqMask == moveqPrefix {
-		return instructions.CreateMOVEQ(instruction)
-	} else if instruction&dbccMask == dbccPrefix {
-		return instructions.CreateDB(instruction, code, offset)
+	case 0b0000000000000010:
+		// Move Long
+		if instruction&moveaMask == moveaPrefix {
+			return instructions.CreateMOVEA(instruction, code, offset)
+		} else if instruction&moveMask == moveLPrefix {
+			return instructions.CreateMOVE(instruction, code, offset)
+		}
+	case 0b0000000000000011:
+		// Move Word
+		return instructions.CreateMOVE(instruction, code, offset)
+	case 0b0000000000000100:
+		// Miscellaneous
+		if instruction == illegalInstruction {
+			return instructions.CreateILLEGAL()
+		} else if instruction == rteInstruction {
+			return instructions.CreateRTE()
+		} else if instruction&leaMask == leaPrefix {
+			return instructions.CreateLEA(instruction, code, offset)
+		}
+	case 0b0000000000000101:
+		// ADDQ/SUBQ/Scc/DBcc/TRAPc c
+		if instruction&dbccMask == dbccPrefix {
+			return instructions.CreateDB(instruction, code, offset)
+		}
+	case 0b0000000000000110:
+		// Bcc/BSR/BRA
+	case 0b0000000000000111:
+		// MOVEQ
+		if instruction&moveqMask == moveqPrefix {
+			return instructions.CreateMOVEQ(instruction)
+		}
+	case 0b0000000000001000:
+		// OR/DIV/SBCD
+	case 0b0000000000001001:
+		// SUB/SUBX
+	case 0b0000000000001010:
+		// (Unassigned, Reserved)
+	case 0b0000000000001011:
+		// CMP/EOR
+	case 0b0000000000001100:
+		// AND/MUL/ABCD/EXG
+	case 0b0000000000001101:
+		// ADD/ADDX
+	case 0b0000000000001110:
+		// Shift/Rotate/Bit Field
+	case 0b0000000000001111:
+		// Coprocessor Interface/MC68040 and CPU32 Extensions
+
+		// TODO - don't think this is right
+		if instruction&dcPrefix == dcPrefix {
+			return instructions.CreateDC(instruction)
+		}
 	}
 
 	return &instructions.Unknown{}

@@ -97,13 +97,13 @@ func addressString(mode addressMode, reg uint8, value uint32) string {
 	case preIndexedImediate:
 		return fmt.Sprintf("#$%d", value)
 	case addressRegisterIndirectWithDisplacement:
-		return fmt.Sprintf("($%x, A%d)", value, reg)
+		return fmt.Sprintf("($%x,A%d)", value, reg)
 	}
 
 	panic(fmt.Sprintf("Unknown address mode %d", mode))
 }
 
-func regFrom3Bits(value uint16, offset byte) byte {
+func valueFrom3Bits(value uint16, offset byte) byte {
 	return byte((value >> offset) & 0b0000000000000111)
 }
 
@@ -116,39 +116,39 @@ func source(value uint16, offset byte) (mode addressMode, register byte) {
 		return preIndexedImediate, 0
 	}
 
-	modeBits := value >> (offset + 3)
-	register = byte((value >> offset) & 0b0000000000000111)
+	modeBits := valueFrom3Bits(value, offset+3)
+	register = valueFrom3Bits(value, offset)
 
 	return addressingMode(modeBits), register
 }
 
 func destination(value uint16, offset byte) (mode addressMode, register byte) {
-	modeBits := value >> offset
-	register = byte((value >> (offset + 3)) & 0b0000000000000111)
+	modeBits := valueFrom3Bits(value, offset)
+	register = valueFrom3Bits(value, offset+3)
 
 	return addressingMode(modeBits), register
 }
 
-func addressingMode(modeBits uint16) addressMode {
-	switch modeBits & 0b00000000000000111 {
-	case 0b0000000000000000:
+func addressingMode(modeBits byte) addressMode {
+	switch modeBits & 0b000000111 {
+	case 0b00000000:
 		return dataRegisterDirect
-	case 0b0000000000000001:
+	case 0b00000001:
 		return addressRegisterDirect
-	case 0b0000000000000010:
+	case 0b00000010:
 		return addressRegisterIndirect
-	case 0b0000000000000011:
+	case 0b00000011:
 		return addressRegisterIndirectWithPostIncrement
-	case 0b0000000000000100:
+	case 0b000000100:
 		return addressRegisterIndirectWithPreDecrement
-	case 0b0000000000000101:
+	case 0b000000101:
 		return addressRegisterIndirectWithDisplacement
-	case 0b0000000000000110:
+	case 0b000000110:
 		return addressRegisterIndirectWithIndexAnd8BitDisplacement
 		// return addressRegisterIndirectWithIndexAndBaseDisplacement
 		// return memoryIndirectPostIndexed
 		// return memoryIndirectPreIndexed
-	case 0b0000000000000111:
+	case 0b000000111:
 		return absoluteShort
 		// return absoluteLong
 		// return programCounterIndirectWithDisplacement

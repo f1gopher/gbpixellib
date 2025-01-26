@@ -74,7 +74,7 @@ type db struct {
 func CreateDB(value uint16, code []uint8, offset int) *db {
 	return &db{
 		condition:      condition(value),
-		reg:            regFrom3Bits(value, 0),
+		reg:            valueFrom3Bits(value, 0),
 		displacement:   uint16(readData(code, offset, 2)),
 		tmpStartOffset: offset,
 	}
