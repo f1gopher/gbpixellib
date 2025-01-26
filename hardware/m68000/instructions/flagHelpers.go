@@ -96,9 +96,15 @@ func addressString(mode addressMode, reg uint8, value uint32) string {
 		return fmt.Sprintf("#$%x", value)
 	case preIndexedImediate:
 		return fmt.Sprintf("#$%d", value)
+	case addressRegisterIndirectWithDisplacement:
+		return fmt.Sprintf("($%x, A%d)", value, reg)
 	}
 
 	panic(fmt.Sprintf("Unknown address mode %d", mode))
+}
+
+func regFrom3Bits(value uint16, offset byte) byte {
+	return byte((value >> offset) & 0b0000000000000111)
 }
 
 func effective(value uint16, offset byte) (mode addressMode, register byte) {

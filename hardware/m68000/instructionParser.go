@@ -41,12 +41,49 @@ const (
 	moveaPrefix        uint16 = 0b0010000001000000
 	moveqMask          uint16 = 0b1111000000000000
 	moveqPrefix        uint16 = 0b0111000000000000
+	dbccMask           uint16 = 0b1111000011111000
+	dbccPrefix         uint16 = 0b0101000011001000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
 	// Read two bytes (the minimum for all instructions) and move the offset
 	instruction := binary.BigEndian.Uint16(code[offset:])
 	offset += 2
+
+	// Bits 15 – 12
+	// Operation
+	// 0000
+	// Bit Manipulation/MOVEP/Immed iate
+	// 0001
+	// Move Byte
+	// 0010
+	// Move Long
+	// 0011
+	// Move Word
+	// 0100
+	// Miscellaneous
+	// 0101
+	// ADDQ/SUBQ/Scc/DBcc/TRAPc c
+	// 0110
+	// Bcc/BSR/BRA
+	// 0111
+	// MOVEQ
+	// 1000
+	// OR/DIV/SBCD
+	// 1001
+	// SUB/SUBX
+	// 1010
+	// (Unassigned, Reserved)
+	// 1011
+	// CMP/EOR
+	// 1100
+	// AND/MUL/ABCD/EXG
+	// 1101
+	// ADD/ADDX
+	// 1110
+	// Shift/Rotate/Bit Field
+	// 1111
+	// Coprocessor Interface/MC68040 and CPU32 Extensions
 
 	if instruction == illegalInstruction {
 		return instructions.CreateILLEGAL()
@@ -66,6 +103,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		return instructions.CreateLEA(instruction, code, offset)
 	} else if instruction&moveqMask == moveqPrefix {
 		return instructions.CreateMOVEQ(instruction)
+	} else if instruction&dbccMask == dbccPrefix {
+		return instructions.CreateDB(instruction, code, offset)
 	}
 
 	return &instructions.Unknown{}
