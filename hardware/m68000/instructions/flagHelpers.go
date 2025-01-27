@@ -107,11 +107,11 @@ func valueFrom3Bits(value uint16, offset byte) byte {
 	return byte((value >> offset) & 0b0000000000000111)
 }
 
-func effective(value uint16, offset byte) (mode addressMode, register byte) {
-	return source(value, offset)
+func effective(value uint16, offset byte, size instSize) (mode addressMode, register byte) {
+	return source(value, offset, size)
 }
 
-func source(value uint16, offset byte) (mode addressMode, register byte) {
+func source(value uint16, offset byte, size instSize) (mode addressMode, register byte) {
 	if value&0b0000000000111111 == 0b000000000011110 {
 		return preIndexedImediate, 0
 	}
@@ -119,17 +119,17 @@ func source(value uint16, offset byte) (mode addressMode, register byte) {
 	modeBits := valueFrom3Bits(value, offset+3)
 	register = valueFrom3Bits(value, offset)
 
-	return addressingMode(modeBits), register
+	return addressingMode(modeBits, size), register
 }
 
-func destination(value uint16, offset byte) (mode addressMode, register byte) {
+func destination(value uint16, offset byte, size instSize) (mode addressMode, register byte) {
 	modeBits := valueFrom3Bits(value, offset)
 	register = valueFrom3Bits(value, offset+3)
 
-	return addressingMode(modeBits), register
+	return addressingMode(modeBits, size), register
 }
 
-func addressingMode(modeBits byte) addressMode {
+func addressingMode(modeBits byte, size instSize) addressMode {
 	switch modeBits & 0b000000111 {
 	case 0b00000000:
 		return dataRegisterDirect
@@ -149,9 +149,14 @@ func addressingMode(modeBits byte) addressMode {
 		// return memoryIndirectPostIndexed
 		// return memoryIndirectPreIndexed
 	case 0b000000111:
-		return absoluteShort
-		// return absoluteLong
+		if size == wordSize {
+			return absoluteShort
+		}
+		if size == longSize {
+			return absoluteLong
+		}
 		// return programCounterIndirectWithDisplacement
+		panic("")
 	}
 
 	panic(fmt.Sprintf("Unknown address mode: %016b", modeBits))

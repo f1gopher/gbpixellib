@@ -9,21 +9,48 @@ type move struct {
 	srcMode  addressMode
 	srcReg   byte
 
-	data uint32
+	srcData  uint32
+	destData uint32
+
+	sizeInBytes int
 }
 
 func CreateMOVE(value uint16, code []uint8, offset int) *move {
-	destMode, destReg := destination(value, 6)
-	srcMode, srcReg := source(value, 0)
 	size := moveSize(value, 12)
+	destMode, destReg := destination(value, 6, size)
+	srcMode, srcReg := source(value, 0, size)
+	sizeInBytes := 2
+
+	var srcData, destData uint32
+	destDataOffset := offset
+
+	if srcMode == absoluteShort {
+		srcData = readData(code, offset, wordSize)
+		destDataOffset += wordSize.bytesUsed()
+		sizeInBytes += 2
+	}
+
+	if srcMode == absoluteLong {
+		srcData = readData(code, offset, longSize)
+		destDataOffset += int(longSize.bytesUsed())
+		sizeInBytes += 4
+	}
+
+	if destMode == absoluteShort ||
+		destMode == addressRegisterIndirectWithDisplacement {
+		destData = readData(code, destDataOffset, wordSize)
+		sizeInBytes += 2
+	}
 
 	return &move{
-		size:     size,
-		destMode: destMode,
-		destReg:  destReg,
-		srcMode:  srcMode,
-		srcReg:   srcReg,
-		data:     readData(code, offset, size),
+		size:        size,
+		destMode:    destMode,
+		destReg:     destReg,
+		srcMode:     srcMode,
+		srcReg:      srcReg,
+		srcData:     srcData,
+		destData:    destData,
+		sizeInBytes: sizeInBytes,
 	}
 }
 
@@ -31,15 +58,10 @@ func (m *move) Name() string {
 	return fmt.Sprintf(
 		"move.%s  %s, %s",
 		m.size.string(),
-		addressString(m.srcMode, m.srcReg, m.data),
-		addressString(m.destMode, m.destReg, m.data))
+		addressString(m.srcMode, m.srcReg, m.srcData),
+		addressString(m.destMode, m.destReg, m.destData))
 }
 
 func (m *move) Length() int {
-	if m.srcMode == absoluteShort || m.srcMode == absoluteLong ||
-		m.destMode == absoluteShort || m.destMode == absoluteLong {
-		return 2 + m.size.bytesUsed()
-	}
-
-	return 2
+	return m.sizeInBytes
 }

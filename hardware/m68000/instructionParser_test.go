@@ -79,8 +79,10 @@ func Test_Comparison(t *testing.T) {
 			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X                %s", i, code[i], code[i+1], code[i+2], code[i+3], inst.Name())
 		case 6:
 			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X           %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], inst.Name())
+		case 8:
+			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X %02X%02X      %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], code[i+6], code[i+7], inst.Name())
 		default:
-			panic("")
+			panic(fmt.Sprintf("Invalid instruction length of %d", inst.Length()))
 		}
 
 		require.Equal(t, expectedLine, resultLine, fmt.Sprintf("Instruction: %08b%08b", code[i], code[i+1]))
