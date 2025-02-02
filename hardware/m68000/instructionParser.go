@@ -55,6 +55,8 @@ const (
 	braPrefix          uint16 = 0b0110000000000000
 	btstMask           uint16 = 0b0000000000000000
 	btstPrefix         uint16 = 0b0000000000000000
+	bclrMask           uint16 = 0b1111000111000000
+	bclrPrefix         uint16 = 0b0000000110000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -70,6 +72,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateDC(instruction)
 		} else if instruction&oriMask == oriPrefix {
 			return instructions.CreateORI(instruction, code, offset)
+		} else if instruction&bclrMask == bclrPrefix {
+			return instructions.CreateBCLR(instruction, code, offset)
 		} else if instruction&btstMask == btstPrefix {
 			return instructions.CreateBTST(instruction, code, offset)
 		}
