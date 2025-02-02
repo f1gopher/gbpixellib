@@ -65,6 +65,8 @@ const (
 	cmpiPrefix         uint16 = 0b0000110000000000
 	eoriMask           uint16 = 0b1111111100000000
 	eoriPrefix         uint16 = 0b0000101000000000
+	tstMask            uint16 = 0b1111111100000000
+	tstPrefix          uint16 = 0b0100101000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -114,6 +116,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateJSR(instruction, code, offset)
 		} else if instruction&moveToSRMask == moveToSRPrefix {
 			return instructions.CreateMOVEToSR(instruction, code, offset)
+		} else if instruction&tstMask == tstPrefix {
+			return instructions.CreateTST(instruction, code, offset)
 		} else if instruction&leaMask == leaPrefix {
 			return instructions.CreateLEA(instruction, code, offset)
 		}
