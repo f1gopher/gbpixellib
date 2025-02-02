@@ -45,6 +45,8 @@ const (
 	dbccPrefix         uint16 = 0b0101000011001000
 	clrMask            uint16 = 0b1111111100000000
 	clrPrefix          uint16 = 0b0100001000000000
+	jsrMask            uint16 = 0b1111111111000000
+	jsrPrefix          uint16 = 0b0100111010000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -82,6 +84,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateRTE()
 		} else if instruction&clrMask == clrPrefix {
 			return instructions.CreateCLR(instruction)
+		} else if instruction&jsrMask == jsrPrefix {
+			return instructions.CreateJSR(instruction, code, offset)
 		} else if instruction&leaMask == leaPrefix {
 			return instructions.CreateLEA(instruction, code, offset)
 		}
