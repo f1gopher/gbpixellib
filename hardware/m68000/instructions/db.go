@@ -83,8 +83,6 @@ func CreateDB(value uint16, code []uint8, offset int) *db {
 }
 
 func (d *db) Name() string {
-	fmt.Printf("%d\n", d.displacement)
-
 	return fmt.Sprintf(
 		"db%s    %s, $%x",
 		d.condition.string(),
