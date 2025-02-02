@@ -27,7 +27,7 @@ func (o *ori) Name() string {
 		"ori.%s   #$%x, %s",
 		o.size.string(),
 		o.data,
-		addressString(o.mode, o.reg, 0))
+		addressString(o.mode, o.reg, 0, 0))
 }
 
 func (o *ori) Length() int {

@@ -28,7 +28,7 @@ func CreateMOVEA(value uint16, code []uint8, offset int) *movea {
 }
 
 func (m *movea) Name() string {
-	return fmt.Sprintf("movea.%s #$%4x, A%d", m.size.string(), m.data, m.destReg)
+	return fmt.Sprintf("movea.%s #$%x, A%d", m.size.string(), m.data, m.destReg)
 }
 
 func (m *movea) Length() int {

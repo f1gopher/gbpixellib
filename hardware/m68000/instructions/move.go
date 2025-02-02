@@ -24,13 +24,15 @@ func CreateMOVE(value uint16, code []uint8, offset int) *move {
 	var srcData, destData uint32
 	destDataOffset := offset
 
-	if srcMode == absoluteShort {
+	if srcMode == absoluteShort ||
+		(srcMode == preIndexedImediate && size == wordSize) {
 		srcData = readData(code, offset, wordSize)
 		destDataOffset += wordSize.bytesUsed()
 		sizeInBytes += 2
 	}
 
-	if srcMode == absoluteLong {
+	if srcMode == absoluteLong ||
+		(srcMode == preIndexedImediate && size == longSize) {
 		srcData = readData(code, offset, longSize)
 		destDataOffset += int(longSize.bytesUsed())
 		sizeInBytes += 4
@@ -58,8 +60,8 @@ func (m *move) Name() string {
 	return fmt.Sprintf(
 		"move.%s  %s, %s",
 		m.size.string(),
-		addressString(m.srcMode, m.srcReg, m.srcData),
-		addressString(m.destMode, m.destReg, m.destData))
+		addressString(m.srcMode, m.srcReg, m.srcData, 0),
+		addressString(m.destMode, m.destReg, m.destData, 0))
 }
 
 func (m *move) Length() int {

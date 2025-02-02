@@ -3,6 +3,7 @@ package instructions
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 )
 
 type instSize int
@@ -82,7 +83,7 @@ const (
 	preIndexedImediate
 )
 
-func addressString(mode addressMode, reg uint8, value uint32) string {
+func addressString(mode addressMode, reg uint8, value uint32, displacement int) string {
 	switch mode {
 	case dataRegisterDirect:
 		return fmt.Sprintf("D%d", reg)
@@ -92,12 +93,22 @@ func addressString(mode addressMode, reg uint8, value uint32) string {
 		return fmt.Sprintf("(A)%d", reg)
 	case addressRegisterIndirectWithPostIncrement:
 		return fmt.Sprintf("(A%d)+", reg)
-	case absoluteShort, absoluteLong:
-		return fmt.Sprintf("#$%x", value)
+	case absoluteShort:
+		return fmt.Sprintf("$%x.w", value)
+	case absoluteLong:
+		return fmt.Sprintf("$%x.l", value)
 	case preIndexedImediate:
-		return fmt.Sprintf("#$%d", value)
+		return fmt.Sprintf("#$%x", value)
 	case addressRegisterIndirectWithDisplacement:
+		if displacement < 0 {
+			return fmt.Sprintf("(-$%x,A%d)", int(math.Abs(float64(displacement))), reg)
+		}
 		return fmt.Sprintf("($%x,A%d)", value, reg)
+	case programCounterIndirectWithDisplacement:
+		if displacement < 0 {
+			return fmt.Sprintf("(-$%x,PC) ; ($%x)", value, displacement)
+		}
+		return fmt.Sprintf("($%x,PC) ; ($%x)", value, displacement)
 	}
 
 	panic(fmt.Sprintf("Unknown address mode %d", mode))
@@ -119,17 +130,17 @@ func source(value uint16, offset byte, size instSize) (mode addressMode, registe
 	modeBits := valueFrom3Bits(value, offset+3)
 	register = valueFrom3Bits(value, offset)
 
-	return addressingMode(modeBits, size), register
+	return addressingMode(modeBits, register), register
 }
 
 func destination(value uint16, offset byte, size instSize) (mode addressMode, register byte) {
 	modeBits := valueFrom3Bits(value, offset)
 	register = valueFrom3Bits(value, offset+3)
 
-	return addressingMode(modeBits, size), register
+	return addressingMode(modeBits, register), register
 }
 
-func addressingMode(modeBits byte, size instSize) addressMode {
+func addressingMode(modeBits byte, reg byte) addressMode {
 	switch modeBits & 0b000000111 {
 	case 0b00000000:
 		return dataRegisterDirect
@@ -149,11 +160,15 @@ func addressingMode(modeBits byte, size instSize) addressMode {
 		// return memoryIndirectPostIndexed
 		// return memoryIndirectPreIndexed
 	case 0b000000111:
-		if size == wordSize {
+		switch reg {
+		case 0b00000000:
 			return absoluteShort
-		}
-		if size == longSize {
+		case 0b00000001:
 			return absoluteLong
+		case 0b00000010:
+			return programCounterIndirectWithDisplacement
+		case 0b00000100:
+			return preIndexedImediate
 		}
 		// return programCounterIndirectWithDisplacement
 		panic("")
@@ -174,4 +189,18 @@ func readData(code []uint8, offset int, size instSize) uint32 {
 	default:
 		panic("")
 	}
+}
+
+func twosComplementToInt(value uint16) int {
+	isNegative := (value & 0b1000000000000000) == 0b1000000000000000
+
+	// For negative invert the bits and add one
+	if isNegative {
+		value = value ^ 0xFFFF
+		value += 1
+
+		return -int(value)
+	}
+
+	return int(value)
 }

@@ -20,7 +20,7 @@ func CreateCLR(value uint16) *clr {
 }
 
 func (c *clr) Name() string {
-	return fmt.Sprintf("clr.%s   %s", c.size.string(), addressString(c.destMode, c.destReg, 0))
+	return fmt.Sprintf("clr.%s   %s", c.size.string(), addressString(c.destMode, c.destReg, 0, 0))
 }
 
 func (c *clr) Length() int {

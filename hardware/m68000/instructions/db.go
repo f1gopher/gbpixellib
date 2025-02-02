@@ -65,28 +65,31 @@ func (d dbCondition) string() string {
 type db struct {
 	reg          byte
 	condition    dbCondition
-	displacement uint16
+	displacement int
 
 	// TODO - only needed for debug output, remove later and use PC value
 	tmpStartOffset int
 }
 
 func CreateDB(value uint16, code []uint8, offset int) *db {
+	displacement := twosComplementToInt(uint16(readData(code, offset, 2) >> 16))
+
 	return &db{
 		condition:      condition(value),
 		reg:            valueFrom3Bits(value, 0),
-		displacement:   uint16(readData(code, offset, 2)),
+		displacement:   displacement,
 		tmpStartOffset: offset,
 	}
 }
 
 func (d *db) Name() string {
+	fmt.Printf("%d\n", d.displacement)
+
 	return fmt.Sprintf(
 		"db%s    %s, $%x",
 		d.condition.string(),
-		addressString(dataRegisterDirect, d.reg, 0),
-		// TODO - tmp calculation
-		d.tmpStartOffset-d.Length(),
+		addressString(dataRegisterDirect, d.reg, 0, 0),
+		d.tmpStartOffset+d.displacement,
 	)
 }
 
