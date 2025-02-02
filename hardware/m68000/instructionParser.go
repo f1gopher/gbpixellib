@@ -29,6 +29,8 @@ const (
 	illegalInstruction uint16 = 0b0100101011111100
 	rteInstruction     uint16 = 0b0100111001110011
 	dcPrefix           uint16 = 0x00FF
+	dc2Mask            uint16 = 0b1111111100000000
+	dc2Prefix          uint16 = 0b0000111000000000
 	moveMask           uint16 = 0b1111000000000000
 	moveBPrefix        uint16 = 0b0001000000000000
 	moveWPrefix        uint16 = 0b0011000000000000
@@ -51,6 +53,8 @@ const (
 	moveToSRPrefix     uint16 = 0b0100011011000000
 	braMask            uint16 = 0b1111111100000000
 	braPrefix          uint16 = 0b0110000000000000
+	btstMask           uint16 = 0b0000000000000000
+	btstPrefix         uint16 = 0b0000000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -62,10 +66,12 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 	switch operation {
 	case 0b0000000000000000:
 		// Bit Manipulation/MOVEP/Immed iate
-		if instruction&dcPrefix == dcPrefix {
+		if instruction&dcPrefix == dcPrefix || instruction&dc2Mask == dc2Prefix {
 			return instructions.CreateDC(instruction)
 		} else if instruction&oriMask == oriPrefix {
 			return instructions.CreateORI(instruction, code, offset)
+		} else if instruction&btstMask == btstPrefix {
+			return instructions.CreateBTST(instruction, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte
