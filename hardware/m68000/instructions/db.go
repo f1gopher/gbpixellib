@@ -72,7 +72,7 @@ type db struct {
 }
 
 func CreateDB(value uint16, code []uint8, offset int) *db {
-	displacement := twosComplementToInt(uint16(readData(code, offset, wordSize)))
+	displacement := twosComplementToInt16Bit(uint16(readData(code, offset, wordSize)))
 
 	return &db{
 		condition:      condition(value),

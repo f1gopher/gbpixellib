@@ -9,7 +9,8 @@ import (
 type instSize int
 
 const (
-	byteSize instSize = iota
+	zeroSize instSize = iota
+	byteSize
 	wordSize
 	longSize
 )
@@ -28,6 +29,8 @@ func (i instSize) string() string {
 
 func (i instSize) bytesUsed() int {
 	switch i {
+	case zeroSize:
+		return 0
 	case byteSize, wordSize:
 		return 2
 	case longSize:
@@ -191,7 +194,21 @@ func readData(code []uint8, offset int, size instSize) uint32 {
 	}
 }
 
-func twosComplementToInt(value uint16) int {
+func twosComplementToInt8Bit(value uint8) int {
+	isNegative := (value & 0b10000000) == 0b10000000
+
+	// For negative invert the bits and add one
+	if isNegative {
+		value = value ^ 0xFF
+		value += 1
+
+		return -int(value)
+	}
+
+	return int(value)
+}
+
+func twosComplementToInt16Bit(value uint16) int {
 	isNegative := (value & 0b1000000000000000) == 0b1000000000000000
 
 	// For negative invert the bits and add one
