@@ -53,10 +53,14 @@ const (
 	moveToSRPrefix     uint16 = 0b0100011011000000
 	braMask            uint16 = 0b1111111100000000
 	braPrefix          uint16 = 0b0110000000000000
-	btstMask           uint16 = 0b0000000000000000
-	btstPrefix         uint16 = 0b0000000000000000
+	btstMask           uint16 = 0b1111000111000000
+	btstPrefix         uint16 = 0b0000000100000000
+	btstMask2          uint16 = 0b1111111111000000
+	btstPrefix2        uint16 = 0b0000100000000000
 	bclrMask           uint16 = 0b1111000111000000
 	bclrPrefix         uint16 = 0b0000000110000000
+	bclrMask2          uint16 = 0b1111111111000000
+	bclrPrefix2        uint16 = 0b0000100010000000
 	cmpiMask           uint16 = 0b1111111100000000
 	cmpiPrefix         uint16 = 0b0000110000000000
 	eoriMask           uint16 = 0b1111111100000000
@@ -78,11 +82,11 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateORI(instruction, code, offset)
 		} else if instruction&cmpiMask == cmpiPrefix {
 			return instructions.CreateCMPI(instruction, code, offset)
-		} else if instruction&bclrMask == bclrPrefix {
+		} else if instruction&bclrMask == bclrPrefix || instruction&bclrMask2 == bclrPrefix2 {
 			return instructions.CreateBCLR(instruction, code, offset)
 		} else if instruction&eoriMask == eoriPrefix {
 			return instructions.CreateEORI(instruction, code, offset)
-		} else if instruction&btstMask == btstPrefix {
+		} else if instruction&btstMask == btstPrefix || instruction&btstMask2 == btstPrefix2 {
 			return instructions.CreateBTST(instruction, code, offset)
 		}
 	case 0b0000000000000001:

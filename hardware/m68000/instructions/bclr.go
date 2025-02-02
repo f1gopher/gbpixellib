@@ -19,7 +19,7 @@ func CreateBCLR(value uint16, code []uint8, offset int) *bclr {
 	srcReg := valueFrom3Bits(value, 9)
 
 	// bit number static
-	if srcReg == 0b00000100 {
+	if value&0b1111111111000000 == 0b0000100010000000 {
 		size = wordSize
 		srcMode = preIndexedImediate
 		data = readData(code, offset, size)
@@ -40,7 +40,7 @@ func CreateBCLR(value uint16, code []uint8, offset int) *bclr {
 func (b *bclr) Name() string {
 	return fmt.Sprintf(
 		"bclr    %s, %s",
-		addressString(b.srcMode, b.srcReg, 0, 0),
+		addressString(b.srcMode, b.srcReg, b.data, 0),
 		addressString(b.destMode, b.destReg, 0, 0))
 }
 

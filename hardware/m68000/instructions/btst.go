@@ -21,7 +21,7 @@ func CreateBTST(value uint16, code []uint8, offset int) *btst {
 	srcReg := valueFrom3Bits(value, 9)
 
 	// bit number static
-	if srcReg == 0b00000100 {
+	if value&0b1111111111000000 == 0b0000100000000000 {
 		size = wordSize
 		srcMode = preIndexedImediate
 		data = readData(code, offset, size)
@@ -42,7 +42,7 @@ func CreateBTST(value uint16, code []uint8, offset int) *btst {
 func (b *btst) Name() string {
 	return fmt.Sprintf(
 		"btst    %s, %s",
-		addressString(b.srcMode, b.srcReg, 0, 0),
+		addressString(b.srcMode, b.srcReg, b.data, 0),
 		addressString(b.destMode, b.destReg, 0, 0))
 }
 
