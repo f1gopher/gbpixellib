@@ -15,8 +15,12 @@ type lea struct {
 }
 
 func CreateLEA(value uint16, code []uint8, offset int) *lea {
+	srcMode, srcReg := effective(value, 0, wordSize)
 	size := wordSize
-	srcMode, srcReg := effective(value, 0, size)
+	if srcMode == absoluteLong {
+		size = longSize
+	}
+
 	dstReg := byte((value >> 9) & 0b0000000000000111)
 
 	return &lea{
