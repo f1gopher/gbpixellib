@@ -77,6 +77,8 @@ const (
 	movemPrefix        uint16 = 0b0100100010000000
 	addqMask           uint16 = 0b1111000100000000
 	addqPrefix         uint16 = 0b0101000000000000
+	bsrMask            uint16 = 0b1111111100000000
+	bsrPrefix          uint16 = 0b0110000100000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -146,7 +148,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000000110:
 		// Bcc/BSR/BRA
-		if instruction&braMask == braPrefix {
+		if instruction&bsrMask == bsrPrefix {
+			return instructions.CreateBSR(instruction, code, offset)
+		} else if instruction&braMask == braPrefix {
 			return instructions.CreateBRA(instruction, code, offset)
 		} else if instruction&bccMask == bccPrefix {
 			return instructions.CreateBcc(instruction, code, offset)
