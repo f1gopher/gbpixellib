@@ -69,6 +69,8 @@ const (
 	tstPrefix          uint16 = 0b0100101000000000
 	bccMask            uint16 = 0b1111000000000000
 	bccPrefix          uint16 = 0b0110000000000000
+	addiMask           uint16 = 0b1111111100000000
+	addiPrefix         uint16 = 0b0000011000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -92,6 +94,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateEORI(instruction, code, offset)
 		} else if instruction&btstMask == btstPrefix || instruction&btstMask2 == btstPrefix2 {
 			return instructions.CreateBTST(instruction, code, offset)
+		} else if instruction&addiMask == addiPrefix {
+			return instructions.CreateADDI(instruction, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte
