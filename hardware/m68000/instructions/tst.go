@@ -16,7 +16,7 @@ func CreateTST(value uint16, code []uint8, offset int) *tst {
 		size:    size,
 		srcMode: srcMode,
 		srcReg:  srcReg,
-		data:    readData(code, offset, size),
+		data:    readData(code, offset, wordSize),
 	}
 }
 
