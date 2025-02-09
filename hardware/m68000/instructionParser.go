@@ -71,6 +71,10 @@ const (
 	bccPrefix          uint16 = 0b0110000000000000
 	addiMask           uint16 = 0b1111111100000000
 	addiPrefix         uint16 = 0b0000011000000000
+	rtsMask            uint16 = 0b1111111111111111
+	rtsPrefix          uint16 = 0b0100111001110101
+	movemMask          uint16 = 0b1111101110000000
+	movemPrefix        uint16 = 0b0100100010000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -116,6 +120,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateILLEGAL()
 		} else if instruction == rteInstruction {
 			return instructions.CreateRTE()
+		} else if instruction&rtsMask == rtsPrefix {
+			return instructions.CreateRTS(instruction)
 		} else if instruction&clrMask == clrPrefix {
 			return instructions.CreateCLR(instruction)
 		} else if instruction&jsrMask == jsrPrefix {
@@ -124,6 +130,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateMOVEToSR(instruction, code, offset)
 		} else if instruction&tstMask == tstPrefix {
 			return instructions.CreateTST(instruction, code, offset)
+		} else if instruction&movemMask == movemPrefix {
+			return instructions.CreateMOVEM(instruction, code, offset)
 		} else if instruction&leaMask == leaPrefix {
 			return instructions.CreateLEA(instruction, code, offset)
 		}

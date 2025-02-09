@@ -39,6 +39,15 @@ func (i instSize) bytesUsed() int {
 	panic("")
 }
 
+func oneBitSize(value uint16, offset byte) instSize {
+	bit := (value >> offset) & 0b0000000000000001
+	if bit == 0 {
+		return wordSize
+	}
+
+	return longSize
+}
+
 func twoBitSize(value uint16, offset byte) instSize {
 	bits := (value >> offset) & 0b0000000000000011
 	switch bits {
@@ -93,7 +102,7 @@ func addressString(mode addressMode, reg uint8, value uint32, displacement int) 
 	case addressRegisterDirect:
 		return fmt.Sprintf("A%d", reg)
 	case addressRegisterIndirect:
-		return fmt.Sprintf("(A)%d", reg)
+		return fmt.Sprintf("(A%d)", reg)
 	case addressRegisterIndirectWithPostIncrement:
 		return fmt.Sprintf("(A%d)+", reg)
 	case absoluteShort:
@@ -112,6 +121,10 @@ func addressString(mode addressMode, reg uint8, value uint32, displacement int) 
 			return fmt.Sprintf("(-$%x,PC) ; ($%x)", value, displacement)
 		}
 		return fmt.Sprintf("($%x,PC) ; ($%x)", value, displacement)
+	case addressRegisterIndirectWithIndexAnd8BitDisplacement:
+		return fmt.Sprintf("%d", value)
+	case addressRegisterIndirectWithPreDecrement:
+		return fmt.Sprintf("-(A%d)", reg)
 	}
 
 	panic(fmt.Sprintf("Unknown address mode %d", mode))
