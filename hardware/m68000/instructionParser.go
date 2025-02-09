@@ -75,6 +75,8 @@ const (
 	rtsPrefix          uint16 = 0b0100111001110101
 	movemMask          uint16 = 0b1111101110000000
 	movemPrefix        uint16 = 0b0100100010000000
+	addqMask           uint16 = 0b1111000100000000
+	addqPrefix         uint16 = 0b0101000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -139,6 +141,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// ADDQ/SUBQ/Scc/DBcc/TRAPc c
 		if instruction&dbccMask == dbccPrefix {
 			return instructions.CreateDB(instruction, code, offset)
+		} else if instruction&addqMask == addqPrefix {
+			return instructions.CreateADDQ(instruction, code, offset)
 		}
 	case 0b0000000000000110:
 		// Bcc/BSR/BRA
