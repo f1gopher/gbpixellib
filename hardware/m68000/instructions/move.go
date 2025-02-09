@@ -25,7 +25,8 @@ func CreateMOVE(value uint16, code []uint8, offset int) *move {
 	destDataOffset := offset
 
 	if srcMode == absoluteShort ||
-		(srcMode == preIndexedImediate && size == wordSize) {
+		(srcMode == preIndexedImediate && size == wordSize) ||
+		srcMode == addressRegisterIndirectWithDisplacement {
 		srcData = readData(code, offset, wordSize)
 		destDataOffset += wordSize.bytesUsed()
 		sizeInBytes += 2
@@ -42,6 +43,11 @@ func CreateMOVE(value uint16, code []uint8, offset int) *move {
 		destMode == addressRegisterIndirectWithDisplacement {
 		destData = readData(code, destDataOffset, wordSize)
 		sizeInBytes += 2
+	}
+
+	if destMode == absoluteLong {
+		destData = readData(code, destDataOffset, longSize)
+		sizeInBytes += 4
 	}
 
 	return &move{
