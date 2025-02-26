@@ -8,6 +8,7 @@ type add struct {
 	srcReg  byte
 	mode    byte
 	destReg byte
+	data    uint32
 }
 
 func CreateADD(value uint16, code []uint8, offset int) *add {
@@ -27,6 +28,7 @@ func CreateADD(value uint16, code []uint8, offset int) *add {
 		srcReg:  srcReg,
 		mode:    mode,
 		destReg: destReg,
+		data:    readData(code, offset, size),
 	}
 }
 
@@ -34,11 +36,11 @@ func (a *add) Name() string {
 	return fmt.Sprintf(
 		"add.%s   %s, D%d",
 		a.size.string(),
-		addressString(a.srcMode, a.srcReg, 0, 0),
+		addressString(a.srcMode, a.srcReg, a.data, 0),
 		a.destReg,
 	)
 }
 
 func (a *add) Length() int {
-	return 2
+	return 2 + addressModeBytesUsed(a.srcMode).bytesUsed()
 }

@@ -101,6 +101,8 @@ func addressModeBytesUsed(mode addressMode) instSize {
 		return wordSize
 	case absoluteLong:
 		return longSize
+	case dataRegisterDirect:
+		return zeroSize
 	}
 
 	panic(fmt.Sprintf("Unknow address mode for size: %d", mode))

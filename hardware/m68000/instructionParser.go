@@ -85,6 +85,8 @@ const (
 	subqPrefix         uint16 = 0b0101000100000000
 	addMask            uint16 = 0b1111000000000000
 	addPrefix          uint16 = 0b1101000000000000
+	subMask            uint16 = 0b1111000000000000
+	subPrefix          uint16 = 0b1001000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -174,6 +176,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// OR/DIV/SBCD
 	case 0b0000000000001001:
 		// SUB/SUBX
+		if instruction&subMask == subPrefix {
+			return instructions.CreateSUB(instruction, code, offset)
+		}
 	case 0b0000000000001010:
 		// (Unassigned, Reserved)
 	case 0b0000000000001011:
