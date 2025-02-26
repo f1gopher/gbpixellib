@@ -11,8 +11,8 @@ type jsr struct {
 }
 
 func CreateJSR(value uint16, code []uint8, offset int) *jsr {
-	size := wordSize
-	srcMode, srcReg := effective(value, 0, size)
+	srcMode, srcReg := effective(value, 0, wordSize)
+	size := addressModeBytesUsed(srcMode)
 	return &jsr{
 		size:    size,
 		srcMode: srcMode,

@@ -95,6 +95,17 @@ const (
 	preIndexedImediate
 )
 
+func addressModeBytesUsed(mode addressMode) instSize {
+	switch mode {
+	case absoluteShort, addressRegisterIndirectWithIndexAnd8BitDisplacement, addressRegisterIndirectWithDisplacement:
+		return wordSize
+	case absoluteLong:
+		return longSize
+	}
+
+	panic(fmt.Sprintf("Unknow address mode for size: %d", mode))
+}
+
 func addressString(mode addressMode, reg uint8, value uint32, displacement int) string {
 	switch mode {
 	case dataRegisterDirect:
