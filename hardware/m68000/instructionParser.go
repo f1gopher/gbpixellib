@@ -81,6 +81,8 @@ const (
 	bsrPrefix          uint16 = 0b0110000100000000
 	sccMask            uint16 = 0b1111111111000000
 	sccPrefix          uint16 = 0b0101000011000000
+	subqMask           uint16 = 0b1111000100000000
+	subqPrefix         uint16 = 0b0101000100000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -149,6 +151,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateScc(instruction, code, offset)
 		} else if instruction&addqMask == addqPrefix {
 			return instructions.CreateADDQ(instruction, code, offset)
+		} else if instruction&subqMask == subqPrefix {
+			return instructions.CreateSUBQ(instruction, code, offset)
 		}
 	case 0b0000000000000110:
 		// Bcc/BSR/BRA
