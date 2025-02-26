@@ -24,6 +24,12 @@ func CreateMOVE(value uint16, code []uint8, offset int) *move {
 	var srcData, destData uint32
 	destDataOffset := offset
 
+	if srcMode == preIndexedImediate && size == byteSize {
+		srcData = readData(code, offset, byteSize)
+		destDataOffset += byteSize.bytesUsed()
+		sizeInBytes += 2
+	}
+
 	if srcMode == absoluteShort ||
 		(srcMode == preIndexedImediate && size == wordSize) ||
 		srcMode == addressRegisterIndirectWithDisplacement {
