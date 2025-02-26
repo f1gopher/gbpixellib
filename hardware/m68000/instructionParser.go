@@ -83,6 +83,8 @@ const (
 	sccPrefix          uint16 = 0b0101000011000000
 	subqMask           uint16 = 0b1111000100000000
 	subqPrefix         uint16 = 0b0101000100000000
+	addMask            uint16 = 0b1111000000000000
+	addPrefix          uint16 = 0b1101000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -180,6 +182,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// AND/MUL/ABCD/EXG
 	case 0b0000000000001101:
 		// ADD/ADDX
+		if instruction&addMask == addPrefix {
+			return instructions.CreateADD(instruction, code, offset)
+		}
 	case 0b0000000000001110:
 		// Shift/Rotate/Bit Field
 	case 0b0000000000001111:
