@@ -87,6 +87,8 @@ const (
 	addPrefix          uint16 = 0b1101000000000000
 	subMask            uint16 = 0b1111000000000000
 	subPrefix          uint16 = 0b1001000000000000
+	eorMask            uint16 = 0b1111000000000000
+	eorPrefix          uint16 = 0b1011000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -183,6 +185,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// (Unassigned, Reserved)
 	case 0b0000000000001011:
 		// CMP/EOR
+		if instruction&eorMask == eorPrefix {
+			return instructions.CreateEOR(instruction, code, offset)
+		}
 	case 0b0000000000001100:
 		// AND/MUL/ABCD/EXG
 	case 0b0000000000001101:
