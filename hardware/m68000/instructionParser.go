@@ -145,7 +145,7 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		} else if instruction&rtsMask == rtsPrefix {
 			return instructions.CreateRTS(instruction)
 		} else if instruction&clrMask == clrPrefix {
-			return instructions.CreateCLR(instruction)
+			return instructions.CreateCLR(instruction, code, offset)
 		} else if instruction&jsrMask == jsrPrefix {
 			return instructions.CreateJSR(instruction, code, offset)
 		} else if instruction&moveToSRMask == moveToSRPrefix {

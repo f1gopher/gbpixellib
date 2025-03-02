@@ -29,6 +29,5 @@ func (c *cmpi) Name() string {
 }
 
 func (c *cmpi) Length() int {
-	// TODO - not sure why this is right
-	return 2 + longSize.bytesUsed() // c.size.bytesUsed()
+	return 2 + addressModeBytesUsed(c.srcMode).bytesUsed() + c.size.bytesUsed()
 }
