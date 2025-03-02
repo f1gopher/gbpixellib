@@ -97,6 +97,8 @@ const (
 	notPrefix          uint16 = 0b0100011000000000
 	lsl_lsrMask        uint16 = 0b1111000000000000
 	lsl_lsrPrefix      uint16 = 0b1110000000000000
+	andiMask           uint16 = 0b1111111100000000
+	andiPrefix         uint16 = 0b0000001000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -122,6 +124,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateBTST(instruction, code, offset)
 		} else if instruction&addiMask == addiPrefix {
 			return instructions.CreateADDI(instruction, code, offset)
+		} else if instruction&andiMask == andiPrefix {
+			return instructions.CreateANDI(instruction, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte
