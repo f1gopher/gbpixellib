@@ -91,6 +91,8 @@ const (
 	eorPrefix          uint16 = 0b1011000000000000
 	ror_rolMask        uint16 = 0b1111000000011000
 	ror_rolPrefix      uint16 = 0b1110000000011000
+	orMask             uint16 = 0b1111000000000000
+	orPrefix           uint16 = 0b1000000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -178,6 +180,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000001000:
 		// OR/DIV/SBCD
+		if instruction&orMask == orPrefix {
+			return instructions.CreateOR(instruction, code, offset)
+		}
 	case 0b0000000000001001:
 		// SUB/SUBX
 		if instruction&subMask == subPrefix {
