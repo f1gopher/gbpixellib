@@ -89,12 +89,14 @@ const (
 	subPrefix          uint16 = 0b1001000000000000
 	eorMask            uint16 = 0b1111000000000000
 	eorPrefix          uint16 = 0b1011000000000000
-	ror_rolMask        uint16 = 0b1111000000011000
-	ror_rolPrefix      uint16 = 0b1110000000011000
+	rol_rorMask        uint16 = 0b1111000000011000
+	rol_rorPrefix      uint16 = 0b1110000000011000
 	orMask             uint16 = 0b1111000000000000
 	orPrefix           uint16 = 0b1000000000000000
 	notMask            uint16 = 0b1111111100000000
 	notPrefix          uint16 = 0b0100011000000000
+	lsl_lsrMask        uint16 = 0b1111000000000000
+	lsl_lsrPrefix      uint16 = 0b1110000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -208,8 +210,10 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000001110:
 		// Shift/Rotate/Bit Field
-		if instruction&ror_rolMask == ror_rolPrefix {
-			return instructions.CreateROR_ROL(instruction, code, offset)
+		if instruction&rol_rorMask == rol_rorPrefix {
+			return instructions.CreateROL_ROR(instruction, code, offset)
+		} else if instruction&lsl_lsrMask == lsl_lsrPrefix {
+			return instructions.CreateLSL_LSR(instruction)
 		}
 	case 0b0000000000001111:
 		// Coprocessor Interface/MC68040 and CPU32 Extensions

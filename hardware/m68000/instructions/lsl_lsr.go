@@ -2,49 +2,35 @@ package instructions
 
 import "fmt"
 
-type rotateDirection int
-
-const (
-	right rotateDirection = iota
-	left
-)
-
-type rotateLocation int
-
-const (
-	immediate rotateLocation = iota
-	register
-)
-
-type ror_rol struct {
+type lsl_lsr struct {
 	// Common
-	location  rotateLocation
-	direction rotateDirection
+	location  rotateShiftLocation
+	direction direction
 
-	// Register format
+	// Register shift
 	size instSize
 	data byte
 
-	// Immediate format
+	// Immediate shift
 	srcMode addressMode
 	srcReg  byte
 }
 
-func CreateROR_ROL(value uint16, code []uint8, offset int) *ror_rol {
+func CreateLSL_LSR(value uint16) *lsl_lsr {
 	location := register
-	if value&0b1111111011000000 == 0b1110011011000000 {
+	if value&0b1111111011000000 == 0b1110001011000000 {
 		location = immediate
 	}
 
 	direction := right
-	if value&0b0000000010000000 == 0b0000000100000000 {
+	if value&0b000000100000000 == 0b0000000100000000 {
 		direction = left
 	}
 
 	if location == immediate {
 		srcMode, srcReg := effective(value, 0, wordSize)
 
-		return &ror_rol{
+		return &lsl_lsr{
 			location:  location,
 			direction: direction,
 			srcMode:   srcMode,
@@ -64,7 +50,7 @@ func CreateROR_ROL(value uint16, code []uint8, offset int) *ror_rol {
 	}
 	// TODO - else modulo 64 to get the register?
 
-	return &ror_rol{
+	return &lsl_lsr{
 		location:  location,
 		direction: direction,
 		size:      size,
@@ -73,19 +59,19 @@ func CreateROR_ROL(value uint16, code []uint8, offset int) *ror_rol {
 	}
 }
 
-func (r *ror_rol) Name() string {
-	name := "rol"
-	if r.direction == right {
-		name = "ror"
+func (l *lsl_lsr) Name() string {
+	name := "lsl"
+	if l.direction == right {
+		name = "lsr"
 	}
 
-	if r.location == register {
+	if l.location == register {
 		return fmt.Sprintf(
 			"%s.%s   #%d, %s",
 			name,
-			r.size.string(),
-			r.data,
-			addressString(r.srcMode, r.srcReg, 0, 0),
+			l.size.string(),
+			l.data,
+			addressString(l.srcMode, l.srcReg, 0, 0),
 		)
 	}
 
@@ -95,6 +81,6 @@ func (r *ror_rol) Name() string {
 	)
 }
 
-func (r *ror_rol) Length() int {
+func (l *lsl_lsr) Length() int {
 	return 2
 }
