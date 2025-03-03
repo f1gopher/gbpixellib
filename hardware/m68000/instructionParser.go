@@ -99,6 +99,8 @@ const (
 	lsl_lsrPrefix      uint16 = 0b1110000000000000
 	andiMask           uint16 = 0b1111111100000000
 	andiPrefix         uint16 = 0b0000001000000000
+	stopMask           uint16 = 0b1111111111111111
+	stopPrefix         uint16 = 0b0100111001110010
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -160,6 +162,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateMOVEM(instruction, code, offset)
 		} else if instruction&notMask == notPrefix {
 			return instructions.CreateNOT(instruction)
+		} else if instruction&stopMask == stopPrefix {
+			return instructions.CreateSTOP(instruction, code, offset)
 		} else if instruction&leaMask == leaPrefix {
 			return instructions.CreateLEA(instruction, code, offset)
 		}
