@@ -36,7 +36,7 @@ func Test_A(t *testing.T) {
 }
 
 func Test_Comparison(t *testing.T) {
-	const input = "ffight"
+	const input = ""
 
 	file, err := os.Open("../../../cps1/test/Comparison/" + input + "/input.dmp")
 
