@@ -101,6 +101,10 @@ const (
 	andiPrefix         uint16 = 0b0000001000000000
 	stopMask           uint16 = 0b1111111111111111
 	stopPrefix         uint16 = 0b0100111001110010
+	peaMask            uint16 = 0b1111111111000000
+	peaPrefix          uint16 = 0b0100100001000000
+	extMask            uint16 = 0b1111111000111000
+	extPrefix          uint16 = 0b0100100000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -158,12 +162,16 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateMOVEToSR(instruction, code, offset)
 		} else if instruction&tstMask == tstPrefix {
 			return instructions.CreateTST(instruction, code, offset)
+		} else if instruction&extMask == extPrefix {
+			return instructions.CreateEXT(instruction)
 		} else if instruction&movemMask == movemPrefix {
 			return instructions.CreateMOVEM(instruction, code, offset)
 		} else if instruction&notMask == notPrefix {
 			return instructions.CreateNOT(instruction)
 		} else if instruction&stopMask == stopPrefix {
 			return instructions.CreateSTOP(instruction, code, offset)
+		} else if instruction&peaMask == peaPrefix {
+			return instructions.CreatePEA(instruction, code, offset)
 		} else if instruction&leaMask == leaPrefix {
 			return instructions.CreateLEA(instruction, code, offset)
 		}
