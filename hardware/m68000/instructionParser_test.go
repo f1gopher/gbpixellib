@@ -36,22 +36,22 @@ func Test_A(t *testing.T) {
 }
 
 func Test_Comparison(t *testing.T) {
-	const input = ""
+	const input = "ffight"
 
 	file, err := os.Open("../../../cps1/test/Comparison/" + input + "/input.dmp")
 
 	assert.Nil(t, err, "missing test data file")
 	defer file.Close()
 
-	r, _ := regexp.Compile(`\w{4}`)
+	r, _ := regexp.Compile(`(\w{4}) `)
 	code := []uint8{}
 	inputScanner := bufio.NewScanner(file)
 	for inputScanner.Scan() {
 		line := inputScanner.Text()
 		matches := r.FindAllString(line, -1)
 
-		for x := 1; x < len(matches); x++ {
-			val, _ := strconv.ParseUint(matches[x], 16, 16)
+		for x := 0; x < 8; x++ {
+			val, _ := strconv.ParseUint(matches[x][0:4], 16, 16)
 			lower := uint8(val)
 			upper := uint8(val >> 8)
 			code = append(code, upper)
@@ -85,7 +85,14 @@ func Test_Comparison(t *testing.T) {
 			panic(fmt.Sprintf("Invalid instruction length of %d", inst.Length()))
 		}
 
-		require.Equal(t, expectedLine, resultLine, fmt.Sprintf("Instruction: %08b%08b", code[i], code[i+1]))
+		require.Equal(
+			t,
+			expectedLine,
+			resultLine,
+			fmt.Sprintf("Instruction: %08b%08b    %.2g%% Completed",
+				code[i],
+				code[i+1],
+				(float64(x)/float64(len(expectedLines))*100.0)))
 
 		i += inst.Length()
 	}
