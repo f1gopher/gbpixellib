@@ -12,11 +12,10 @@ type lsl_lsr struct {
 	data byte
 
 	// Immediate shift
-	srcMode addressMode
-	srcReg  byte
+	src addressModeInfo
 }
 
-func CreateLSL_LSR(value uint16) *lsl_lsr {
+func CreateLSL_LSR(value uint16, code []uint8, codeOffset int) *lsl_lsr {
 	location := register
 	if value&0b1111111011000000 == 0b1110001011000000 {
 		location = immediate
@@ -28,13 +27,12 @@ func CreateLSL_LSR(value uint16) *lsl_lsr {
 	}
 
 	if location == immediate {
-		srcMode, srcReg := effective(value, 0, wordSize)
+		src, _, _ := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
 
 		return &lsl_lsr{
 			location:  location,
 			direction: direction,
-			srcMode:   srcMode,
-			srcReg:    srcReg,
+			src:       src,
 		}
 	}
 
@@ -43,7 +41,10 @@ func CreateLSL_LSR(value uint16) *lsl_lsr {
 		rotateCountLocation = register
 	}
 	size := twoBitSize(value, 6)
-	register := valueFrom3Bits(value, 0)
+	src := addressModeInfo{
+		reg:  valueFrom3Bits(value, 0),
+		mode: dataRegisterDirect,
+	}
 	countReg := valueFrom3Bits(value, 9)
 	if rotateCountLocation == immediate && countReg == 0 {
 		countReg = 8
@@ -54,7 +55,7 @@ func CreateLSL_LSR(value uint16) *lsl_lsr {
 		location:  location,
 		direction: direction,
 		size:      size,
-		srcReg:    register,
+		src:       src,
 		data:      countReg,
 	}
 }
@@ -71,7 +72,7 @@ func (l *lsl_lsr) Name() string {
 			name,
 			l.size.string(),
 			l.data,
-			addressString(l.srcMode, l.srcReg, 0, 0),
+			l.src.string(),
 		)
 	}
 

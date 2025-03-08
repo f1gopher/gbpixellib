@@ -3,23 +3,19 @@ package instructions
 import "fmt"
 
 type clr struct {
-	size     instSize
-	destMode addressMode
-	destReg  byte
-
-	displacement int
+	length int
+	size   instSize
+	dest   addressModeInfo
 }
 
-func CreateCLR(value uint16, code []uint8, offset int) *clr {
+func CreateCLR(value uint16, code []uint8, codeOffset int) *clr {
 	size := twoBitSize(value, 6)
-	mode, reg := effective(value, 0, size)
-	displacement := twosComplementToInt16Bit(uint16(readData(code, offset, wordSize)))
+	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 
 	return &clr{
-		size:         size,
-		destMode:     mode,
-		destReg:      reg,
-		displacement: displacement,
+		length: 2 + instSize,
+		size:   size,
+		dest:   dest,
 	}
 }
 
@@ -27,9 +23,9 @@ func (c *clr) Name() string {
 	return fmt.Sprintf(
 		"clr.%s   %s",
 		c.size.string(),
-		addressString(c.destMode, c.destReg, 0, c.displacement))
+		c.dest.string())
 }
 
 func (c *clr) Length() int {
-	return 2 + addressModeBytesUsed(c.destMode).bytesUsed()
+	return c.length
 }

@@ -5,35 +5,34 @@ import (
 )
 
 type addi struct {
-	size     instSize
-	destMode addressMode
-	destReg  byte
-
-	data uint32
+	length int
+	opSize instSize
+	dest   addressModeInfo
+	data   uint32
 }
 
-func CreateADDI(value uint16, code []uint8, offset int) *addi {
+func CreateADDI(value uint16, code []uint8, codeOffset int) *addi {
 	size := twoBitSize(value, 6)
-	destMode, destReg := effective(value, 0, size)
-	data := readData(code, offset, size)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
+	data := readData(code, codeOffset, size)
 
 	return &addi{
-		size:     size,
-		destMode: destMode,
-		destReg:  destReg,
-		data:     data,
+		length: 2 + instSize + size.bytesUsed(),
+		opSize: size,
+		dest:   dest,
+
+		data: data,
 	}
 }
 
 func (a *addi) Name() string {
 	return fmt.Sprintf(
 		"addi.%s  #$%x, %s",
-		a.size.string(),
+		a.opSize.string(),
 		a.data,
-		addressString(a.destMode, a.destReg, a.data, 0),
-	)
+		a.dest.string())
 }
 
 func (a *addi) Length() int {
-	return 2 + a.size.bytesUsed()
+	return a.length
 }

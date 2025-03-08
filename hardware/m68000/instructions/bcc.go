@@ -11,13 +11,13 @@ type bcc struct {
 	tmpStartOffset int
 }
 
-func CreateBcc(value uint16, code []uint8, offset int) *bcc {
+func CreateBcc(value uint16, code []uint8, codeOffset int) *bcc {
 	size := zeroSize
 	var displacement int = 0
 	smallDisplacement := uint8(value & 0b0000000011111111)
 	if smallDisplacement == 0 {
 		size = wordSize
-		displacement = twosComplementToInt16Bit(uint16(readData(code, offset, size)))
+		displacement = twosComplementToInt16Bit(uint16(readData(code, codeOffset, size)))
 	} else {
 		displacement = twosComplementToInt8Bit(smallDisplacement)
 	}
@@ -26,7 +26,7 @@ func CreateBcc(value uint16, code []uint8, offset int) *bcc {
 		size:           size,
 		displacement:   displacement,
 		condition:      condition(value),
-		tmpStartOffset: offset,
+		tmpStartOffset: codeOffset,
 	}
 }
 

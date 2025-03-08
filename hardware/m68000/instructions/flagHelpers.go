@@ -3,7 +3,6 @@ package instructions
 import (
 	"encoding/binary"
 	"fmt"
-	"math"
 )
 
 type instSize int
@@ -24,7 +23,7 @@ func (i instSize) string() string {
 	case longSize:
 		return "l"
 	}
-	panic("")
+	panic("Zero size not supported")
 }
 
 func (i instSize) bytesUsed() int {
@@ -76,97 +75,8 @@ func moveSize(value uint16, offset byte) instSize {
 	panic(fmt.Sprintf("Unknown size: %016b", bits))
 }
 
-type addressMode int
-
-const (
-	dataRegisterDirect addressMode = iota
-	addressRegisterDirect
-	addressRegisterIndirect
-	addressRegisterIndirectWithPostIncrement
-	addressRegisterIndirectWithPreDecrement
-	addressRegisterIndirectWithDisplacement
-	addressRegisterIndirectWithIndexAnd8BitDisplacement
-	addressRegisterIndirectWithIndexAndBaseDisplacement
-	memoryIndirectPostIndexed
-	memoryIndirectPreIndexed
-	absoluteShort
-	absoluteLong
-	programCounterIndirectWithDisplacement
-	preIndexedImediate
-)
-
-func addressModeBytesUsed(mode addressMode) instSize {
-	switch mode {
-	case absoluteShort, addressRegisterIndirectWithIndexAnd8BitDisplacement, addressRegisterIndirectWithDisplacement:
-		return wordSize
-	case absoluteLong:
-		return longSize
-	case dataRegisterDirect:
-		return zeroSize
-	}
-
-	panic(fmt.Sprintf("Unknow address mode for size: %d", mode))
-}
-
-func addressString(mode addressMode, reg uint8, value uint32, displacement int) string {
-	switch mode {
-	case dataRegisterDirect:
-		return fmt.Sprintf("D%d", reg)
-	case addressRegisterDirect:
-		return fmt.Sprintf("A%d", reg)
-	case addressRegisterIndirect:
-		return fmt.Sprintf("(A%d)", reg)
-	case addressRegisterIndirectWithPostIncrement:
-		return fmt.Sprintf("(A%d)+", reg)
-	case absoluteShort:
-		return fmt.Sprintf("$%x.w", value)
-	case absoluteLong:
-		return fmt.Sprintf("$%x.l", value)
-	case preIndexedImediate:
-		return fmt.Sprintf("#$%x", value)
-	case addressRegisterIndirectWithDisplacement:
-		if displacement < 0 {
-			return fmt.Sprintf("(-$%x,A%d)", int(math.Abs(float64(displacement))), reg)
-		}
-		return fmt.Sprintf("($%x,A%d)", value, reg)
-	case programCounterIndirectWithDisplacement:
-		if displacement < 0 {
-			return fmt.Sprintf("(-$%x,PC) ; ($%x)", value, displacement)
-		}
-		return fmt.Sprintf("($%x,PC) ; ($%x)", value, displacement)
-	case addressRegisterIndirectWithIndexAnd8BitDisplacement:
-		return fmt.Sprintf("%d", value)
-	case addressRegisterIndirectWithPreDecrement:
-		return fmt.Sprintf("-(A%d)", reg)
-	}
-
-	panic(fmt.Sprintf("Unknown address mode %d", mode))
-}
-
 func valueFrom3Bits(value uint16, offset byte) byte {
 	return byte((value >> offset) & 0b0000000000000111)
-}
-
-func effective(value uint16, offset byte, size instSize) (mode addressMode, register byte) {
-	return source(value, offset, size)
-}
-
-func source(value uint16, offset byte, size instSize) (mode addressMode, register byte) {
-	if value&0b0000000000111111 == 0b000000000011110 {
-		return preIndexedImediate, 0
-	}
-
-	modeBits := valueFrom3Bits(value, offset+3)
-	register = valueFrom3Bits(value, offset)
-
-	return addressingMode(modeBits, register), register
-}
-
-func destination(value uint16, offset byte, size instSize) (mode addressMode, register byte) {
-	modeBits := valueFrom3Bits(value, offset)
-	register = valueFrom3Bits(value, offset+3)
-
-	return addressingMode(modeBits, register), register
 }
 
 func addressingMode(modeBits byte, reg byte) addressMode {
@@ -198,9 +108,11 @@ func addressingMode(modeBits byte, reg byte) addressMode {
 			return programCounterIndirectWithDisplacement
 		case 0b00000100:
 			return preIndexedImediate
+		case 0b00000011:
+			return programCounterIndirectWithIndex8bitDisplacement
 		}
 		// return programCounterIndirectWithDisplacement
-		panic("")
+		panic(fmt.Sprintf("reg: %03b", reg))
 	}
 
 	panic(fmt.Sprintf("Unknown address mode: %016b", modeBits))
@@ -246,4 +158,19 @@ func twosComplementToInt16Bit(value uint16) int {
 	}
 
 	return int(value)
+}
+
+func signExtend16BitTo32Bits(value uint16) int32 {
+	isNegative := (value & 0b1000000000000000) == 0b1000000000000000
+
+	if isNegative {
+		// val := value & 0b0111111111111111
+		// fmt.Printf("%x %t %x %b\n", value, isNegative, val, val)
+		// return -int32(val)
+		value = value ^ 0xFFFF
+		value += 1
+		return -int32(value)
+	}
+
+	return int32(value)
 }

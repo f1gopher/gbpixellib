@@ -3,22 +3,22 @@ package instructions
 import "fmt"
 
 type ori struct {
-	size instSize
-	mode addressMode
-	reg  byte
+	length int
+	size   instSize
+	dest   addressModeInfo
 
 	data uint32
 }
 
-func CreateORI(value uint16, code []uint8, offset int) *ori {
+func CreateORI(value uint16, code []uint8, codeOffset int) *ori {
 	size := twoBitSize(value, 6)
-	mode, reg := effective(value, 0, size)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 
 	return &ori{
-		size: size,
-		mode: mode,
-		reg:  reg,
-		data: readData(code, offset, size),
+		length: 2 + instSize + size.bytesUsed(),
+		size:   size,
+		dest:   dest,
+		data:   readData(code, codeOffset, size),
 	}
 }
 
@@ -27,9 +27,9 @@ func (o *ori) Name() string {
 		"ori.%s   #$%x, %s",
 		o.size.string(),
 		o.data,
-		addressString(o.mode, o.reg, 0, 0))
+		o.dest.string())
 }
 
 func (o *ori) Length() int {
-	return 2 + o.size.bytesUsed()
+	return o.length
 }

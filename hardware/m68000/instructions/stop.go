@@ -6,9 +6,9 @@ type stop struct {
 	immediate uint16
 }
 
-func CreateSTOP(value uint16, code []uint8, offset int) *stop {
+func CreateSTOP(value uint16, code []uint8, codeOffset int) *stop {
 	return &stop{
-		immediate: uint16(readData(code, offset, wordSize)),
+		immediate: uint16(readData(code, codeOffset, wordSize)),
 	}
 }
 

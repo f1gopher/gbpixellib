@@ -3,15 +3,15 @@ package instructions
 import "fmt"
 
 type eor struct {
+	length  int
 	size    instSize
-	srcMode addressMode
-	srcReg  byte
+	src     addressModeInfo
 	mode    byte
 	destReg byte
 	data    uint32
 }
 
-func CreateEOR(value uint16, code []uint8, offset int) *eor {
+func CreateEOR(value uint16, code []uint8, codeOffset int) *eor {
 	mode := valueFrom3Bits(value, 6)
 	size := byteSize
 	if mode == 0b001 || mode == 0b101 {
@@ -19,16 +19,16 @@ func CreateEOR(value uint16, code []uint8, offset int) *eor {
 	} else if mode == 0b010 || mode == 0b110 {
 		size = longSize
 	}
-	srcMode, srcReg := effective(value, 0, size)
+	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 	destReg := valueFrom3Bits(value, 9)
 
 	return &eor{
+		length:  2 + instSize,
 		size:    size,
-		srcMode: srcMode,
-		srcReg:  srcReg,
+		src:     src,
 		mode:    mode,
 		destReg: destReg,
-		data:    readData(code, offset, size),
+		data:    readData(code, codeOffset, size),
 	}
 }
 
@@ -37,10 +37,9 @@ func (e *eor) Name() string {
 		"eor.%s   D%d, %s",
 		e.size.string(),
 		e.destReg,
-		addressString(e.srcMode, e.srcReg, e.data, 0),
-	)
+		e.src.string())
 }
 
 func (e *eor) Length() int {
-	return 2 + addressModeBytesUsed(e.srcMode).bytesUsed()
+	return e.length
 }

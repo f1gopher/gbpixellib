@@ -3,24 +3,18 @@ package instructions
 import "fmt"
 
 type tst struct {
-	size    instSize
-	srcMode addressMode
-	srcReg  byte
-	data    uint32
-
-	displacement int
+	length int
+	size   instSize
+	src    addressModeInfo
 }
 
-func CreateTST(value uint16, code []uint8, offset int) *tst {
+func CreateTST(value uint16, code []uint8, codeOffset int) *tst {
 	size := twoBitSize(value, 6)
-	srcMode, srcReg := effective(value, 0, size)
-	displacement := twosComplementToInt16Bit(uint16(readData(code, offset, wordSize)))
+	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 	return &tst{
-		size:         size,
-		srcMode:      srcMode,
-		srcReg:       srcReg,
-		data:         readData(code, offset, wordSize),
-		displacement: displacement,
+		length: 2 + instSize,
+		size:   size,
+		src:    src,
 	}
 }
 
@@ -28,9 +22,9 @@ func (t *tst) Name() string {
 	return fmt.Sprintf(
 		"tst.%s   %s",
 		t.size.string(),
-		addressString(t.srcMode, t.srcReg, t.data, t.displacement))
+		t.src.string())
 }
 
 func (t *tst) Length() int {
-	return 2 + t.size.bytesUsed()
+	return t.length
 }

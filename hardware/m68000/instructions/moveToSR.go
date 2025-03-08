@@ -3,27 +3,25 @@ package instructions
 import "fmt"
 
 type moveToSR struct {
-	size    instSize
-	srcMode addressMode
-	srcReg  byte
-	data    uint32
+	instSize int
+	dest     addressModeInfo
 }
 
-func CreateMOVEToSR(value uint16, code []uint8, offset int) *moveToSR {
-	size := wordSize
-	destMode, destReg := effective(value, 0, size)
+func CreateMOVEToSR(value uint16, code []uint8, codeOffset int) *moveToSR {
+	dest, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
+
 	return &moveToSR{
-		size:    size,
-		srcMode: destMode,
-		srcReg:  destReg,
-		data:    readData(code, offset, size),
+		instSize: 2 + instSize,
+		dest:     dest,
 	}
 }
 
 func (m *moveToSR) Name() string {
-	return fmt.Sprintf("move    %s, SR", addressString(m.srcMode, m.srcReg, m.data, 0))
+	return fmt.Sprintf(
+		"move    %s, SR",
+		m.dest.string())
 }
 
 func (m *moveToSR) Length() int {
-	return 2 + m.size.bytesUsed()
+	return m.instSize
 }

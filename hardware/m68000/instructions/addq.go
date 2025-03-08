@@ -3,16 +3,17 @@ package instructions
 import "fmt"
 
 type addq struct {
-	size  instSize
-	mode  addressMode
-	reg   byte
-	value byte
-	data  uint32
+	length       int
+	size         instSize
+	dest         addressModeInfo
+	value        byte
+	data         uint32
+	displacement int32
 }
 
-func CreateADDQ(value uint16, code []uint8, offset int) *addq {
+func CreateADDQ(value uint16, code []uint8, codeOffset int) *addq {
 	size := twoBitSize(value, 6)
-	mode, reg := effective(value, 0, wordSize)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 	imediateValue := (value >> 9) & 0b00000111
 	// 0 means 8
 	if imediateValue == 0 {
@@ -20,11 +21,10 @@ func CreateADDQ(value uint16, code []uint8, offset int) *addq {
 	}
 
 	return &addq{
-		size:  size,
-		mode:  mode,
-		reg:   reg,
-		value: byte(imediateValue),
-		data:  readData(code, offset, wordSize),
+		length: 2 + instSize,
+		size:   size,
+		dest:   dest,
+		value:  byte(imediateValue),
 	}
 }
 
@@ -33,10 +33,10 @@ func (a *addq) Name() string {
 		"addq.%s  #%d, %s",
 		a.size.string(),
 		a.value,
-		addressString(a.mode, a.reg, a.data, 0))
+		a.dest.string())
 }
 
 func (a *addq) Length() int {
 	// TODO - not sure thi sis right but with long size it only read an extra word
-	return 2 + wordSize.bytesUsed()
+	return a.length
 }

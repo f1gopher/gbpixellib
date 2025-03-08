@@ -9,18 +9,18 @@ type bsr struct {
 	tmpStartOffset int
 }
 
-func CreateBSR(value uint16, code []uint8, offset int) *bsr {
+func CreateBSR(value uint16, code []uint8, codeOffset int) *bsr {
 	size := byteSize
 	displacement := twosComplementToInt8Bit(uint8(value & 0b0000000011111111))
 	if displacement == 0 {
 		size = wordSize
-		displacement = twosComplementToInt16Bit(uint16(readData(code, offset, wordSize)))
+		displacement = twosComplementToInt16Bit(uint16(readData(code, codeOffset, wordSize)))
 	}
 
 	return &bsr{
 		size:           size,
 		displacement:   displacement,
-		tmpStartOffset: offset,
+		tmpStartOffset: codeOffset,
 	}
 }
 

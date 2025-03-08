@@ -3,34 +3,32 @@ package instructions
 import "fmt"
 
 type movea struct {
-	size    instSize
-	destReg byte
-	srcMode addressMode
-	srcReg  byte
+	src addressModeInfo
 
-	data uint32
+	opSize   instSize
+	destReg  byte
+	instSize int
 }
 
-func CreateMOVEA(value uint16, code []uint8, offset int) *movea {
+func CreateMOVEA(value uint16, code []uint8, codeOffset int) *movea {
 	size := twoBitSize(value, 12)
 	// Use 6 as the offset even though it is 9 because we don't read the mode
 	// so it will skip 6+3 to get to the destination
-	_, destReg := destination(value, 6, size)
-	srcMode, srcReg := source(value, 0, size)
+	destReg := valueFrom3Bits(value, 9)
+	src, _, instSize := readSrcAddressMode(value, 0, size, code, codeOffset, codeOffset)
 
 	return &movea{
-		size:    size,
-		data:    readData(code, offset, size),
-		destReg: destReg,
-		srcMode: srcMode,
-		srcReg:  srcReg,
+		src:      src,
+		opSize:   size,
+		destReg:  destReg,
+		instSize: 2 + instSize,
 	}
 }
 
 func (m *movea) Name() string {
-	return fmt.Sprintf("movea.%s #$%x, A%d", m.size.string(), m.data, m.destReg)
+	return fmt.Sprintf("movea.%s %s, A%d", m.opSize.string(), m.src.string(), m.destReg)
 }
 
 func (m *movea) Length() int {
-	return 2 + m.size.bytesUsed()
+	return m.instSize
 }

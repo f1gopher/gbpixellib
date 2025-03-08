@@ -3,7 +3,7 @@ package instructions
 import "fmt"
 
 type db struct {
-	reg          byte
+	count        addressModeInfo
 	condition    testCondition
 	displacement int
 
@@ -11,14 +11,18 @@ type db struct {
 	tmpStartOffset int
 }
 
-func CreateDB(value uint16, code []uint8, offset int) *db {
-	displacement := twosComplementToInt16Bit(uint16(readData(code, offset, wordSize)))
+func CreateDB(value uint16, code []uint8, codeOffset int) *db {
+	displacement := twosComplementToInt16Bit(uint16(readData(code, codeOffset, wordSize)))
+	count := addressModeInfo{
+		reg:  valueFrom3Bits(value, 0),
+		mode: dataRegisterDirect,
+	}
 
 	return &db{
+		count:          count,
 		condition:      condition(value),
-		reg:            valueFrom3Bits(value, 0),
 		displacement:   displacement,
-		tmpStartOffset: offset,
+		tmpStartOffset: codeOffset,
 	}
 }
 
@@ -26,7 +30,7 @@ func (d *db) Name() string {
 	return fmt.Sprintf(
 		"db%s    %s, $%x",
 		d.condition.string(),
-		addressString(dataRegisterDirect, d.reg, 0, 0),
+		d.count.string(),
 		d.tmpStartOffset+d.displacement,
 	)
 }

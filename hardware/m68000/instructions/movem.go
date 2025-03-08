@@ -10,16 +10,16 @@ const (
 )
 
 type movem struct {
+	effective addressModeInfo
+
 	transferSize     instSize
-	mode             addressMode
-	reg              byte
 	registerListMask uint16
 	direction        moveDirection
 }
 
-func CreateMOVEM(value uint16, code []uint8, offset int) *movem {
+func CreateMOVEM(value uint16, code []uint8, codeOffset int) *movem {
 	size := oneBitSize(value, 6)
-	mode, reg := effective(value, 0, size)
+	eff, _, _ := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 	direction := registerToMemory
 	if ((value >> 10) & 0b0000000000000001) == 0b0000000000000001 {
 		direction = memoryToRegister
@@ -27,10 +27,9 @@ func CreateMOVEM(value uint16, code []uint8, offset int) *movem {
 
 	return &movem{
 		transferSize:     size,
-		mode:             mode,
-		reg:              reg,
-		registerListMask: uint16(readData(code, offset, wordSize)),
+		registerListMask: uint16(readData(code, codeOffset, wordSize)),
 		direction:        direction,
+		effective:        eff,
 	}
 }
 
@@ -39,7 +38,7 @@ func (m *movem) Name() string {
 		return fmt.Sprintf(
 			"movem.%s %s, %s",
 			m.transferSize.string(),
-			addressString(m.mode, m.reg, 0, 0),
+			m.effective.string(),
 			m.registers())
 	}
 
@@ -47,7 +46,7 @@ func (m *movem) Name() string {
 		"movem.%s %s, %s",
 		m.transferSize.string(),
 		m.registers(),
-		addressString(m.mode, m.reg, 0, 0))
+		m.effective.string())
 }
 
 func (m *movem) Length() int {
@@ -55,21 +54,21 @@ func (m *movem) Length() int {
 }
 
 func (m *movem) registers() string {
-	if m.mode == addressRegisterIndirectWithPreDecrement {
+	if m.effective.mode == addressRegisterIndirectWithPreDecrement {
 		// D then A
 		aFirstReg, aLastReg := m.firstAndLastReg(byte(m.registerListMask))
 		dFirstReg, dLastReg := m.firstAndLastReg(byte(m.registerListMask >> 8))
 		return fmt.Sprintf("D%d-D%d/A%d-A%d", 7-dFirstReg, 7-dLastReg, 7-aFirstReg, 7-aLastReg)
 	}
 
-	if m.mode == addressRegisterIndirectWithPostIncrement {
+	if m.effective.mode == addressRegisterIndirectWithPostIncrement {
 		// A then D
 		aLastReg, aFirstReg := m.firstAndLastReg(byte(m.registerListMask >> 8))
 		dLastReg, dFirstReg := m.firstAndLastReg(byte(m.registerListMask))
 		return fmt.Sprintf("D%d-D%d/A%d-A%d", dFirstReg, dLastReg, aFirstReg, aLastReg)
 	}
 
-	panic(fmt.Sprintf("Unknown MOVEM mode %d", m.mode))
+	panic(fmt.Sprintf("Unknown MOVEM mode %d", m.effective.mode))
 }
 
 func (m *movem) firstAndLastReg(value byte) (left byte, right byte) {

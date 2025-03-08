@@ -167,7 +167,7 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		} else if instruction&movemMask == movemPrefix {
 			return instructions.CreateMOVEM(instruction, code, offset)
 		} else if instruction&notMask == notPrefix {
-			return instructions.CreateNOT(instruction)
+			return instructions.CreateNOT(instruction, code, offset)
 		} else if instruction&stopMask == stopPrefix {
 			return instructions.CreateSTOP(instruction, code, offset)
 		} else if instruction&peaMask == peaPrefix {
@@ -229,7 +229,7 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		if instruction&rol_rorMask == rol_rorPrefix {
 			return instructions.CreateROL_ROR(instruction, code, offset)
 		} else if instruction&lsl_lsrMask == lsl_lsrPrefix {
-			return instructions.CreateLSL_LSR(instruction)
+			return instructions.CreateLSL_LSR(instruction, code, offset)
 		}
 	case 0b0000000000001111:
 		// Coprocessor Interface/MC68040 and CPU32 Extensions

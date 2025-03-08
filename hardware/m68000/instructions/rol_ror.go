@@ -26,11 +26,10 @@ type ror_rol struct {
 	data byte
 
 	// Immediate format
-	srcMode addressMode
-	srcReg  byte
+	src addressModeInfo
 }
 
-func CreateROL_ROR(value uint16, code []uint8, offset int) *ror_rol {
+func CreateROL_ROR(value uint16, code []uint8, codeOffset int) *ror_rol {
 	location := register
 	if value&0b1111111011000000 == 0b1110011011000000 {
 		location = immediate
@@ -42,13 +41,12 @@ func CreateROL_ROR(value uint16, code []uint8, offset int) *ror_rol {
 	}
 
 	if location == immediate {
-		srcMode, srcReg := effective(value, 0, wordSize)
+		src, _, _ := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
 
 		return &ror_rol{
 			location:  location,
 			direction: direction,
-			srcMode:   srcMode,
-			srcReg:    srcReg,
+			src:       src,
 		}
 	}
 
@@ -57,7 +55,10 @@ func CreateROL_ROR(value uint16, code []uint8, offset int) *ror_rol {
 		rotateCountLocation = register
 	}
 	size := twoBitSize(value, 6)
-	register := valueFrom3Bits(value, 0)
+	src := addressModeInfo{
+		reg:  valueFrom3Bits(value, 0),
+		mode: dataRegisterDirect,
+	}
 	countReg := valueFrom3Bits(value, 9)
 	if rotateCountLocation == immediate && countReg == 0 {
 		countReg = 8
@@ -68,7 +69,7 @@ func CreateROL_ROR(value uint16, code []uint8, offset int) *ror_rol {
 		location:  location,
 		direction: direction,
 		size:      size,
-		srcReg:    register,
+		src:       src,
 		data:      countReg,
 	}
 }
@@ -85,7 +86,7 @@ func (r *ror_rol) Name() string {
 			name,
 			r.size.string(),
 			r.data,
-			addressString(r.srcMode, r.srcReg, 0, 0),
+			r.src.string(),
 		)
 	}
 

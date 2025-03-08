@@ -5,19 +5,19 @@ import (
 )
 
 type not struct {
-	size    instSize
-	srcMode addressMode
-	srcReg  byte
+	length int
+	size   instSize
+	src    addressModeInfo
 }
 
-func CreateNOT(value uint16) *not {
+func CreateNOT(value uint16, code []uint8, codeOffset int) *not {
 	size := twoBitSize(value, 6)
-	srcMode, srcReg := effective(value, 0, size)
+	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 
 	return &not{
-		size:    size,
-		srcMode: srcMode,
-		srcReg:  srcReg,
+		length: 2 + instSize,
+		size:   size,
+		src:    src,
 	}
 }
 
@@ -25,9 +25,9 @@ func (n *not) Name() string {
 	return fmt.Sprintf(
 		"not.%s   %s",
 		n.size.string(),
-		addressString(n.srcMode, n.srcReg, 0, 0))
+		n.src.string())
 }
 
 func (n *not) Length() int {
-	return 2
+	return n.length
 }
