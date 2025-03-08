@@ -79,45 +79,6 @@ func valueFrom3Bits(value uint16, offset byte) byte {
 	return byte((value >> offset) & 0b0000000000000111)
 }
 
-func addressingMode(modeBits byte, reg byte) addressMode {
-	switch modeBits & 0b000000111 {
-	case 0b00000000:
-		return dataRegisterDirect
-	case 0b00000001:
-		return addressRegisterDirect
-	case 0b00000010:
-		return addressRegisterIndirect
-	case 0b00000011:
-		return addressRegisterIndirectWithPostIncrement
-	case 0b000000100:
-		return addressRegisterIndirectWithPreDecrement
-	case 0b000000101:
-		return addressRegisterIndirectWithDisplacement
-	case 0b000000110:
-		return addressRegisterIndirectWithIndexAnd8BitDisplacement
-		// return addressRegisterIndirectWithIndexAndBaseDisplacement
-		// return memoryIndirectPostIndexed
-		// return memoryIndirectPreIndexed
-	case 0b000000111:
-		switch reg {
-		case 0b00000000:
-			return absoluteShort
-		case 0b00000001:
-			return absoluteLong
-		case 0b00000010:
-			return programCounterIndirectWithDisplacement
-		case 0b00000100:
-			return preIndexedImediate
-		case 0b00000011:
-			return programCounterIndirectWithIndex8bitDisplacement
-		}
-		// return programCounterIndirectWithDisplacement
-		panic(fmt.Sprintf("reg: %03b", reg))
-	}
-
-	panic(fmt.Sprintf("Unknown address mode: %016b", modeBits))
-}
-
 func readData(code []uint8, offset int, size instSize) uint32 {
 	switch size {
 	case byteSize:
