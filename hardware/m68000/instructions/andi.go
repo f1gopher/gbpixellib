@@ -23,7 +23,7 @@ func CreateANDI(value uint16, code []uint8, codeOffset int) *andi {
 
 func (a *andi) Name() string {
 	return fmt.Sprintf(
-		"andi.%s  #$%d, %s",
+		"andi.%s  #$%x, %s",
 		a.size.string(),
 		a.data,
 		a.src.string(),
