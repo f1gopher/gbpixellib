@@ -82,7 +82,7 @@ func Test_Comparison(t *testing.T) {
 		case 8:
 			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X %02X%02X      %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], code[i+6], code[i+7], inst.Name())
 		default:
-			panic(fmt.Sprintf("Invalid instruction length of %d", inst.Length()))
+			panic(fmt.Sprintf("Invalid instruction length of %d for %06X: %s", inst.Length(), i, inst.Name()))
 		}
 
 		require.Equal(

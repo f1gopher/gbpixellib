@@ -105,6 +105,8 @@ const (
 	peaPrefix          uint16 = 0b0100100001000000
 	extMask            uint16 = 0b1111111000111000
 	extPrefix          uint16 = 0b0100100000000000
+	jmpMask            uint16 = 0b1111111111000000
+	jmpPrefix          uint16 = 0b0100111011000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -172,6 +174,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateSTOP(instruction, code, offset)
 		} else if instruction&peaMask == peaPrefix {
 			return instructions.CreatePEA(instruction, code, offset)
+		} else if instruction&jmpMask == jmpPrefix {
+			return instructions.CreateJMP(instruction, code, offset)
 		} else if instruction&leaMask == leaPrefix {
 			return instructions.CreateLEA(instruction, code, offset)
 		}
