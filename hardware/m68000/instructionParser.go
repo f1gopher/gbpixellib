@@ -111,6 +111,8 @@ const (
 	moveUSPPrefix      uint16 = 0b0100111001100000
 	trapMask           uint16 = 0b1111111111110000
 	trapPrefix         uint16 = 0b0100111001000000
+	moveCCRMask        uint16 = 0b1111111111000000
+	moveCCRPrefix      uint16 = 0b0100010011000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -181,7 +183,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		} else if instruction&jmpMask == jmpPrefix {
 			return instructions.CreateJMP(instruction, code, offset)
 		} else if instruction&moveUSPMask == moveUSPPrefix {
-			return instructions.CreateMOVEUSP(instruction)
+			return instructions.CreateMOVEToUSP(instruction)
+		} else if instruction&moveCCRMask == moveCCRPrefix {
+			return instructions.CreateMOVEToCCR(instruction, code, offset)
 		} else if instruction&trapMask == trapPrefix {
 			return instructions.CreateTRAP(instruction)
 		} else if instruction&leaMask == leaPrefix {

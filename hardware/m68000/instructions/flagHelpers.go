@@ -89,7 +89,7 @@ func readData(code []uint8, offset int, size instSize) uint32 {
 	case longSize:
 		return binary.BigEndian.Uint32(code[offset:])
 	default:
-		panic("")
+		panic(fmt.Sprintf("Unhandled size: %d", size))
 	}
 }
 

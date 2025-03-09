@@ -58,6 +58,11 @@ func (m *movem) registers() string {
 		// D then A
 		aFirstReg, aLastReg := m.firstAndLastReg(byte(m.registerListMask))
 		dFirstReg, dLastReg := m.firstAndLastReg(byte(m.registerListMask >> 8))
+
+		if aFirstReg == aLastReg {
+			return fmt.Sprintf("A%d", 7-aLastReg)
+		}
+
 		return fmt.Sprintf("D%d-D%d/A%d-A%d", 7-dFirstReg, 7-dLastReg, 7-aFirstReg, 7-aLastReg)
 	}
 
@@ -65,6 +70,11 @@ func (m *movem) registers() string {
 		// A then D
 		aLastReg, aFirstReg := m.firstAndLastReg(byte(m.registerListMask >> 8))
 		dLastReg, dFirstReg := m.firstAndLastReg(byte(m.registerListMask))
+
+		if aFirstReg == aLastReg {
+			return fmt.Sprintf("A%d", aLastReg)
+		}
+
 		return fmt.Sprintf("D%d-D%d/A%d-A%d", dFirstReg, dLastReg, aFirstReg, aLastReg)
 	}
 

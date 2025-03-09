@@ -89,7 +89,8 @@ func Test_Comparison(t *testing.T) {
 			t,
 			expectedLine,
 			resultLine,
-			fmt.Sprintf("Instruction: %08b%08b    %.2g%% Completed",
+			fmt.Sprintf("Line %d Instruction: %08b%08b    %.2g%% Completed",
+				x,
 				code[i],
 				code[i+1],
 				(float64(x)/float64(len(expectedLines))*100.0)))

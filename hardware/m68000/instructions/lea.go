@@ -11,7 +11,7 @@ type lea struct {
 }
 
 func CreateLEA(value uint16, code []uint8, codeOffset int) *lea {
-	src, _, instSize := readEffectiveAddressMode(value, 0, zeroSize, code, codeOffset, codeOffset)
+	src, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
 	size := wordSize
 	if src.mode == absoluteLong {
 		size = longSize
