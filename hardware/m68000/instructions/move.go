@@ -16,6 +16,14 @@ func CreateMOVE(value uint16, code []uint8, codeOffset int) *move {
 	src, readOffset, _ := readSrcAddressMode(value, 0, size, code, readOffset, codeOffset)
 	dest, readOffset, _ := readDestAddressMode(value, 6, size, code, readOffset, codeOffset)
 
+	if dest.mode == addressRegisterDirect ||
+		dest.mode == programCounterIndirectWithDisplacement ||
+		dest.mode == preIndexedImediate ||
+		dest.mode == programCounterIndirectWithIndex8bitDisplacement ||
+		size == zeroSize {
+		return nil
+	}
+
 	sizeInBytes := 2 + (readOffset - codeOffset)
 
 	return &move{

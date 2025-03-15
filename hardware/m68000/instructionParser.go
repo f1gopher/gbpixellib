@@ -116,6 +116,8 @@ const (
 	subiPrefix         uint16 = 0b0000010000000000
 	andMask            uint16 = 0b1111000000000000
 	andPrefix          uint16 = 0b1100000000000000
+	roxl_roxrMask      uint16 = 0b1111000000011000
+	roxl_roxrPrefix    uint16 = 0b1110000000010000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -257,6 +259,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// Shift/Rotate/Bit Field
 		if opcode&rol_rorMask == rol_rorPrefix {
 			result = instructions.CreateROL_ROR(opcode, code, offset)
+		} else if opcode&roxl_roxrMask == roxl_roxrPrefix {
+			result = instructions.CreateROXL_ROXR(opcode, code, offset)
 		} else if opcode&lsl_lsrMask == lsl_lsrPrefix {
 			result = instructions.CreateLSL_LSR(opcode, code, offset)
 		}
