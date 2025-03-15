@@ -13,7 +13,8 @@ func CreateDC(value uint16) *dc {
 }
 
 func (d *dc) Name() string {
-	if d.value&0xFF00 == 0xFF00 {
+	if d.value&0xFF00 == 0xFF00 ||
+		d.value == 0xFE01 {
 		return fmt.Sprintf("dc.w    $%x; opcode 1111", d.value)
 	}
 

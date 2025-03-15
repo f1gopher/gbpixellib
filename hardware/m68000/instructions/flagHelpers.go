@@ -58,7 +58,7 @@ func twoBitSize(value uint16, offset byte) instSize {
 		return longSize
 	}
 
-	panic(fmt.Sprintf("Unknown size: %016b", bits))
+	return zeroSize
 }
 
 func moveSize(value uint16, offset byte) instSize {
@@ -134,4 +134,14 @@ func signExtend16BitTo32Bits(value uint16) int32 {
 	}
 
 	return int32(value)
+}
+
+func sizeFromOpmode(opmode byte) instSize {
+	size := byteSize
+	if opmode == 0b00000001 || opmode == 0b00000101 {
+		size = wordSize
+	} else if opmode == 0b00000010 || opmode == 0b00000110 {
+		size = longSize
+	}
+	return size
 }

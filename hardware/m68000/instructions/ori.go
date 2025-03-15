@@ -12,7 +12,16 @@ type ori struct {
 
 func CreateORI(value uint16, code []uint8, codeOffset int) *ori {
 	size := twoBitSize(value, 6)
-	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset+size.bytesUsed(), codeOffset)
+
+	if dest.mode == addressRegisterDirect ||
+		dest.mode == programCounterIndirectWithDisplacement ||
+		dest.mode == preIndexedImediate ||
+		dest.mode == programCounterIndirectWithIndex8bitDisplacement ||
+		dest.mode == invalidAddressMode ||
+		size == zeroSize {
+		return nil
+	}
 
 	return &ori{
 		length: 2 + instSize + size.bytesUsed(),

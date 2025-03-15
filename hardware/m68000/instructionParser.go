@@ -2,6 +2,7 @@ package m68000
 
 import (
 	"encoding/binary"
+	"reflect"
 
 	"github.com/f1gopher/gbpixellib/hardware/m68000/instructions"
 )
@@ -113,155 +114,165 @@ const (
 	moveCCRPrefix      uint16 = 0b0100010011000000
 	subiMask           uint16 = 0b1111111100000000
 	subiPrefix         uint16 = 0b0000010000000000
+	andMask            uint16 = 0b1111000000000000
+	andPrefix          uint16 = 0b1100000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
 	// Read two bytes (the minimum for all instructions) and move the offset
-	instruction := binary.BigEndian.Uint16(code[offset:])
+	opcode := binary.BigEndian.Uint16(code[offset:])
 	offset += 2
+	var result instruction = nil
 
-	operation := instruction >> 12 & 0b0000000000001111
+	operation := opcode >> 12 & 0b0000000000001111
 	switch operation {
 	case 0b0000000000000000:
 		// Bit Manipulation/MOVEP/Immed iate
-		if instruction&dcPrefix == dcPrefix || instruction&dc2Mask == dc2Prefix {
-			return instructions.CreateDC(instruction)
-		} else if instruction&oriMask == oriPrefix {
-			return instructions.CreateORI(instruction, code, offset)
-		} else if instruction&cmpiMask == cmpiPrefix {
-			return instructions.CreateCMPI(instruction, code, offset)
-		} else if instruction&bclrMask == bclrPrefix || instruction&bclrMask2 == bclrPrefix2 {
-			return instructions.CreateBCLR(instruction, code, offset)
-		} else if instruction&eoriMask == eoriPrefix {
-			return instructions.CreateEORI(instruction, code, offset)
-		} else if instruction&btstMask == btstPrefix || instruction&btstMask2 == btstPrefix2 {
-			return instructions.CreateBTST(instruction, code, offset)
-		} else if instruction&addiMask == addiPrefix {
-			return instructions.CreateADDI(instruction, code, offset)
-		} else if instruction&andiMask == andiPrefix {
-			return instructions.CreateANDI(instruction, code, offset)
-		} else if instruction&subiMask == subiPrefix {
-			return instructions.CreateSUBI(instruction, code, offset)
+		if opcode&dcPrefix == dcPrefix || opcode&dc2Mask == dc2Prefix {
+			result = instructions.CreateDC(opcode)
+		} else if opcode&oriMask == oriPrefix {
+			result = instructions.CreateORI(opcode, code, offset)
+		} else if opcode&cmpiMask == cmpiPrefix {
+			result = instructions.CreateCMPI(opcode, code, offset)
+		} else if opcode&bclrMask == bclrPrefix || opcode&bclrMask2 == bclrPrefix2 {
+			result = instructions.CreateBCLR(opcode, code, offset)
+		} else if opcode&eoriMask == eoriPrefix {
+			result = instructions.CreateEORI(opcode, code, offset)
+		} else if opcode&btstMask == btstPrefix || opcode&btstMask2 == btstPrefix2 {
+			result = instructions.CreateBTST(opcode, code, offset)
+		} else if opcode&addiMask == addiPrefix {
+			result = instructions.CreateADDI(opcode, code, offset)
+		} else if opcode&andiMask == andiPrefix {
+			result = instructions.CreateANDI(opcode, code, offset)
+		} else if opcode&subiMask == subiPrefix {
+			result = instructions.CreateSUBI(opcode, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte
-		return instructions.CreateMOVE(instruction, code, offset)
+		result = instructions.CreateMOVE(opcode, code, offset)
 	case 0b0000000000000010:
 		// Move Long
-		if instruction&moveaMask == moveaPrefix {
-			return instructions.CreateMOVEA(instruction, code, offset)
-		} else if instruction&moveMask == moveLPrefix {
-			return instructions.CreateMOVE(instruction, code, offset)
+		if opcode&moveaMask == moveaPrefix {
+			result = instructions.CreateMOVEA(opcode, code, offset)
+		} else if opcode&moveMask == moveLPrefix {
+			result = instructions.CreateMOVE(opcode, code, offset)
 		}
 	case 0b0000000000000011:
 		// Move Word
-		return instructions.CreateMOVE(instruction, code, offset)
+		result = instructions.CreateMOVE(opcode, code, offset)
 	case 0b0000000000000100:
 		// Miscellaneous
-		if instruction == illegalInstruction {
-			return instructions.CreateILLEGAL()
-		} else if instruction == rteInstruction {
-			return instructions.CreateRTE()
-		} else if instruction&rtsMask == rtsPrefix {
-			return instructions.CreateRTS(instruction)
-		} else if instruction&clrMask == clrPrefix {
-			return instructions.CreateCLR(instruction, code, offset)
-		} else if instruction&jsrMask == jsrPrefix {
-			return instructions.CreateJSR(instruction, code, offset)
-		} else if instruction&moveToSRMask == moveToSRPrefix {
-			return instructions.CreateMOVEToSR(instruction, code, offset)
-		} else if instruction&tstMask == tstPrefix {
-			return instructions.CreateTST(instruction, code, offset)
-		} else if instruction&extMask == extPrefix {
-			return instructions.CreateEXT(instruction)
-		} else if instruction&movemMask == movemPrefix {
-			return instructions.CreateMOVEM(instruction, code, offset)
-		} else if instruction&notMask == notPrefix {
-			return instructions.CreateNOT(instruction, code, offset)
-		} else if instruction&stopMask == stopPrefix {
-			return instructions.CreateSTOP(instruction, code, offset)
-		} else if instruction&peaMask == peaPrefix {
-			return instructions.CreatePEA(instruction, code, offset)
-		} else if instruction&jmpMask == jmpPrefix {
-			return instructions.CreateJMP(instruction, code, offset)
-		} else if instruction&moveUSPMask == moveUSPPrefix {
-			return instructions.CreateMOVEToUSP(instruction)
-		} else if instruction&moveCCRMask == moveCCRPrefix {
-			return instructions.CreateMOVEToCCR(instruction, code, offset)
-		} else if instruction&trapMask == trapPrefix {
-			return instructions.CreateTRAP(instruction)
-		} else if instruction&leaMask == leaPrefix {
-			return instructions.CreateLEA(instruction, code, offset)
+		if opcode == illegalInstruction {
+			result = instructions.CreateILLEGAL()
+		} else if opcode == rteInstruction {
+			result = instructions.CreateRTE()
+		} else if opcode&rtsMask == rtsPrefix {
+			result = instructions.CreateRTS(opcode)
+		} else if opcode&clrMask == clrPrefix {
+			result = instructions.CreateCLR(opcode, code, offset)
+		} else if opcode&jsrMask == jsrPrefix {
+			result = instructions.CreateJSR(opcode, code, offset)
+		} else if opcode&moveToSRMask == moveToSRPrefix {
+			result = instructions.CreateMOVEToSR(opcode, code, offset)
+		} else if opcode&tstMask == tstPrefix {
+			result = instructions.CreateTST(opcode, code, offset)
+		} else if opcode&extMask == extPrefix {
+			result = instructions.CreateEXT(opcode)
+		} else if opcode&movemMask == movemPrefix {
+			result = instructions.CreateMOVEM(opcode, code, offset)
+		} else if opcode&notMask == notPrefix {
+			result = instructions.CreateNOT(opcode, code, offset)
+		} else if opcode&stopMask == stopPrefix {
+			result = instructions.CreateSTOP(opcode, code, offset)
+		} else if opcode&peaMask == peaPrefix {
+			result = instructions.CreatePEA(opcode, code, offset)
+		} else if opcode&jmpMask == jmpPrefix {
+			result = instructions.CreateJMP(opcode, code, offset)
+		} else if opcode&moveUSPMask == moveUSPPrefix {
+			result = instructions.CreateMOVEToUSP(opcode)
+		} else if opcode&moveCCRMask == moveCCRPrefix {
+			result = instructions.CreateMOVEToCCR(opcode, code, offset)
+		} else if opcode&trapMask == trapPrefix {
+			result = instructions.CreateTRAP(opcode)
+		} else if opcode&leaMask == leaPrefix {
+			result = instructions.CreateLEA(opcode, code, offset)
 		}
 	case 0b0000000000000101:
 		// ADDQ/SUBQ/Scc/DBcc/TRAPc c
-		if instruction&dbccMask == dbccPrefix {
-			return instructions.CreateDB(instruction, code, offset)
-		} else if instruction&sccMask == sccPrefix {
-			return instructions.CreateScc(instruction, code, offset)
-		} else if instruction&addqMask == addqPrefix {
-			return instructions.CreateADDQ(instruction, code, offset)
-		} else if instruction&subqMask == subqPrefix {
-			return instructions.CreateSUBQ(instruction, code, offset)
+		if opcode&dbccMask == dbccPrefix {
+			result = instructions.CreateDB(opcode, code, offset)
+		} else if opcode&sccMask == sccPrefix {
+			result = instructions.CreateScc(opcode, code, offset)
+		} else if opcode&addqMask == addqPrefix {
+			result = instructions.CreateADDQ(opcode, code, offset)
+		} else if opcode&subqMask == subqPrefix {
+			result = instructions.CreateSUBQ(opcode, code, offset)
 		}
 	case 0b0000000000000110:
 		// Bcc/BSR/BRA
-		if instruction&bsrMask == bsrPrefix {
-			return instructions.CreateBSR(instruction, code, offset)
-		} else if instruction&braMask == braPrefix {
-			return instructions.CreateBRA(instruction, code, offset)
-		} else if instruction&bccMask == bccPrefix {
-			return instructions.CreateBcc(instruction, code, offset)
+		if opcode&bsrMask == bsrPrefix {
+			result = instructions.CreateBSR(opcode, code, offset)
+		} else if opcode&braMask == braPrefix {
+			result = instructions.CreateBRA(opcode, code, offset)
+		} else if opcode&bccMask == bccPrefix {
+			result = instructions.CreateBcc(opcode, code, offset)
 		}
 	case 0b0000000000000111:
 		// MOVEQ
-		if instruction&moveqMask == moveqPrefix {
-			return instructions.CreateMOVEQ(instruction)
+		if opcode&moveqMask == moveqPrefix {
+			result = instructions.CreateMOVEQ(opcode)
 		}
 	case 0b0000000000001000:
 		// OR/DIV/SBCD
-		if instruction&orMask == orPrefix {
-			return instructions.CreateOR(instruction, code, offset)
+		if opcode&orMask == orPrefix {
+			result = instructions.CreateOR(opcode, code, offset)
 		}
 	case 0b0000000000001001:
 		// SUB/SUBX
-		if instruction&subMask == subPrefix {
-			return instructions.CreateSUB(instruction, code, offset)
+		if opcode&subMask == subPrefix {
+			result = instructions.CreateSUB(opcode, code, offset)
 		}
 	case 0b0000000000001010:
 		// (Unassigned, Reserved)
 	case 0b0000000000001011:
 		// CMP/EOR
-		opmode := (instruction >> 6) & 0b000000000000111
+		opmode := (opcode >> 6) & 0b000000000000111
 
 		if opmode == 0 || opmode == 0b00000001 || opmode == 0b00000010 {
-			return instructions.CreateCMP(instruction, code, offset)
+			result = instructions.CreateCMP(opcode, code, offset)
 		} else {
-			return instructions.CreateEOR(instruction, code, offset)
+			result = instructions.CreateEOR(opcode, code, offset)
 		}
 	case 0b0000000000001100:
 		// AND/MUL/ABCD/EXG
+		if opcode&andMask == andPrefix {
+			result = instructions.CreateAND(opcode, code, offset)
+		}
 	case 0b0000000000001101:
 		// ADD/ADDX
-		if instruction&addMask == addPrefix {
-			return instructions.CreateADD(instruction, code, offset)
+		if opcode&addMask == addPrefix {
+			result = instructions.CreateADD(opcode, code, offset)
 		}
 	case 0b0000000000001110:
 		// Shift/Rotate/Bit Field
-		if instruction&rol_rorMask == rol_rorPrefix {
-			return instructions.CreateROL_ROR(instruction, code, offset)
-		} else if instruction&lsl_lsrMask == lsl_lsrPrefix {
-			return instructions.CreateLSL_LSR(instruction, code, offset)
+		if opcode&rol_rorMask == rol_rorPrefix {
+			result = instructions.CreateROL_ROR(opcode, code, offset)
+		} else if opcode&lsl_lsrMask == lsl_lsrPrefix {
+			result = instructions.CreateLSL_LSR(opcode, code, offset)
 		}
 	case 0b0000000000001111:
 		// Coprocessor Interface/MC68040 and CPU32 Extensions
 
-		// TODO - don't think this is right
-		if instruction&dcPrefix == dcPrefix {
-			return instructions.CreateDC(instruction)
-		}
+		// // TODO - don't think this is right
+		// if opcode&dcPrefix == dcPrefix {
+		// 	result = instructions.CreateDC(opcode)
+		// }
+	}
+
+	if result != nil && !reflect.ValueOf(result).IsNil() {
+		return result
 	}
 
 	// Ilegal instructions are called dc.w for some reason
-	return instructions.CreateDC(instruction)
+	return instructions.CreateDC(opcode)
 }

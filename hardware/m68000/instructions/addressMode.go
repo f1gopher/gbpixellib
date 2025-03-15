@@ -8,7 +8,8 @@ import (
 type addressMode int
 
 const (
-	dataRegisterDirect addressMode = iota
+	invalidAddressMode addressMode = iota
+	dataRegisterDirect
 	addressRegisterDirect
 	addressRegisterIndirect
 	addressRegisterIndirectWithPostIncrement
@@ -191,7 +192,8 @@ func addressingMode(modeBits byte, reg byte) addressMode {
 			return programCounterIndirectWithIndex8bitDisplacement
 		}
 		// return programCounterIndirectWithDisplacement
-		panic(fmt.Sprintf("reg: %03b", reg))
+		// panic(fmt.Sprintf("reg: %03b", reg))
+		return invalidAddressMode
 	}
 
 	panic(fmt.Sprintf("Unknown address mode: %016b", modeBits))
