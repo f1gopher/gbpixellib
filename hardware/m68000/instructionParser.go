@@ -124,6 +124,8 @@ const (
 	movepPrefix        uint16 = 0b0000000000001000
 	bsetMask           uint16 = 0b1111000011000000
 	bsetPrefix         uint16 = 0b0000000011000000
+	divuMask           uint16 = 0b1111000111000000
+	divuPrefix         uint16 = 0b1000000011000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -238,7 +240,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000001000:
 		// OR/DIV/SBCD
-		if opcode&orMask == orPrefix {
+		if opcode&divuMask == divuPrefix {
+			result = instructions.CreateDIVU(opcode, code, offset)
+		} else if opcode&orMask == orPrefix {
 			result = instructions.CreateOR(opcode, code, offset)
 		}
 	case 0b0000000000001001:

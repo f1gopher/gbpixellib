@@ -3,22 +3,22 @@ package instructions
 import "fmt"
 
 type bsr struct {
-	size         instSize
+	length       int
 	displacement int
 
 	tmpStartOffset int
 }
 
 func CreateBSR(value uint16, code []uint8, codeOffset int) *bsr {
-	size := byteSize
+	length := 2
 	displacement := twosComplementToInt8Bit(uint8(value & 0b0000000011111111))
-	if displacement == 0 {
-		size = wordSize
+	if value&0b0000000011111111 == 0 {
+		length += 2
 		displacement = twosComplementToInt16Bit(uint16(readData(code, codeOffset, wordSize)))
 	}
 
 	return &bsr{
-		size:           size,
+		length:         length,
 		displacement:   displacement,
 		tmpStartOffset: codeOffset,
 	}
@@ -31,5 +31,5 @@ func (b *bsr) Name() string {
 }
 
 func (b *bsr) Length() int {
-	return 2 + b.size.bytesUsed()
+	return b.length
 }
