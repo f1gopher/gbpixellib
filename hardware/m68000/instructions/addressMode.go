@@ -133,7 +133,10 @@ func readAddressMode(
 		data = readData(code, codeOffset, longSize)
 		bytesUsed = 4
 	} else if mode == programCounterIndirectWithIndex8bitDisplacement {
-		data = readData(code, codeOffset, wordSize)
+		extraData := uint16(readData(code, codeOffset, wordSize))
+		// Only want the first 8bits of info
+		displacement = int32(signExtend16BitTo32Bits(extraData & 0b0000000011111111))
+		data = uint32(valueFrom3Bits(extraData, 12))
 		bytesUsed = 2
 	} else if mode == addressRegisterIndirectWithIndexAnd8BitDisplacement {
 		extraData := uint16(readData(code, codeOffset, wordSize))
@@ -232,7 +235,11 @@ func (a *addressModeInfo) string() string {
 	case addressRegisterIndirectWithPreDecrement:
 		return fmt.Sprintf("-(A%d)", a.reg)
 	case programCounterIndirectWithIndex8bitDisplacement:
-		return fmt.Sprintf("(PC,D1.w)")
+		if a.displacement == 0 {
+			return fmt.Sprintf("(PC,D%d.w)", a.data)
+		}
+
+		return fmt.Sprintf("($%x,PC,D%d.w)", a.displacement, a.data)
 	}
 
 	panic(fmt.Sprintf("Unknown address mode %d", a.mode))

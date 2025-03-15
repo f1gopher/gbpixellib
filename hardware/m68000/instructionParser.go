@@ -37,8 +37,8 @@ const (
 	moveLPrefix        uint16 = 0b0010000000000000
 	oriMask            uint16 = 0b1111111100000000
 	oriPrefix          uint16 = 0b0000000000000000
-	leaMask            uint16 = 0b1111000000000000
-	leaPrefix          uint16 = 0b0100000000000000
+	leaMask            uint16 = 0b1111000111000000
+	leaPrefix          uint16 = 0b0100000111000000
 	moveaMask          uint16 = 0b1110000111000000
 	moveaPrefix        uint16 = 0b0010000001000000
 	moveqMask          uint16 = 0b1111000000000000
@@ -258,5 +258,6 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	}
 
-	return &instructions.Unknown{}
+	// Ilegal instructions are called dc.w for some reason
+	return instructions.CreateDC(instruction)
 }
