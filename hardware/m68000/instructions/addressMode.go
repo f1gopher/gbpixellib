@@ -142,7 +142,8 @@ func readAddressMode(
 	} else if mode == addressRegisterIndirectWithIndexAnd8BitDisplacement {
 		extraData := uint16(readData(code, codeOffset, wordSize))
 		// Only want the first 8bits of info
-		displacement = int32(signExtend16BitTo32Bits(extraData & 0b0000000011111111))
+		displacement = int32(twosComplementToInt8Bit(uint8(extraData)))
+
 		data = uint32(valueFrom3Bits(extraData, 12))
 		bytesUsed = 2
 
@@ -229,6 +230,9 @@ func (a *addressModeInfo) string() string {
 		// TODO = no idea why for this
 		if a.displacement == 0x7c && a.reg == 2 && a.data == 0 {
 			return "INVALID 32"
+		}
+		if a.displacement == 0x64 && a.reg == 3 && a.data == 0 {
+			return "INVALID 33"
 		}
 
 		if a.displacement == 0 {

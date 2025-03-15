@@ -21,6 +21,8 @@ func CreateMOVEP(value uint16, code []uint8, codeOffset int) *movep {
 		size = wordSize
 	} else if opmode == 0b000000101 || opmode == 0b00000111 {
 		size = longSize
+	} else {
+		return nil
 	}
 	displacement := readData(code, codeOffset, wordSize)
 

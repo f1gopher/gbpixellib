@@ -11,9 +11,13 @@ type andi struct {
 
 func CreateANDI(value uint16, code []uint8, codeOffset int) *andi {
 	size := twoBitSize(value, 6)
-	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
+	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset+size.bytesUsed(), codeOffset)
 
-	if size == zeroSize {
+	if size == zeroSize ||
+		src.mode == addressRegisterDirect ||
+		src.mode == programCounterIndirectWithDisplacement ||
+		src.mode == preIndexedImediate ||
+		src.mode == programCounterIndirectWithIndex8bitDisplacement {
 		return nil
 	}
 

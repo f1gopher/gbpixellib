@@ -122,6 +122,8 @@ const (
 	bchgPrefix         uint16 = 0b0000000101000000
 	movepMask          uint16 = 0b1111000000111000
 	movepPrefix        uint16 = 0b0000000000001000
+	bsetMask           uint16 = 0b1111000011000000
+	bsetPrefix         uint16 = 0b0000000011000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -156,6 +158,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateSUBI(opcode, code, offset)
 		} else if opcode&bchgMask == bchgPrefix {
 			result = instructions.CreateBCHG(opcode, code, offset)
+		} else if opcode&bsetMask == bsetPrefix {
+			result = instructions.CreateBSET(opcode, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte
