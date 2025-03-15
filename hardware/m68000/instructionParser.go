@@ -111,6 +111,8 @@ const (
 	trapPrefix         uint16 = 0b0100111001000000
 	moveCCRMask        uint16 = 0b1111111111000000
 	moveCCRPrefix      uint16 = 0b0100010011000000
+	subiMask           uint16 = 0b1111111100000000
+	subiPrefix         uint16 = 0b0000010000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -138,6 +140,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			return instructions.CreateADDI(instruction, code, offset)
 		} else if instruction&andiMask == andiPrefix {
 			return instructions.CreateANDI(instruction, code, offset)
+		} else if instruction&subiMask == subiPrefix {
+			return instructions.CreateSUBI(instruction, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte
