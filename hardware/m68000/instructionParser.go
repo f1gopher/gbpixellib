@@ -118,6 +118,8 @@ const (
 	andPrefix          uint16 = 0b1100000000000000
 	roxl_roxrMask      uint16 = 0b1111000000011000
 	roxl_roxrPrefix    uint16 = 0b1110000000010000
+	bchgMask           uint16 = 0b1111000111000000
+	bchgPrefix         uint16 = 0b0000000101000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -148,6 +150,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateANDI(opcode, code, offset)
 		} else if opcode&subiMask == subiPrefix {
 			result = instructions.CreateSUBI(opcode, code, offset)
+		} else if opcode&bchgMask == bchgPrefix {
+			result = instructions.CreateBCHG(opcode, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte

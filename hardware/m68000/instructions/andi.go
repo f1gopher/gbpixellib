@@ -13,6 +13,10 @@ func CreateANDI(value uint16, code []uint8, codeOffset int) *andi {
 	size := twoBitSize(value, 6)
 	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 
+	if size == zeroSize {
+		return nil
+	}
+
 	return &andi{
 		length: 2 + instSize + size.bytesUsed(),
 		size:   size,
