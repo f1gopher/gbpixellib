@@ -79,7 +79,7 @@ const (
 	addqPrefix         uint16 = 0b0101000000000000
 	bsrMask            uint16 = 0b1111111100000000
 	bsrPrefix          uint16 = 0b0110000100000000
-	sccMask            uint16 = 0b1111111111000000
+	sccMask            uint16 = 0b1111000011000000
 	sccPrefix          uint16 = 0b0101000011000000
 	subqMask           uint16 = 0b1111000100000000
 	subqPrefix         uint16 = 0b0101000100000000
@@ -87,8 +87,6 @@ const (
 	addPrefix          uint16 = 0b1101000000000000
 	subMask            uint16 = 0b1111000000000000
 	subPrefix          uint16 = 0b1001000000000000
-	eorMask            uint16 = 0b1111000000000000
-	eorPrefix          uint16 = 0b1011000000000000
 	rol_rorMask        uint16 = 0b1111000000011000
 	rol_rorPrefix      uint16 = 0b1110000000011000
 	orMask             uint16 = 0b1111000000000000
@@ -230,7 +228,11 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// (Unassigned, Reserved)
 	case 0b0000000000001011:
 		// CMP/EOR
-		if instruction&eorMask == eorPrefix {
+		opmode := (instruction >> 6) & 0b000000000000111
+
+		if opmode == 0 || opmode == 0b00000001 || opmode == 0b00000010 {
+			return instructions.CreateCMP(instruction, code, offset)
+		} else {
 			return instructions.CreateEOR(instruction, code, offset)
 		}
 	case 0b0000000000001100:

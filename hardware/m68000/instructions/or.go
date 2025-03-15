@@ -7,6 +7,7 @@ type or struct {
 	size    instSize
 	src     addressModeInfo
 	destReg byte
+	opmode  byte
 }
 
 func CreateOR(value uint16, code []uint8, codeOffset int) *or {
@@ -24,16 +25,25 @@ func CreateOR(value uint16, code []uint8, codeOffset int) *or {
 		size:    size,
 		src:     src,
 		destReg: destReg,
+		opmode:  opmode,
 	}
 }
 
 func (o *or) Name() string {
+	if o.opmode == 0 || o.opmode == 0b00000001 || o.opmode == 0b00000010 {
+		return fmt.Sprintf(
+			"or.%s    %s, D%d",
+			o.size.string(),
+			o.src.string(),
+			o.destReg,
+		)
+	}
+
 	return fmt.Sprintf(
-		"or.%s    %s, D%d",
+		"or.%s    D%d, %s",
 		o.size.string(),
-		o.src.string(),
 		o.destReg,
-	)
+		o.src.string())
 }
 
 func (o *or) Length() int {

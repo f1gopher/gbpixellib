@@ -136,9 +136,13 @@ func readAddressMode(
 		data = readData(code, codeOffset, wordSize)
 		bytesUsed = 2
 	} else if mode == addressRegisterIndirectWithIndexAnd8BitDisplacement {
-		displacement = int32(signExtend16BitTo32Bits(uint16(readData(code, codeOffset, wordSize))))
-
+		extraData := uint16(readData(code, codeOffset, wordSize))
+		// Only want the first 8bits of info
+		displacement = int32(signExtend16BitTo32Bits(extraData & 0b0000000011111111))
+		data = uint32(valueFrom3Bits(extraData, 12))
 		bytesUsed = 2
+
+		// TODO - bit 10 of extraData might be used to chose Address ot Data register (1 for data)
 	}
 
 	return addressModeInfo{

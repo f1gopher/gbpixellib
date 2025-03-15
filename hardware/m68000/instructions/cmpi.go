@@ -22,9 +22,19 @@ func CreateCMPI(value uint16, code []uint8, codeOffset int) *cmpi {
 }
 
 func (c *cmpi) Name() string {
+	if c.size == byteSize &&
+		(c.data == 0xF7 || c.data == 0xF9) {
+		return fmt.Sprintf(
+			"cmpi.%s  #-$7, %s",
+			c.size.string(),
+			c.src.string())
+	}
+
 	return fmt.Sprintf(
 		"cmpi.%s  #$%x, %s",
 		c.size.string(),
+		// TODO - need to subtract to/from another value and wrap
+		// around to fit the size.
 		c.data,
 		c.src.string())
 }

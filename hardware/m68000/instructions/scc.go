@@ -20,7 +20,7 @@ func CreateScc(value uint16, code []uint8, codeOffset int) *scc {
 
 func (s *scc) Name() string {
 	return fmt.Sprintf(
-		"s%s      %s",
+		"s%-3s    %s",
 		s.condition.string(),
 		s.dest.string())
 }
