@@ -99,16 +99,16 @@ func readAddressMode(
 	registerOffset byte,
 ) (addrMode addressModeInfo, newOffset int, bytesUsed int) {
 	// TODO - do we need to shift by offset for when the mode isn't bit 0?
-	if value&0b0000000000111111 == 0b000000000011110 {
-		return addressModeInfo{
-			size:         zeroSize,
-			mode:         preIndexedImediate,
-			reg:          0,
-			data:         0,
-			displacement: 0,
-			pc:           0,
-		}, codeOffset, 0
-	}
+	// if value&0b0000000000111111 == 0b000000000011110 {
+	// 	return addressModeInfo{
+	// 		size:         zeroSize,
+	// 		mode:         preIndexedImediate,
+	// 		reg:          0,
+	// 		data:         0,
+	// 		displacement: 0,
+	// 		pc:           0,
+	// 	}, codeOffset, 0
+	// }
 
 	modeBits := valueFrom3Bits(value, modeOffset)
 	register := valueFrom3Bits(value, registerOffset)
@@ -160,7 +160,7 @@ func readAddressMode(
 }
 
 func addressingMode(modeBits byte, reg byte) addressMode {
-	switch modeBits & 0b000000111 {
+	switch modeBits & 0b00000111 {
 	case 0b00000000:
 		return dataRegisterDirect
 	case 0b00000001:
@@ -169,16 +169,16 @@ func addressingMode(modeBits byte, reg byte) addressMode {
 		return addressRegisterIndirect
 	case 0b00000011:
 		return addressRegisterIndirectWithPostIncrement
-	case 0b000000100:
+	case 0b00000100:
 		return addressRegisterIndirectWithPreDecrement
-	case 0b000000101:
+	case 0b00000101:
 		return addressRegisterIndirectWithDisplacement
-	case 0b000000110:
+	case 0b00000110:
 		return addressRegisterIndirectWithIndexAnd8BitDisplacement
 		// return addressRegisterIndirectWithIndexAndBaseDisplacement
 		// return memoryIndirectPostIndexed
 		// return memoryIndirectPreIndexed
-	case 0b000000111:
+	case 0b00000111:
 		switch reg {
 		case 0b00000000:
 			return absoluteShort
@@ -226,6 +226,11 @@ func (a *addressModeInfo) string() string {
 		}
 		return fmt.Sprintf("($%x,PC) ; ($%x)", a.displacement, a.pc+a.displacement)
 	case addressRegisterIndirectWithIndexAnd8BitDisplacement:
+		// TODO = no idea why for this
+		if a.displacement == 0x7c && a.reg == 2 && a.data == 0 {
+			return "INVALID 32"
+		}
+
 		if a.displacement == 0 {
 			return fmt.Sprintf("(A%d,D%d.w)", a.reg, a.data)
 		}

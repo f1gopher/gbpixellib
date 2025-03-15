@@ -17,16 +17,16 @@ func CreateBTST(value uint16, code []uint8, codeOffset int) *btst {
 		mode: dataRegisterDirect,
 		reg:  valueFrom3Bits(value, 9),
 	}
-	dest, _, _ := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
 
 	// bit number static
 	if value&0b1111111111000000 == 0b0000100000000000 {
 		src.mode = preIndexedImediate
 
 		if dest.mode == addressRegisterIndirectWithDisplacement {
-			size = longSize
-			data := readData(code, codeOffset, size)
-			src.data = data >> 16
+			size = wordSize
+			src.data = readData(code, codeOffset, size)
+			// src.data = data >> 16
 			// destData = data & 0b00000000000000001111111111111111
 			dest.displacement = signExtend16BitTo32Bits(uint16(readData(code, codeOffset+2, wordSize)))
 		} else {
@@ -38,7 +38,7 @@ func CreateBTST(value uint16, code []uint8, codeOffset int) *btst {
 	}
 
 	return &btst{
-		length: 2 + size.bytesUsed(),
+		length: 2 + size.bytesUsed() + instSize,
 		size:   size,
 		src:    src,
 		dest:   dest,

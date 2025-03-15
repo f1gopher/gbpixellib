@@ -120,6 +120,8 @@ const (
 	roxl_roxrPrefix    uint16 = 0b1110000000010000
 	bchgMask           uint16 = 0b1111000111000000
 	bchgPrefix         uint16 = 0b0000000101000000
+	movepMask          uint16 = 0b1111000000111000
+	movepPrefix        uint16 = 0b0000000000001000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -142,6 +144,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateBCLR(opcode, code, offset)
 		} else if opcode&eoriMask == eoriPrefix {
 			result = instructions.CreateEORI(opcode, code, offset)
+		} else if opcode&movepMask == movepPrefix {
+			result = instructions.CreateMOVEP(opcode, code, offset)
 		} else if opcode&btstMask == btstPrefix || opcode&btstMask2 == btstPrefix2 {
 			result = instructions.CreateBTST(opcode, code, offset)
 		} else if opcode&addiMask == addiPrefix {
