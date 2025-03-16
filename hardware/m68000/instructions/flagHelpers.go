@@ -72,7 +72,7 @@ func moveSize(value uint16, offset byte) instSize {
 		return longSize
 	}
 
-	panic(fmt.Sprintf("Unknown size: %016b", bits))
+	return zeroSize
 }
 
 func valueFrom3Bits(value uint16, offset byte) byte {

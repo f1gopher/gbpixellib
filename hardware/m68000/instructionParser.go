@@ -134,6 +134,10 @@ const (
 	sbcdPrefix         uint16 = 0b1000000100000000
 	swapMask           uint16 = 0b1111111111111000
 	swapPrefix         uint16 = 0b0100100001000000
+	negMask            uint16 = 0b1111111100000000
+	negPrefix          uint16 = 0b0100010000000000
+	chkMask            uint16 = 0b1111000001000000
+	chkPrefix          uint16 = 0b0100000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -224,6 +228,10 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateTRAP(opcode)
 		} else if opcode&leaMask == leaPrefix {
 			result = instructions.CreateLEA(opcode, code, offset)
+		} else if opcode&negMask == negPrefix {
+			result = instructions.CreateNEG(opcode, code, offset)
+		} else if opcode&chkMask == chkPrefix {
+			result = instructions.CreateCHK(opcode, code, offset)
 		}
 	case 0b0000000000000101:
 		// ADDQ/SUBQ/Scc/DBcc/TRAPc c

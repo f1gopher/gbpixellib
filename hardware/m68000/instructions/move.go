@@ -23,6 +23,9 @@ func CreateMOVE(value uint16, code []uint8, codeOffset int) *move {
 		size == zeroSize {
 		return nil
 	}
+	if size == byteSize && src.mode == addressRegisterDirect {
+		return nil
+	}
 
 	sizeInBytes := 2 + (readOffset - codeOffset)
 
