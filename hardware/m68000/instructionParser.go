@@ -132,6 +132,8 @@ const (
 	andiToCCRPrefix    uint16 = 0b0000001000111100
 	sbcdMask           uint16 = 0b1111000111110000
 	sbcdPrefix         uint16 = 0b1000000100000000
+	swapMask           uint16 = 0b1111111111111000
+	swapPrefix         uint16 = 0b0100100001000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -200,6 +202,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateMOVEToSR(opcode, code, offset)
 		} else if opcode&tstMask == tstPrefix {
 			result = instructions.CreateTST(opcode, code, offset)
+		} else if opcode&swapMask == swapPrefix {
+			result = instructions.CreateSWAP(opcode, code, offset)
 		} else if opcode&extMask == extPrefix {
 			result = instructions.CreateEXT(opcode)
 		} else if opcode&movemMask == movemPrefix {
