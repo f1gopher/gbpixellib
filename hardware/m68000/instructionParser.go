@@ -130,6 +130,8 @@ const (
 	abcdPrefix         uint16 = 0b1100000100000000
 	andiToCCRMask      uint16 = 0b1111111111111111
 	andiToCCRPrefix    uint16 = 0b0000001000111100
+	sbcdMask           uint16 = 0b1111000111110000
+	sbcdPrefix         uint16 = 0b1000000100000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -248,6 +250,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// OR/DIV/SBCD
 		if opcode&divuMask == divuPrefix {
 			result = instructions.CreateDIVU(opcode, code, offset)
+		} else if opcode&sbcdMask == sbcdPrefix {
+			result = instructions.CreateSBCD(opcode, code, offset)
 		} else if opcode&orMask == orPrefix {
 			result = instructions.CreateOR(opcode, code, offset)
 		}
