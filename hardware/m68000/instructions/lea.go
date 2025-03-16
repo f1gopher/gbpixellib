@@ -19,6 +19,10 @@ func CreateLEA(value uint16, code []uint8, codeOffset int) *lea {
 
 	dstReg := byte((value >> 9) & 0b0000000000000111)
 
+	if src.mode == invalidAddressMode {
+		return nil
+	}
+
 	return &lea{
 		length: 2 + instSize,
 		size:   size,

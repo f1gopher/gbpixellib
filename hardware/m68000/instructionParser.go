@@ -42,7 +42,7 @@ const (
 	leaPrefix          uint16 = 0b0100000111000000
 	moveaMask          uint16 = 0b1110000111000000
 	moveaPrefix        uint16 = 0b0010000001000000
-	moveqMask          uint16 = 0b1111000000000000
+	moveqMask          uint16 = 0b1111000100000000
 	moveqPrefix        uint16 = 0b0111000000000000
 	dbccMask           uint16 = 0b1111000011111000
 	dbccPrefix         uint16 = 0b0101000011001000
@@ -138,6 +138,12 @@ const (
 	negPrefix          uint16 = 0b0100010000000000
 	chkMask            uint16 = 0b1111000001000000
 	chkPrefix          uint16 = 0b0100000000000000
+	oriToSRMask        uint16 = 0b1111111111111111
+	oriToSRPrefix      uint16 = 0b0000000001111100
+	negxMask           uint16 = 0b1111111100000000
+	negxPrefix         uint16 = 0b0100000000000000
+	nopMask            uint16 = 0b1111111111111111
+	nopPrefix          uint16 = 0b0100111001110001
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -152,6 +158,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// Bit Manipulation/MOVEP/Immed iate
 		if opcode&dcPrefix == dcPrefix || opcode&dc2Mask == dc2Prefix {
 			result = instructions.CreateDC(opcode)
+		} else if opcode&oriToSRMask == oriToSRPrefix {
+			result = instructions.CreateORIToSR(opcode, code, offset)
 		} else if opcode&oriMask == oriPrefix {
 			result = instructions.CreateORI(opcode, code, offset)
 		} else if opcode&cmpiMask == cmpiPrefix {
@@ -194,6 +202,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// Miscellaneous
 		if opcode == illegalInstruction {
 			result = instructions.CreateILLEGAL()
+		} else if opcode&nopMask == nopPrefix {
+			result = instructions.CreateNOP(opcode, code, offset)
 		} else if opcode == rteInstruction {
 			result = instructions.CreateRTE()
 		} else if opcode&rtsMask == rtsPrefix {
@@ -232,6 +242,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateNEG(opcode, code, offset)
 		} else if opcode&chkMask == chkPrefix {
 			result = instructions.CreateCHK(opcode, code, offset)
+		} else if opcode&negxMask == negxPrefix {
+			result = instructions.CreateNEGX(opcode, code, offset)
 		}
 	case 0b0000000000000101:
 		// ADDQ/SUBQ/Scc/DBcc/TRAPc c

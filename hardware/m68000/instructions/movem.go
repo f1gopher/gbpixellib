@@ -25,6 +25,25 @@ func CreateMOVEM(value uint16, code []uint8, codeOffset int) *movem {
 		direction = memoryToRegister
 	}
 
+	if direction == registerToMemory {
+		if eff.mode == dataRegisterDirect ||
+			eff.mode == addressRegisterDirect ||
+			eff.mode == addressRegisterIndirectWithPostIncrement ||
+			eff.mode == programCounterIndirectWithDisplacement ||
+			eff.mode == preIndexedImediate ||
+			eff.mode == programCounterIndirectWithIndex8bitDisplacement {
+			return nil
+		}
+	} else {
+		if eff.mode == dataRegisterDirect ||
+			eff.mode == addressRegisterDirect ||
+			eff.mode == addressRegisterIndirectWithPreDecrement ||
+			eff.mode == programCounterIndirectWithDisplacement ||
+			eff.mode == programCounterIndirectWithIndex8bitDisplacement {
+			return nil
+		}
+	}
+
 	return &movem{
 		transferSize:     size,
 		registerListMask: uint16(readData(code, codeOffset, wordSize)),
@@ -76,6 +95,11 @@ func (m *movem) registers() string {
 		}
 
 		return fmt.Sprintf("D%d-D%d/A%d-A%d", dFirstReg, dLastReg, aFirstReg, aLastReg)
+	}
+
+	if m.effective.mode == addressRegisterIndirect {
+		dLastReg, dFirstReg := m.firstAndLastReg(byte(m.registerListMask))
+		return fmt.Sprintf("D%d-D%d", dFirstReg, dLastReg)
 	}
 
 	panic(fmt.Sprintf("Unknown MOVEM mode %d", m.effective.mode))
