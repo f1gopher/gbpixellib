@@ -128,6 +128,8 @@ const (
 	divuPrefix         uint16 = 0b1000000011000000
 	abcdMask           uint16 = 0b1111000111110000
 	abcdPrefix         uint16 = 0b1100000100000000
+	andiToCCRMask      uint16 = 0b1111111111111111
+	andiToCCRPrefix    uint16 = 0b0000001000111100
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -156,6 +158,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateBTST(opcode, code, offset)
 		} else if opcode&addiMask == addiPrefix {
 			result = instructions.CreateADDI(opcode, code, offset)
+		} else if opcode&andiToCCRMask == andiToCCRPrefix {
+			result = instructions.CreateANDIToCCR(opcode, code, offset)
 		} else if opcode&andiMask == andiPrefix {
 			result = instructions.CreateANDI(opcode, code, offset)
 		} else if opcode&subiMask == subiPrefix {
