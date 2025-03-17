@@ -11,7 +11,7 @@ type movea struct {
 }
 
 func CreateMOVEA(value uint16, code []uint8, codeOffset int) *movea {
-	size := twoBitSize(value, 12)
+	size := moveSize(value, 12)
 	// Use 6 as the offset even though it is 9 because we don't read the mode
 	// so it will skip 6+3 to get to the destination
 	destReg := valueFrom3Bits(value, 9)

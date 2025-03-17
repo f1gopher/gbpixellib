@@ -40,8 +40,9 @@ const (
 	oriPrefix          uint16 = 0b0000000000000000
 	leaMask            uint16 = 0b1111000111000000
 	leaPrefix          uint16 = 0b0100000111000000
-	moveaMask          uint16 = 0b1110000111000000
-	moveaPrefix        uint16 = 0b0010000001000000
+	moveaMask          uint16 = 0b1111000111000000
+	moveaPrefix1       uint16 = 0b0011000001000000
+	moveaPrefix2       uint16 = 0b0010000001000000
 	moveqMask          uint16 = 0b1111000100000000
 	moveqPrefix        uint16 = 0b0111000000000000
 	dbccMask           uint16 = 0b1111000011111000
@@ -144,6 +145,8 @@ const (
 	negxPrefix         uint16 = 0b0100000000000000
 	nopMask            uint16 = 0b1111111111111111
 	nopPrefix          uint16 = 0b0100111001110001
+	cmpaMask           uint16 = 0b1111000000000000
+	cmpaPrefix         uint16 = 0b1011000000000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -190,14 +193,20 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		result = instructions.CreateMOVE(opcode, code, offset)
 	case 0b0000000000000010:
 		// Move Long
-		if opcode&moveaMask == moveaPrefix {
+		if opcode&moveaMask == moveaPrefix1 ||
+			opcode&moveaMask == moveaPrefix2 {
 			result = instructions.CreateMOVEA(opcode, code, offset)
 		} else if opcode&moveMask == moveLPrefix {
 			result = instructions.CreateMOVE(opcode, code, offset)
 		}
 	case 0b0000000000000011:
 		// Move Word
-		result = instructions.CreateMOVE(opcode, code, offset)
+		if opcode&moveaMask == moveaPrefix1 ||
+			opcode&moveaMask == moveaPrefix2 {
+			result = instructions.CreateMOVEA(opcode, code, offset)
+		} else {
+			result = instructions.CreateMOVE(opcode, code, offset)
+		}
 	case 0b0000000000000100:
 		// Miscellaneous
 		if opcode == illegalInstruction {
@@ -292,6 +301,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 
 		if opmode == 0 || opmode == 0b00000001 || opmode == 0b00000010 {
 			result = instructions.CreateCMP(opcode, code, offset)
+		} else if opmode == 0b00000011 || opmode == 0b00000111 {
+			result = instructions.CreateCMPA(opcode, code, offset)
 		} else {
 			result = instructions.CreateEOR(opcode, code, offset)
 		}
