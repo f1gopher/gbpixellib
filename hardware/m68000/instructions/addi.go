@@ -13,7 +13,7 @@ type addi struct {
 
 func CreateADDI(value uint16, code []uint8, codeOffset int) *addi {
 	size := twoBitSize(value, 6)
-	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset+size.bytesUsed(), codeOffset)
 	data := readData(code, codeOffset, size)
 
 	return &addi{

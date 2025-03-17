@@ -27,7 +27,7 @@ func (a *abcd) Name() string {
 		return fmt.Sprintf("abcd    -(A%d), -(A%d)", a.yReg, a.xReg)
 	}
 
-	return fmt.Sprintf("abcd    $#%x, $#%x", a.yReg, a.xReg)
+	return fmt.Sprintf("abcd    D%d, D%d", a.yReg, a.xReg)
 }
 
 func (a *abcd) Length() int {

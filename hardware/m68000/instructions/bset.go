@@ -18,7 +18,7 @@ func CreateBSET(value uint16, code []uint8, codeOffset int) *bset {
 	dest, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
 
 	// bit number static
-	if value&0b1111111111000000 == 0b0000100001100000 {
+	if value&0b1111111111000000 == 0b0000100011000000 {
 		src.mode = preIndexedImediate
 
 		if dest.mode == addressRegisterIndirectWithDisplacement {
