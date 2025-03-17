@@ -81,8 +81,10 @@ func Test_Comparison(t *testing.T) {
 			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X           %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], inst.Name())
 		case 8:
 			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X %02X%02X      %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], code[i+6], code[i+7], inst.Name())
+		case 10:
+			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], code[i+6], code[i+7], code[i+8], code[i+9], inst.Name())
 		default:
-			panic(fmt.Sprintf("Invalid instruction length of %d for %06X: %s", inst.Length(), i, inst.Name()))
+			panic(fmt.Sprintf("Invalid instruction %016b length of %d for %06X: '%s' expected %s", code[i], inst.Length(), i, inst.Name(), expectedLine))
 		}
 
 		require.Equal(
