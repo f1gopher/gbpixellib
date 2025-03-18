@@ -155,6 +155,8 @@ const (
 	asl_asrPrefix2     uint16 = 0b1110000011000000
 	exgMask            uint16 = 0b1111000100110000
 	exgPrefix          uint16 = 0b1100000100000000
+	muluMask           uint16 = 0b1111000111000000
+	muluPrefix         uint16 = 0b1100000011000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -320,6 +322,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateABCD(opcode, code, offset)
 		} else if opcode&exgMask == exgPrefix {
 			result = instructions.CreateEXG(opcode, code, offset)
+		} else if opcode&muluMask == muluPrefix {
+			result = instructions.CreateMULU(opcode, code, offset)
 		} else if opcode&andMask == andPrefix {
 			result = instructions.CreateAND(opcode, code, offset)
 		}
