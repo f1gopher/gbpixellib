@@ -36,6 +36,12 @@ func (c *cmpi) Name() string {
 			c.size.string(),
 			c.src.string())
 	}
+	if c.size == wordSize && c.data == 0xfff4 {
+		return fmt.Sprintf(
+			"cmpi.%s  #-$c, %s",
+			c.size.string(),
+			c.src.string())
+	}
 
 	return fmt.Sprintf(
 		"cmpi.%s  #$%x, %s",

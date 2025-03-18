@@ -157,6 +157,8 @@ const (
 	exgPrefix          uint16 = 0b1100000100000000
 	muluMask           uint16 = 0b1111000111000000
 	muluPrefix         uint16 = 0b1100000011000000
+	addxMask           uint16 = 0b1111000100110000
+	addxPrefix         uint16 = 0b1101000100000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -329,7 +331,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000001101:
 		// ADD/ADDX
-		if opcode&addMask == addPrefix {
+		if opcode&addxMask == addxPrefix {
+			result = instructions.CreateADDX(opcode, code, offset)
+		} else if opcode&addMask == addPrefix {
 			result = instructions.CreateADD(opcode, code, offset)
 		}
 	case 0b0000000000001110:
