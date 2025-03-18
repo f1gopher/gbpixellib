@@ -95,8 +95,10 @@ const (
 	orPrefix           uint16 = 0b1000000000000000
 	notMask            uint16 = 0b1111111100000000
 	notPrefix          uint16 = 0b0100011000000000
-	lsl_lsrMask        uint16 = 0b1111000000000000
-	lsl_lsrPrefix      uint16 = 0b1110000000000000
+	lsl_lsrMask1       uint16 = 0b1111000000011000
+	lsl_lsrPrefix1     uint16 = 0b1110000000001000
+	lsl_lsrMask2       uint16 = 0b1111111011000000
+	lsl_lsrPrefix2     uint16 = 0b1110001011000000
 	andiMask           uint16 = 0b1111111100000000
 	andiPrefix         uint16 = 0b0000001000000000
 	stopMask           uint16 = 0b1111111111111111
@@ -147,6 +149,10 @@ const (
 	nopPrefix          uint16 = 0b0100111001110001
 	cmpaMask           uint16 = 0b1111000000000000
 	cmpaPrefix         uint16 = 0b1011000000000000
+	asl_asrMask1       uint16 = 0b1111000000011000
+	asl_asrPrefix1     uint16 = 0b1110000000000000
+	asl_asrMask2       uint16 = 0b1111111011000000
+	asl_asrPrefix2     uint16 = 0b1110000011000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -324,8 +330,10 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateROL_ROR(opcode, code, offset)
 		} else if opcode&roxl_roxrMask == roxl_roxrPrefix {
 			result = instructions.CreateROXL_ROXR(opcode, code, offset)
-		} else if opcode&lsl_lsrMask == lsl_lsrPrefix {
+		} else if opcode&lsl_lsrMask1 == lsl_lsrPrefix1 || opcode&lsl_lsrMask2 == lsl_lsrPrefix2 {
 			result = instructions.CreateLSL_LSR(opcode, code, offset)
+		} else if opcode&asl_asrMask1 == asl_asrPrefix1 || opcode&asl_asrMask2 == asl_asrPrefix2 {
+			result = instructions.CreateASL_ASR(opcode, code, offset)
 		}
 	case 0b0000000000001111:
 		// Coprocessor Interface/MC68040 and CPU32 Extensions
