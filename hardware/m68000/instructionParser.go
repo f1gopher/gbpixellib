@@ -370,6 +370,6 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		return result
 	}
 
-	// Ilegal instructions are called dc.w for some reason
+	// Illegal instructions are called dc.w for some reason
 	return instructions.CreateDC(opcode)
 }

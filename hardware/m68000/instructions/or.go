@@ -15,6 +15,17 @@ func CreateOR(value uint16, code []uint8, codeOffset int) *or {
 	size := sizeFromOpmode(opmode)
 	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 	destReg := valueFrom3Bits(value, 9)
+
+	if opmode == 0b00000100 || opmode == 0b00000101 || opmode == 0b00000110 {
+		if src.mode == addressRegisterDirect ||
+			src.mode == dataRegisterDirect ||
+			src.mode == programCounterIndirectWithDisplacement ||
+			src.mode == preIndexedImediate ||
+			src.mode == programCounterIndirectWithIndex8bitDisplacement {
+			return nil
+		}
+	}
+
 	return &or{
 		length:  2 + instSize,
 		size:    size,

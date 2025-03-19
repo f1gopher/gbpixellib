@@ -18,7 +18,7 @@ func CreateEORI(value uint16, code []uint8, codeOffset int) *eori {
 		mode: preIndexedImediate,
 		data: readData(code, codeOffset, size),
 	}
-	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset+2, codeOffset)
 	return &eori{
 		length: 2 + instSize + size.bytesUsed(),
 		size:   size,

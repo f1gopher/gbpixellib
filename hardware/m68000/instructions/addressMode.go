@@ -238,11 +238,20 @@ func (a *addressModeInfo) string() string {
 		if a.displacement == 0x33 && a.reg == 1 && a.data == 3 {
 			return "INVALID 31"
 		}
-		if a.displacement == 0x37 && a.reg == 5 && a.data == 3 {
+		if (a.displacement == 0x37 && a.reg == 5 && a.data == 3) ||
+			(a.displacement == -0x4a && a.reg == 5 && a.data == 1) {
 			return "INVALID 35"
 		}
-		if a.displacement == 0x38 && a.reg == 4 && a.data == 3 {
+		if (a.displacement == 0x38 && a.reg == 4 && a.data == 3) ||
+			(a.displacement == -0x5c && a.reg == 4 && a.data == 1) ||
+			(a.displacement == -0x5d && a.reg == 4 && a.data == 1) {
 			return "INVALID 34"
+		}
+		if a.displacement == -0x1 && a.reg == 7 && a.data == 7 {
+			return "INVALID 37"
+		}
+		if a.displacement == 0x2e && a.reg == 0 && a.data == 1 {
+			return "INVALID 30"
 		}
 
 		if a.displacement == 0 {
