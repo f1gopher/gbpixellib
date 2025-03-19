@@ -163,6 +163,8 @@ const (
 	addxPrefix         uint16 = 0b1101000100000000
 	oriToCCRMask       uint16 = 0b1111111111111111
 	oriToCCRPrefix     uint16 = 0b0000000000111100
+	linkMask           uint16 = 0b1111111111111000
+	linkPrefix         uint16 = 0b0100111001010000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -271,6 +273,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateCHK(opcode, code, offset)
 		} else if opcode&negxMask == negxPrefix {
 			result = instructions.CreateNEGX(opcode, code, offset)
+		} else if opcode&linkMask == linkPrefix {
+			result = instructions.CreateLINK(opcode, code, offset)
 		}
 	case 0b0000000000000101:
 		// ADDQ/SUBQ/Scc/DBcc/TRAPc c
