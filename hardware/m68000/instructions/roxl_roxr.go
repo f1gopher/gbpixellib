@@ -4,6 +4,7 @@ import "fmt"
 
 type roxl_roxr struct {
 	// Common
+	length    int
 	location  rotateShiftLocation
 	direction direction
 
@@ -17,7 +18,7 @@ type roxl_roxr struct {
 
 func CreateROXL_ROXR(value uint16, code []uint8, codeOffset int) *roxl_roxr {
 	location := register
-	if value&0b1111111011000000 == 0b1110011011000000 {
+	if value&0b1111111011000000 == 0b1110010011000000 {
 		location = immediate
 	}
 
@@ -27,9 +28,10 @@ func CreateROXL_ROXR(value uint16, code []uint8, codeOffset int) *roxl_roxr {
 	}
 
 	if location == immediate {
-		src, _, _ := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
+		src, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
 
 		return &roxl_roxr{
+			length:    2 + instSize,
 			location:  location,
 			direction: direction,
 			src:       src,
@@ -52,6 +54,7 @@ func CreateROXL_ROXR(value uint16, code []uint8, codeOffset int) *roxl_roxr {
 	// TODO - else modulo 64 to get the register?
 
 	return &roxl_roxr{
+		length:    2,
 		location:  location,
 		direction: direction,
 		size:      size,
@@ -72,16 +75,15 @@ func (r *roxl_roxr) Name() string {
 			name,
 			r.size.string(),
 			r.data,
-			r.src.string(),
-		)
+			r.src.string())
 	}
 
 	return fmt.Sprintf(
-		"%s.   ",
+		"%s.w  %s",
 		name,
-	)
+		r.src.string())
 }
 
 func (r *roxl_roxr) Length() int {
-	return 2
+	return r.length
 }

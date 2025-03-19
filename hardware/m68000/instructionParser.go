@@ -119,8 +119,10 @@ const (
 	subiPrefix         uint16 = 0b0000010000000000
 	andMask            uint16 = 0b1111000000000000
 	andPrefix          uint16 = 0b1100000000000000
-	roxl_roxrMask      uint16 = 0b1111000000011000
-	roxl_roxrPrefix    uint16 = 0b1110000000010000
+	roxl_roxrMask1     uint16 = 0b1111000000011000
+	roxl_roxrPrefix1   uint16 = 0b1110000000010000
+	roxl_roxrMask2     uint16 = 0b1111111011000000
+	roxl_roxrPrefix2   uint16 = 0b1110010011000000
 	bchgMask           uint16 = 0b1111000111000000
 	bchgPrefix         uint16 = 0b0000000101000000
 	movepMask          uint16 = 0b1111000000111000
@@ -159,6 +161,8 @@ const (
 	muluPrefix         uint16 = 0b1100000011000000
 	addxMask           uint16 = 0b1111000100110000
 	addxPrefix         uint16 = 0b1101000100000000
+	oriToCCRMask       uint16 = 0b1111111111111111
+	oriToCCRPrefix     uint16 = 0b0000000000111100
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -175,6 +179,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateDC(opcode)
 		} else if opcode&oriToSRMask == oriToSRPrefix {
 			result = instructions.CreateORIToSR(opcode, code, offset)
+		} else if opcode&oriToCCRMask == oriToCCRPrefix {
+			result = instructions.CreateORIToCCR(opcode, code, offset)
 		} else if opcode&oriMask == oriPrefix {
 			result = instructions.CreateORI(opcode, code, offset)
 		} else if opcode&cmpiMask == cmpiPrefix {
@@ -204,7 +210,7 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// Move Byte
 		result = instructions.CreateMOVE(opcode, code, offset)
 	case 0b0000000000000010:
-		// Move Long
+		// Move L
 		if opcode&moveaMask == moveaPrefix1 ||
 			opcode&moveaMask == moveaPrefix2 {
 			result = instructions.CreateMOVEA(opcode, code, offset)
@@ -340,7 +346,7 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// Shift/Rotate/Bit Field
 		if opcode&rol_rorMask == rol_rorPrefix {
 			result = instructions.CreateROL_ROR(opcode, code, offset)
-		} else if opcode&roxl_roxrMask == roxl_roxrPrefix {
+		} else if opcode&roxl_roxrMask1 == roxl_roxrPrefix1 || opcode&roxl_roxrMask2 == roxl_roxrPrefix2 {
 			result = instructions.CreateROXL_ROXR(opcode, code, offset)
 		} else if opcode&lsl_lsrMask1 == lsl_lsrPrefix1 || opcode&lsl_lsrMask2 == lsl_lsrPrefix2 {
 			result = instructions.CreateLSL_LSR(opcode, code, offset)

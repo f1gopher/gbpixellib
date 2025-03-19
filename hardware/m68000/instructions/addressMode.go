@@ -136,7 +136,7 @@ func readAddressMode(
 	} else if mode == programCounterIndirectWithIndex8bitDisplacement {
 		extraData := uint16(readData(code, codeOffset, wordSize))
 		// Only want the first 8bits of info
-		displacement = int32(signExtend16BitTo32Bits(extraData & 0b0000000011111111))
+		displacement = int32(twosComplementToInt8Bit(byte(extraData)))
 		data = uint32(valueFrom3Bits(extraData, 12))
 		bytesUsed = 2
 	} else if mode == addressRegisterIndirectWithIndexAnd8BitDisplacement {
@@ -235,6 +235,15 @@ func (a *addressModeInfo) string() string {
 			(a.displacement == 0xa && a.reg == 3 && a.data == 6) {
 			return "INVALID 33"
 		}
+		if a.displacement == 0x33 && a.reg == 1 && a.data == 3 {
+			return "INVALID 31"
+		}
+		if a.displacement == 0x37 && a.reg == 5 && a.data == 3 {
+			return "INVALID 35"
+		}
+		if a.displacement == 0x38 && a.reg == 4 && a.data == 3 {
+			return "INVALID 34"
+		}
 
 		if a.displacement == 0 {
 			return fmt.Sprintf("(A%d,D%d.w)", a.reg, a.data)
@@ -249,6 +258,9 @@ func (a *addressModeInfo) string() string {
 	case programCounterIndirectWithIndex8bitDisplacement:
 		if a.displacement == 0 {
 			return fmt.Sprintf("(PC,D%d.w)", a.data)
+		}
+		if a.displacement < 0 {
+			return fmt.Sprintf("(-$%x,PC,D%d.w)", -a.displacement, a.data)
 		}
 
 		return fmt.Sprintf("($%x,PC,D%d.w)", a.displacement, a.data)

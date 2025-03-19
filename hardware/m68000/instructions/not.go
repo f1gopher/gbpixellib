@@ -14,6 +14,13 @@ func CreateNOT(value uint16, code []uint8, codeOffset int) *not {
 	size := twoBitSize(value, 6)
 	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 
+	if src.mode == addressRegisterDirect ||
+		src.mode == programCounterIndirectWithDisplacement ||
+		src.mode == preIndexedImediate ||
+		src.mode == programCounterIndirectWithIndex8bitDisplacement {
+		return nil
+	}
+
 	return &not{
 		length: 2 + instSize,
 		size:   size,
