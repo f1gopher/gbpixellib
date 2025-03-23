@@ -42,6 +42,12 @@ func (c *cmpi) Name() string {
 			c.size.string(),
 			c.src.string())
 	}
+	if c.size == byteSize && c.data == 0xFF {
+		return fmt.Sprintf(
+			"cmpi.%s  #-$1, %s",
+			c.size.string(),
+			c.src.string())
+	}
 
 	return fmt.Sprintf(
 		"cmpi.%s  #$%x, %s",

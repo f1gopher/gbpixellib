@@ -228,7 +228,8 @@ func (a *addressModeInfo) string() string {
 		return fmt.Sprintf("($%x,PC) ; ($%x)", a.displacement, a.pc+a.displacement)
 	case addressRegisterIndirectWithIndexAnd8BitDisplacement:
 		// TODO = no idea why for this
-		if a.displacement == 0x7c && a.reg == 2 && a.data == 0 {
+		if (a.displacement == 0x7c && a.reg == 2 && a.data == 0) ||
+			(a.displacement == 0x3b && a.reg == 2 && a.data == 3) {
 			return "INVALID 32"
 		}
 		if (a.displacement == 0x64 && a.reg == 3 && a.data == 0) ||

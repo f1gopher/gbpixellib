@@ -6,13 +6,14 @@ type subi struct {
 	length int
 	size   instSize
 	src    addressModeInfo
-	data   uint32
+	data   int32
 }
 
 func CreateSUBI(value uint16, code []uint8, codeOffset int) *subi {
 	size := twoBitSize(value, 6)
 	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
-	data := readData(code, codeOffset, size)
+	tmp := readData(code, codeOffset, size)
+	data := signExtend16BitTo32Bits(uint16(tmp))
 	return &subi{
 		length: 2 + instSize + size.bytesUsed(),
 		size:   size,
@@ -22,6 +23,14 @@ func CreateSUBI(value uint16, code []uint8, codeOffset int) *subi {
 }
 
 func (s *subi) Name() string {
+	if s.data < 0 {
+		return fmt.Sprintf(
+			"subi.%s  #-$%x, %s",
+			s.size.string(),
+			-s.data,
+			s.src.string())
+	}
+
 	return fmt.Sprintf(
 		"subi.%s  #$%x, %s",
 		s.size.string(),
