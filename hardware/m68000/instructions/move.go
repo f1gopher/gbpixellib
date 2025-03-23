@@ -20,7 +20,9 @@ func CreateMOVE(value uint16, code []uint8, codeOffset int) *move {
 		dest.mode == programCounterIndirectWithDisplacement ||
 		dest.mode == preIndexedImediate ||
 		dest.mode == programCounterIndirectWithIndex8bitDisplacement ||
-		size == zeroSize {
+		dest.mode == invalidAddressMode ||
+		size == zeroSize ||
+		src.mode == invalidAddressMode {
 		return nil
 	}
 	if size == byteSize && src.mode == addressRegisterDirect {

@@ -167,6 +167,8 @@ const (
 	linkPrefix         uint16 = 0b0100111001010000
 	addaMask           uint16 = 0b1111000011000000
 	addaPrefix         uint16 = 0b1101000011000000
+	divsMask           uint16 = 0b1111000111000000
+	divsPrefix         uint16 = 0b1000000111000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -309,6 +311,8 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateDIVU(opcode, code, offset)
 		} else if opcode&sbcdMask == sbcdPrefix {
 			result = instructions.CreateSBCD(opcode, code, offset)
+		} else if opcode&divsMask == divsPrefix {
+			result = instructions.CreateDIVS(opcode, code, offset)
 		} else if opcode&orMask == orPrefix {
 			result = instructions.CreateOR(opcode, code, offset)
 		}

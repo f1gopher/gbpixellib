@@ -35,6 +35,17 @@ func CreateBTST(value uint16, code []uint8, codeOffset int) *btst {
 		// 	src.data = data
 		// 	dest.data = 0
 		// }
+		//
+		if dest.mode == invalidAddressMode ||
+			dest.mode == addressRegisterDirect ||
+			dest.mode == preIndexedImediate {
+			return nil
+		}
+	} else {
+		if dest.mode == invalidAddressMode ||
+			dest.mode == addressRegisterDirect {
+			return nil
+		}
 	}
 
 	return &btst{

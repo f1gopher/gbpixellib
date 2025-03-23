@@ -19,7 +19,7 @@ const (
 	addressRegisterIndirectWithIndexAndBaseDisplacement
 	memoryIndirectPostIndexed
 	memoryIndirectPreIndexed
-	absoluteShort
+	absoluteWord
 	absoluteLong
 	programCounterIndirectWithDisplacement
 	preIndexedImediate
@@ -127,7 +127,7 @@ func readAddressMode(
 		bytesUsed = size.bytesUsed()
 	} else if mode == dataRegisterDirect || mode == addressRegisterDirect {
 		bytesUsed = 0
-	} else if mode == absoluteShort {
+	} else if mode == absoluteWord {
 		data = readData(code, codeOffset, wordSize)
 		bytesUsed = 2
 	} else if mode == absoluteLong {
@@ -182,7 +182,7 @@ func addressingMode(modeBits byte, reg byte) addressMode {
 	case 0b00000111:
 		switch reg {
 		case 0b00000000:
-			return absoluteShort
+			return absoluteWord
 		case 0b00000001:
 			return absoluteLong
 		case 0b00000010:
@@ -210,7 +210,7 @@ func (a *addressModeInfo) string() string {
 		return fmt.Sprintf("(A%d)", a.reg)
 	case addressRegisterIndirectWithPostIncrement:
 		return fmt.Sprintf("(A%d)+", a.reg)
-	case absoluteShort:
+	case absoluteWord:
 		return fmt.Sprintf("$%x.w", a.data)
 	case absoluteLong:
 		return fmt.Sprintf("$%x.l", a.data)
@@ -276,5 +276,6 @@ func (a *addressModeInfo) string() string {
 		return fmt.Sprintf("($%x,PC,D%d.w)", a.displacement, a.data)
 	}
 
-	panic(fmt.Sprintf("Unknown address mode %d", a.mode))
+	// panic(fmt.Sprintf("Unknown address mode %d", a.mode))
+	return "unknown address mode"
 }
