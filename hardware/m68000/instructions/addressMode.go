@@ -33,6 +33,7 @@ type addressModeInfo struct {
 	data         uint32
 	displacement int32
 	pc           int32
+	invalid      string
 }
 
 func readEffectiveAddressMode(
@@ -113,6 +114,8 @@ func readAddressMode(
 	modeBits := valueFrom3Bits(value, modeOffset)
 	register := valueFrom3Bits(value, registerOffset)
 	bytesUsed = 0
+	invalid := ""
+	paramSize := zeroSize
 
 	mode := addressingMode(modeBits, register)
 	var displacement int32 = 0
@@ -141,22 +144,32 @@ func readAddressMode(
 		bytesUsed = 2
 	} else if mode == addressRegisterIndirectWithIndexAnd8BitDisplacement {
 		extraData := uint16(readData(code, codeOffset, wordSize))
+
+		if ((extraData >> 8) & 0b0000000000000111) != 0 {
+			invalid = fmt.Sprintf("INVALID %x", value&0x3f)
+		}
+
 		// Only want the first 8bits of info
 		displacement = int32(twosComplementToInt8Bit(uint8(extraData)))
 
 		data = uint32(valueFrom3Bits(extraData, 12))
 		bytesUsed = 2
+		paramSize = wordSize
+		if extraData&0b0000100000000000 == 0b0000100000000000 {
+			paramSize = longSize
+		}
 
 		// TODO - bit 10 of extraData might be used to chose Address ot Data register (1 for data)
 	}
 
 	return addressModeInfo{
-		size:         zeroSize,
+		size:         paramSize,
 		mode:         mode,
 		reg:          register,
 		data:         data,
 		displacement: displacement,
 		pc:           int32(programCounter),
+		invalid:      invalid,
 	}, codeOffset + bytesUsed, bytesUsed
 }
 
@@ -227,42 +240,18 @@ func (a *addressModeInfo) string() string {
 		}
 		return fmt.Sprintf("($%x,PC) ; ($%x)", a.displacement, a.pc+a.displacement)
 	case addressRegisterIndirectWithIndexAnd8BitDisplacement:
-		// TODO = no idea why for this
-		if (a.displacement == 0x7c && a.reg == 2 && a.data == 0) ||
-			(a.displacement == 0x3b && a.reg == 2 && a.data == 3) {
-			return "INVALID 32"
-		}
-		if (a.displacement == 0x64 && a.reg == 3 && a.data == 0) ||
-			(a.displacement == 0xa && a.reg == 3 && a.data == 6) {
-			return "INVALID 33"
-		}
-		if a.displacement == 0x33 && a.reg == 1 && a.data == 3 {
-			return "INVALID 31"
-		}
-		if (a.displacement == 0x37 && a.reg == 5 && a.data == 3) ||
-			(a.displacement == -0x4a && a.reg == 5 && a.data == 1) {
-			return "INVALID 35"
-		}
-		if (a.displacement == 0x38 && a.reg == 4 && a.data == 3) ||
-			(a.displacement == -0x5c && a.reg == 4 && a.data == 1) ||
-			(a.displacement == -0x5d && a.reg == 4 && a.data == 1) {
-			return "INVALID 34"
-		}
-		if a.displacement == -0x1 && a.reg == 7 && a.data == 7 {
-			return "INVALID 37"
-		}
-		if a.displacement == 0x2e && a.reg == 0 && a.data == 1 {
-			return "INVALID 30"
+		if a.invalid != "" {
+			return a.invalid
 		}
 
 		if a.displacement == 0 {
-			return fmt.Sprintf("(A%d,D%d.w)", a.reg, a.data)
+			return fmt.Sprintf("(A%d,D%d.%s)", a.reg, a.data, a.size.string())
 		}
 
 		if a.displacement < 0 {
-			return fmt.Sprintf("(-$%x,A%d,D%d.w)", -a.displacement, a.reg, a.data)
+			return fmt.Sprintf("(-$%x,A%d,D%d.%s)", -a.displacement, a.reg, a.data, a.size.string())
 		}
-		return fmt.Sprintf("($%x,A%d,D%d.w)", a.displacement, a.reg, a.data)
+		return fmt.Sprintf("($%x,A%d,D%d.%s)", a.displacement, a.reg, a.data, a.size.string())
 	case addressRegisterIndirectWithPreDecrement:
 		return fmt.Sprintf("-(A%d)", a.reg)
 	case programCounterIndirectWithIndex8bitDisplacement:

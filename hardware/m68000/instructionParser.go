@@ -169,6 +169,8 @@ const (
 	addaPrefix         uint16 = 0b1101000011000000
 	divsMask           uint16 = 0b1111000111000000
 	divsPrefix         uint16 = 0b1000000111000000
+	subaMask           uint16 = 0b1111000011000000
+	subaPrefix         uint16 = 0b1001000011000000
 )
 
 func (i *instructionParser) parse(code []uint8, offset int) instruction {
@@ -318,7 +320,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000001001:
 		// SUB/SUBX
-		if opcode&subMask == subPrefix {
+		if opcode&subaMask == subaPrefix {
+			result = instructions.CreateSUBA(opcode, code, offset)
+		} else if opcode&subMask == subPrefix {
 			result = instructions.CreateSUB(opcode, code, offset)
 		}
 	case 0b0000000000001010:

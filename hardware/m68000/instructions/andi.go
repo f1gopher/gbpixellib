@@ -17,7 +17,8 @@ func CreateANDI(value uint16, code []uint8, codeOffset int) *andi {
 		src.mode == addressRegisterDirect ||
 		src.mode == programCounterIndirectWithDisplacement ||
 		src.mode == preIndexedImediate ||
-		src.mode == programCounterIndirectWithIndex8bitDisplacement {
+		src.mode == programCounterIndirectWithIndex8bitDisplacement ||
+		src.mode == invalidAddressMode {
 		return nil
 	}
 

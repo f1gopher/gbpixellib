@@ -8,7 +8,7 @@ type addi struct {
 	length int
 	opSize instSize
 	dest   addressModeInfo
-	data   uint32
+	data   int32
 }
 
 func CreateADDI(value uint16, code []uint8, codeOffset int) *addi {
@@ -23,18 +23,31 @@ func CreateADDI(value uint16, code []uint8, codeOffset int) *addi {
 		size == zeroSize {
 		return nil
 	}
-	data := readData(code, codeOffset, size)
+	var data int32
+	tmp := readData(code, codeOffset, size)
+	if size == wordSize {
+		data = signExtend16BitTo32Bits(uint16(tmp))
+	} else {
+		data = int32(twosComplementToInt8Bit(uint8(tmp)))
+	}
 
 	return &addi{
 		length: 2 + instSize + size.bytesUsed(),
 		opSize: size,
 		dest:   dest,
-
-		data: data,
+		data:   data,
 	}
 }
 
 func (a *addi) Name() string {
+	if a.data < 0 {
+		return fmt.Sprintf(
+			"addi.%s  #-$%x, %s",
+			a.opSize.string(),
+			-a.data,
+			a.dest.string())
+	}
+
 	return fmt.Sprintf(
 		"addi.%s  #$%x, %s",
 		a.opSize.string(),

@@ -12,7 +12,12 @@ type subi struct {
 func CreateSUBI(value uint16, code []uint8, codeOffset int) *subi {
 	size := twoBitSize(value, 6)
 	tmp := readData(code, codeOffset, size)
-	data := signExtend16BitTo32Bits(uint16(tmp))
+	var data int32
+	if size == wordSize {
+		data = signExtend16BitTo32Bits(uint16(tmp))
+	} else {
+		data = int32(twosComplementToInt8Bit(uint8(tmp)))
+	}
 	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset+size.bytesUsed(), codeOffset)
 	return &subi{
 		length: 2 + instSize + size.bytesUsed(),

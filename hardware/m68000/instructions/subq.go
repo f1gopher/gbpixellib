@@ -17,6 +17,15 @@ func CreateSUBQ(value uint16, code []uint8, codeOffset int) *subq {
 	if data == 0 {
 		data = 8
 	}
+
+	if src.mode == invalidAddressMode ||
+		src.mode == preIndexedImediate ||
+		src.mode == addressRegisterIndirectWithIndexAndBaseDisplacement ||
+		src.mode == addressRegisterIndirectWithIndexAnd8BitDisplacement ||
+		(src.mode == addressRegisterDirect && size == byteSize) {
+		return nil
+	}
+
 	return &subq{
 		length: 2 + instSize,
 		src:    src,

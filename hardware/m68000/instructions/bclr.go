@@ -28,6 +28,14 @@ func CreateBCLR(value uint16, code []uint8, codeOffset int) *bclr {
 
 	dest, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
 
+	if dest.mode == invalidAddressMode ||
+		dest.mode == addressRegisterDirect ||
+		dest.mode == programCounterIndirectWithDisplacement ||
+		dest.mode == preIndexedImediate ||
+		dest.mode == programCounterIndirectWithIndex8bitDisplacement {
+		return nil
+	}
+
 	return &bclr{
 		length: 2 + instSize + size.bytesUsed(),
 		size:   size,

@@ -10,6 +10,7 @@ const (
 )
 
 type movem struct {
+	length    int
 	effective addressModeInfo
 
 	transferSize     instSize
@@ -19,7 +20,7 @@ type movem struct {
 
 func CreateMOVEM(value uint16, code []uint8, codeOffset int) *movem {
 	size := oneBitSize(value, 6)
-	eff, _, _ := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
+	eff, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset+wordSize.bytesUsed(), codeOffset)
 	direction := registerToMemory
 	if ((value >> 10) & 0b0000000000000001) == 0b0000000000000001 {
 		direction = memoryToRegister
@@ -45,6 +46,7 @@ func CreateMOVEM(value uint16, code []uint8, codeOffset int) *movem {
 	}
 
 	return &movem{
+		length:           2 + instSize + wordSize.bytesUsed(),
 		transferSize:     size,
 		registerListMask: uint16(readData(code, codeOffset, wordSize)),
 		direction:        direction,
@@ -69,7 +71,7 @@ func (m *movem) Name() string {
 }
 
 func (m *movem) Length() int {
-	return 2 + wordSize.bytesUsed()
+	return m.length
 }
 
 func (m *movem) registers() string {
@@ -80,7 +82,7 @@ func (m *movem) registers() string {
 
 		if !aAnySet && dAnySet {
 			if dFirstReg == dLastReg {
-				return fmt.Sprintf("D%d", 7-aLastReg)
+				return fmt.Sprintf("D%d", 7-dLastReg)
 			}
 			return fmt.Sprintf("D%d-D%d", 7-dFirstReg, 7-dLastReg)
 		} else if aAnySet && !dAnySet {
@@ -100,7 +102,7 @@ func (m *movem) registers() string {
 
 		if !aAnySet && dAnySet {
 			if dFirstReg == dLastReg {
-				return fmt.Sprintf("D%d", aLastReg)
+				return fmt.Sprintf("D%d", dLastReg)
 			}
 			return fmt.Sprintf("D%d-D%d", dFirstReg, dLastReg)
 		} else if aAnySet && !dAnySet {
