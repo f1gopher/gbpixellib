@@ -3,18 +3,17 @@ package instructions
 import "fmt"
 
 type move struct {
-	src  addressModeInfo
-	dest addressModeInfo
+	length int
+	src    addressModeInfo
+	dest   addressModeInfo
 
-	length      instSize
-	sizeInBytes int
+	size instSize
 }
 
 func CreateMOVE(value uint16, code []uint8, codeOffset int) *move {
-	readOffset := codeOffset
 	size := moveSize(value, 12)
-	src, readOffset, _ := readSrcAddressMode(value, 0, size, code, readOffset, codeOffset)
-	dest, readOffset, _ := readDestAddressMode(value, 6, size, code, readOffset, codeOffset)
+	src, _, srcInstSize := readSrcAddressMode(value, 0, size, code, codeOffset, codeOffset)
+	dest, _, destInstSize := readDestAddressMode(value, 6, size, code, codeOffset+srcInstSize, codeOffset)
 
 	if dest.mode == addressRegisterDirect ||
 		dest.mode == programCounterIndirectWithDisplacement ||
@@ -29,24 +28,22 @@ func CreateMOVE(value uint16, code []uint8, codeOffset int) *move {
 		return nil
 	}
 
-	sizeInBytes := 2 + (readOffset - codeOffset)
-
 	return &move{
-		src:         src,
-		dest:        dest,
-		length:      size,
-		sizeInBytes: sizeInBytes,
+		length: 2 + srcInstSize + destInstSize,
+		src:    src,
+		dest:   dest,
+		size:   size,
 	}
 }
 
 func (m *move) Name() string {
 	return fmt.Sprintf(
 		"move.%s  %s, %s",
-		m.length.string(),
+		m.size.string(),
 		m.src.string(),
 		m.dest.string())
 }
 
 func (m *move) Length() int {
-	return m.sizeInBytes
+	return m.length
 }

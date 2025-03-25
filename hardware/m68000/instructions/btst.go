@@ -46,6 +46,11 @@ func CreateBTST(value uint16, code []uint8, codeOffset int) *btst {
 			dest.mode == addressRegisterDirect {
 			return nil
 		}
+
+		// Only want the frist byte in this mode
+		if dest.mode == preIndexedImediate {
+			dest.data = dest.data & 0x00FF
+		}
 	}
 
 	return &btst{

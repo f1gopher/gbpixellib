@@ -146,7 +146,14 @@ func readAddressMode(
 		extraData := uint16(readData(code, codeOffset, wordSize))
 
 		if ((extraData >> 8) & 0b0000000000000111) != 0 {
-			invalid = fmt.Sprintf("INVALID %x", value&0x3f)
+
+			if modeOffset > registerOffset {
+				invalid = fmt.Sprintf("INVALID %x", value&0x3f)
+			} else {
+				// Need to swap mode and register bits around so they match the expected output
+				t := ((value >> uint16(registerOffset)) & 0b111) | ((value >> (uint16(modeOffset) - 3)) & 0b111000)
+				invalid = fmt.Sprintf("INVALID %x", t&0x3f)
+			}
 		}
 
 		// Only want the first 8bits of info
