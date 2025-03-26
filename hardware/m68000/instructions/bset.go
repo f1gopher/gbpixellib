@@ -35,8 +35,11 @@ func CreateBSET(value uint16, code []uint8, codeOffset int) *bset {
 		}
 	}
 
-	if src.mode == invalidAddressMode ||
-		dest.mode == invalidAddressMode {
+	if dest.mode == invalidAddressMode ||
+		dest.mode == addressRegisterDirect ||
+		dest.mode == preIndexedImediate ||
+		dest.mode == programCounterIndirectWithDisplacement ||
+		dest.mode == programCounterIndirectWithIndex8bitDisplacement {
 		return nil
 	}
 

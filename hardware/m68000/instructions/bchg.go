@@ -3,23 +3,48 @@ package instructions
 import "fmt"
 
 type bchg struct {
-	length   int
-	src      addressModeInfo
-	register byte
+	length      int
+	src         addressModeInfo
+	register    byte
+	data        byte
+	isImmediate bool
 }
 
 func CreateBCHG(value uint16, code []uint8, codeOffset int) *bchg {
-	src, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
-	register := valueFrom3Bits(value, 9)
+	var register byte = 0
+	var data byte = 0
+	offset := codeOffset
+	isImmediate := value&0b1111111111000000 == 0b0000100001000000
+	length := 2
+
+	if isImmediate {
+		data = uint8(readData(code, codeOffset, byteSize))
+		offset += wordSize.bytesUsed()
+		length += wordSize.bytesUsed()
+	} else {
+		register = valueFrom3Bits(value, 9)
+	}
+
+	src, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, offset, codeOffset)
 
 	return &bchg{
-		length:   2 + instSize,
-		src:      src,
-		register: register,
+		length:      length + instSize,
+		src:         src,
+		register:    register,
+		data:        data,
+		isImmediate: isImmediate,
 	}
 }
 
 func (b *bchg) Name() string {
+	if b.isImmediate {
+		return fmt.Sprintf(
+			"bchg    #$%x, %s",
+			b.data,
+			b.src.string(),
+		)
+	}
+
 	return fmt.Sprintf(
 		"bchg    D%d, %s",
 		b.register,

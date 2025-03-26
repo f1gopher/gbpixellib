@@ -107,6 +107,20 @@ func twosComplementToInt8Bit(value uint8) int {
 	return int(value)
 }
 
+func twosComplementToInt32Bit(value uint32) int32 {
+	isNegative := (value & 0b10000000000000000000000000000000) == 0b10000000000000000000000000000000
+
+	// For negative invert the bits and add one
+	if isNegative {
+		value = value ^ 0xFFFFFFFF
+		value += 1
+
+		return -int32(value)
+	}
+
+	return int32(value)
+}
+
 func twosComplementToInt16Bit(value uint16) int {
 	isNegative := (value & 0b1000000000000000) == 0b1000000000000000
 

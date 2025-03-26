@@ -1,11 +1,19 @@
 package instructions
 
-type Unknown struct{}
+import "fmt"
 
-func (u *Unknown) Name() string {
-	return "Unknown instruction"
+type unknown struct {
+	value uint16
 }
 
-func (u *Unknown) Length() int {
+func CreateUNKNOWN(value uint16) *unknown {
+	return &unknown{value: value}
+}
+
+func (u *unknown) Name() string {
+	return fmt.Sprintf("unknown instruction: %x", u.value)
+}
+
+func (u *unknown) Length() int {
 	return 2
 }

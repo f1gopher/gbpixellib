@@ -123,8 +123,10 @@ const (
 	roxl_roxrPrefix1   uint16 = 0b1110000000010000
 	roxl_roxrMask2     uint16 = 0b1111111011000000
 	roxl_roxrPrefix2   uint16 = 0b1110010011000000
-	bchgMask           uint16 = 0b1111000111000000
-	bchgPrefix         uint16 = 0b0000000101000000
+	bchgMask1          uint16 = 0b1111000111000000
+	bchgPrefix1        uint16 = 0b0000000101000000
+	bchgMask2          uint16 = 0b1111111111000000
+	bchgPrefix2        uint16 = 0b0000100001000000
 	movepMask          uint16 = 0b1111000000111000
 	movepPrefix        uint16 = 0b0000000000001000
 	bsetMask           uint16 = 0b1111000011000000
@@ -209,7 +211,7 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 			result = instructions.CreateANDI(opcode, code, offset)
 		} else if opcode&subiMask == subiPrefix {
 			result = instructions.CreateSUBI(opcode, code, offset)
-		} else if opcode&bchgMask == bchgPrefix {
+		} else if opcode&bchgMask1 == bchgPrefix1 || opcode&bchgMask2 == bchgPrefix2 {
 			result = instructions.CreateBCHG(opcode, code, offset)
 		} else if opcode&bsetMask == bsetPrefix {
 			result = instructions.CreateBSET(opcode, code, offset)
@@ -376,6 +378,9 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// if opcode&dcPrefix == dcPrefix {
 		// 	result = instructions.CreateDC(opcode)
 		// }
+		if opcode&0xff80 == 0xf500 {
+			result = instructions.CreateUNKNOWN(opcode)
+		}
 	}
 
 	if result != nil && !reflect.ValueOf(result).IsNil() {

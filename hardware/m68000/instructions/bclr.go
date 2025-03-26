@@ -12,6 +12,7 @@ type bclr struct {
 }
 
 func CreateBCLR(value uint16, code []uint8, codeOffset int) *bclr {
+	offset := codeOffset
 	size := zeroSize
 	var data uint32 = 0
 	src := addressModeInfo{
@@ -21,12 +22,13 @@ func CreateBCLR(value uint16, code []uint8, codeOffset int) *bclr {
 
 	// bit number static
 	if value&0b1111111111000000 == 0b0000100010000000 {
-		size = wordSize
+		size = byteSize
 		src.mode = preIndexedImediate
 		src.data = readData(code, codeOffset, size)
+		offset += wordSize.bytesUsed()
 	}
 
-	dest, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
+	dest, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, offset, codeOffset)
 
 	if dest.mode == invalidAddressMode ||
 		dest.mode == addressRegisterDirect ||

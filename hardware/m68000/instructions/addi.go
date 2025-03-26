@@ -27,6 +27,8 @@ func CreateADDI(value uint16, code []uint8, codeOffset int) *addi {
 	tmp := readData(code, codeOffset, size)
 	if size == wordSize {
 		data = signExtend16BitTo32Bits(uint16(tmp))
+	} else if size == longSize {
+		data = twosComplementToInt32Bit(tmp)
 	} else {
 		data = int32(twosComplementToInt8Bit(uint8(tmp)))
 	}
