@@ -11,10 +11,17 @@ type subi struct {
 
 func CreateSUBI(value uint16, code []uint8, codeOffset int) *subi {
 	size := twoBitSize(value, 6)
+
+	if size == zeroSize {
+		return nil
+	}
+
 	tmp := readData(code, codeOffset, size)
 	var data int32
 	if size == wordSize {
 		data = signExtend16BitTo32Bits(uint16(tmp))
+	} else if size == longSize {
+		data = twosComplementToInt32Bit(tmp)
 	} else {
 		data = int32(twosComplementToInt8Bit(uint8(tmp)))
 	}

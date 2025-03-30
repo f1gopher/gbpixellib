@@ -11,6 +11,11 @@ type addx struct {
 
 func CreateADDX(value uint16, code []uint8, codeOffset int) *addx {
 	size := twoBitSize(value, 6)
+
+	if size == zeroSize {
+		return nil
+	}
+
 	regX := valueFrom3Bits(value, 9)
 	regY := valueFrom3Bits(value, 0)
 	isAddressReg := value&0b0000000000001000 == 0b0000000000001000
