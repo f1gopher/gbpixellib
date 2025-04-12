@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,9 +37,29 @@ func Test_A(t *testing.T) {
 }
 
 func Test_Comparison(t *testing.T) {
-	const input = ""
+	home := "../../../cps1/test/Comparison/"
 
-	file, err := os.Open("../../../cps1/test/Comparison/" + input + "/input.dmp")
+	//runComparison(t, home+"ffight.dmp", home+"ffight.asm")
+
+	files, err := filepath.Glob(home + "*.dmp")
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, file := range files {
+		t.Run(file, func(t *testing.T) {
+			expected := file[:len(file)-3]
+			expected += "asm"
+			runComparison(t, file, expected)
+		})
+	}
+}
+
+func runComparison(t *testing.T, input string, expectedOutput string) {
+
+	t.Logf("Checking: %s\n", input)
+
+	file, err := os.Open(input)
 
 	assert.Nil(t, err, "missing test data file")
 	defer file.Close()
@@ -50,7 +71,7 @@ func Test_Comparison(t *testing.T) {
 		line := inputScanner.Text()
 		matches := r.FindAllString(line, -1)
 
-		for x := 0; x < 8; x++ {
+		for x := range matches {
 			val, _ := strconv.ParseUint(matches[x][0:4], 16, 16)
 			lower := uint8(val)
 			upper := uint8(val >> 8)
@@ -61,7 +82,7 @@ func Test_Comparison(t *testing.T) {
 
 	parser := instructionParser{}
 
-	expected, err := os.ReadFile("../../../cps1/test/Comparison/" + input + "/output.asm")
+	expected, err := os.ReadFile(expectedOutput)
 	assert.Nil(t, err, "Missing expected result file")
 
 	expectedLines := strings.Split(string(expected), "\n")
@@ -74,13 +95,13 @@ func Test_Comparison(t *testing.T) {
 		inst := parser.parse(code, i)
 		switch inst.Length() {
 		case 2:
-			resultLine = fmt.Sprintf("%06X: %02X%02X                     %s", i, code[i], code[i+1], inst.Name())
+			resultLine = fmt.Sprintf("%06X: %02X%02X                %s", i, code[i], code[i+1], inst.Name())
 		case 4:
-			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X                %s", i, code[i], code[i+1], code[i+2], code[i+3], inst.Name())
+			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X           %s", i, code[i], code[i+1], code[i+2], code[i+3], inst.Name())
 		case 6:
-			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X           %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], inst.Name())
+			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X      %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], inst.Name())
 		case 8:
-			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X %02X%02X      %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], code[i+6], code[i+7], inst.Name())
+			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X %02X%02X %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], code[i+6], code[i+7], inst.Name())
 		case 10:
 			resultLine = fmt.Sprintf("%06X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %s", i, code[i], code[i+1], code[i+2], code[i+3], code[i+4], code[i+5], code[i+6], code[i+7], code[i+8], code[i+9], inst.Name())
 		default:
