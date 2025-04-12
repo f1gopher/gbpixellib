@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleADD(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// ADD <ea>,Dn (destination is data register)
 		// Size: Byte (00), Word (01), Long (10)
 
@@ -292,12 +289,5 @@ func TestDisassembleADD(t *testing.T) {
 		{[]uint8{0xDF, 0xB9, 0x9A, 0xBC, 0xDE, 0xF0}, "ADD.L D7,(0x9ABCDEF0).L"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

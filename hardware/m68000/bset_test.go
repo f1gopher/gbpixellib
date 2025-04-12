@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleBSET(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// BSET - Bit Set
 		// Format 1: BSET Dn,<ea> (dynamic bit number from register)
 		// Format: 0000 rrr 111 eee mmm (where rrr is the register number)
@@ -129,12 +126,5 @@ func TestDisassembleBSET(t *testing.T) {
 		{[]uint8{0x08, 0xF9, 0x9A, 0xBC, 0xDE, 0xF0, 0x00, 0x07}, "BSET #7,(0x9ABCDEF0).L"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

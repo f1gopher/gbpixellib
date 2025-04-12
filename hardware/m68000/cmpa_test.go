@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleCMPA(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// CMPA - Compare Address
 		// Format: 1011 rrr s11 eeeeee
 		// Where:
@@ -188,12 +185,5 @@ func TestDisassembleCMPA(t *testing.T) {
 		{[]uint8{0xB1, 0xFB, 0x12, 0xB4}, "CMPA.L (0x12,PC,A4.W),A0"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

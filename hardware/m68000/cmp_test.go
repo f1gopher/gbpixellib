@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleCMP(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// CMP - Compare
 		// Format: 1011 rrr sss eeeeee
 		// Where:
@@ -249,12 +246,5 @@ func TestDisassembleCMP(t *testing.T) {
 		{[]uint8{0xB0, 0xBB, 0x12, 0xB4}, "CMP.L (0x12,PC,A4.W),D0"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

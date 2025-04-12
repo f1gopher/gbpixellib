@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleANDI_to_SR(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// ANDI to SR (Status Register)
 		// Format: 0000 0010 0111 1100 xxxx xxxx xxxx xxxx
 		// Where xxxx xxxx xxxx xxxx is a 16-bit immediate value that will be ANDed with the SR
@@ -59,12 +56,5 @@ func TestDisassembleANDI_to_SR(t *testing.T) {
 		{[]uint8{0x02, 0x7C, 0xFF, 0xE0}, "ANDI #0xFFE0,SR"}, // Clear all condition codes
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

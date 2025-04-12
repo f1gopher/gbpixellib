@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleAND(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// AND - Logical AND
 		// Operation: Source ∧ Destination → Destination
 		// Sizes: Byte (00), Word (01), Long (10)
@@ -119,21 +116,11 @@ func TestDisassembleAND(t *testing.T) {
 		{[]uint8{0xCE, 0x72, 0x91, 0xB0}, "AND.W (0x91,A2,A0.L),D7"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }
 
 func TestDisassembleAND_Part2(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// AND.L d8(An,Xn),Dn
 		{[]uint8{0xC0, 0xB0, 0x12, 0x34}, "AND.L (0x12,A0,D4.W),D0"},
 		{[]uint8{0xC8, 0xB6, 0x56, 0x78}, "AND.L (0x56,A6,D7.W),D4"},
@@ -336,12 +323,5 @@ func TestDisassembleAND_Part2(t *testing.T) {
 		{[]uint8{0xCF, 0xB9, 0x9A, 0xBC, 0xDE, 0xF0}, "AND.L D7,(0x9ABCDEF0).L"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

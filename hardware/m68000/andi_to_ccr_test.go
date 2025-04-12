@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleANDI_to_CCR(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// ANDI to CCR (Condition Code Register)
 		// Format: 0000 0010 0011 1100 xxxx xxxx
 		// Where xxxx xxxx is an 8-bit immediate value that will be ANDed with the CCR
@@ -58,12 +55,5 @@ func TestDisassembleANDI_to_CCR(t *testing.T) {
 		{[]uint8{0x02, 0x3C, 0xFF, 0x1F}, "ANDI #0x1F,CCR"}, // Upper byte should be ignored
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

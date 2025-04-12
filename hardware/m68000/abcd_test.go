@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleABCD(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// Register to Register mode (Rx,Ry)
 		// Format: 1100xxx10000yyyy where xxx is destination register, yyyy is source register
 		{[]uint8{0xC1, 0x00}, "ABCD D0,D0"},
@@ -58,12 +55,5 @@ func TestDisassembleABCD(t *testing.T) {
 		{[]uint8{0xC7, 0x0D}, "ABCD -(A5),-(A3)"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleBTST(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// BTST - Bit Test
 		// Format 1: BTST Dn,<ea> (dynamic bit number from register)
 		// Format: 0000 rrr 100 eee mmm (where rrr is the register number)
@@ -155,12 +152,5 @@ func TestDisassembleBTST(t *testing.T) {
 		{[]uint8{0x08, 0x3C, 0xAB, 0xCD, 0x00, 0x07}, "BTST #7,#0xABCD"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

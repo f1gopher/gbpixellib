@@ -3,11 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleDBcc(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-		address  uint32 // PC address for relative branch calculation
-	}{
+	testCases := []testCaseWithAddress{
 		// DBcc - Decrement and Branch on Condition
 		// Format: 0101 CCCC 11001 rrr followed by displacement word
 		// Where:
@@ -132,12 +128,5 @@ func TestDisassembleDBcc(t *testing.T) {
 		{[]uint8{0x50, 0xC9, 0xFF, 0xFE}, "DBF D0,$1000", 0x1000}, // Branch to self from 0x1000
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, tc.address)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s (at address 0x%X)", tc.expected, result, tc.address)
-			}
-		})
-	}
+	runAddressTests(t, testCases)
 }

@@ -4,12 +4,6 @@ import (
 	"testing"
 )
 
-func DisassembleInstruction(code []uint8, address uint32) string {
-	parser := instructionParser{}
-	inst := parser.parse(code, int(address))
-	return inst.Name()
-}
-
 func TestDisassembleDataMovement(t *testing.T) {
 	testCases := []struct {
 		name     string

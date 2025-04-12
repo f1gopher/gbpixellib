@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleASL(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// ASL - Arithmetic Shift Left
 		// Format 1: Register shifts by immediate count or register
 		// Format: 1110 ccc s 11 rrr ddd
@@ -165,12 +162,5 @@ func TestDisassembleASL(t *testing.T) {
 		{[]uint8{0xE1, 0xF9, 0x9A, 0xBC, 0xDE, 0xF0}, "ASL.W (0x9ABCDEF0).L"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

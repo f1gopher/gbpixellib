@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleADDQ(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// ADDQ - Add Quick
 		// Operation: Immediate Data + Destination → Destination
 		// Sizes: Byte (00), Word (01), Long (10)
@@ -211,12 +208,5 @@ func TestDisassembleADDQ(t *testing.T) {
 		{[]uint8{0x5E, 0xB9, 0x9A, 0xBC, 0xDE, 0xF0}, "ADDQ.L #7,(0x9ABCDEF0).L"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

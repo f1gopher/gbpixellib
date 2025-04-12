@@ -3,11 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleBRA(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-		address  uint32 // PC address for relative branch calculation
-	}{
+	testCases := []testCaseWithAddress{
 		// BRA - Branch Always (Unconditional)
 		// Format: 0110 0000 xxxx xxxx (8-bit displacement)
 		//         0110 0000 0000 0000 xxxx xxxx xxxx xxxx (16-bit displacement)
@@ -50,12 +46,5 @@ func TestDisassembleBRA(t *testing.T) {
 		{[]uint8{0x60, 0xFA}, "BRA.S $0000", 0x0004},             // Branch to address 0x0000
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, tc.address)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s (at address 0x%X)", tc.expected, result, tc.address)
-			}
-		})
-	}
+	runAddressTests(t, testCases)
 }

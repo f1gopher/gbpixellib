@@ -29,9 +29,6 @@ func (i *instructionParser) dump(code []uint8) []string {
 const (
 	illegalInstruction uint16 = 0b0100101011111100
 	rteInstruction     uint16 = 0b0100111001110011
-	dcPrefix           uint16 = 0x00FF
-	dc2Mask            uint16 = 0b1111111100000000
-	dc2Prefix          uint16 = 0b0000111000000000
 	moveMask           uint16 = 0b1111000000000000
 	moveBPrefix        uint16 = 0b0001000000000000
 	moveWPrefix        uint16 = 0b0011000000000000
@@ -185,9 +182,7 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 	switch operation {
 	case 0b0000000000000000:
 		// Bit Manipulation/MOVEP/Immed iate
-		if opcode&dcPrefix == dcPrefix || opcode&dc2Mask == dc2Prefix {
-			result = instructions.CreateDC(opcode)
-		} else if opcode&oriToSRMask == oriToSRPrefix {
+		if opcode&oriToSRMask == oriToSRPrefix {
 			result = instructions.CreateORIToSR(opcode, code, offset)
 		} else if opcode&oriToCCRMask == oriToCCRPrefix {
 			result = instructions.CreateORIToCCR(opcode, code, offset)
@@ -373,11 +368,6 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000001111:
 		// Coprocessor Interface/MC68040 and CPU32 Extensions
-
-		// // TODO - don't think this is right
-		// if opcode&dcPrefix == dcPrefix {
-		// 	result = instructions.CreateDC(opcode)
-		// }
 		if opcode&0xff80 == 0xf500 {
 			result = instructions.CreateUNKNOWN(opcode)
 		}
@@ -387,6 +377,5 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		return result
 	}
 
-	// Illegal instructions are called dc.w for some reason
-	return instructions.CreateDC(opcode)
+	return instructions.CreateILLEGAL()
 }

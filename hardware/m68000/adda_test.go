@@ -1,12 +1,11 @@
 package m68000
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestDisassembleADDA(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// ADDA - Add Effective Address to Address Register
 		// Operation: <ea> + An → An
 		// Sizes: Word (011), Long (111)
@@ -182,12 +181,5 @@ func TestDisassembleADDA(t *testing.T) {
 		{[]uint8{0xDF, 0xFB, 0x91, 0xB0}, "ADDA.L (0x91,PC,A0.L),A7"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

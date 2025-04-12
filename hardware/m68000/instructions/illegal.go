@@ -7,7 +7,7 @@ func CreateILLEGAL() *illegal {
 }
 
 func (i *illegal) Name() string {
-	return ""
+	return "ILLEGAL"
 }
 
 func (i *illegal) Length() int {

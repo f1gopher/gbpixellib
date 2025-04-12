@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleCHK(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// CHK - Check Register Against Bounds
 		// Format: 0100 rrr 1s0 eee mmm
 		// Where:
@@ -129,12 +126,5 @@ func TestDisassembleCHK(t *testing.T) {
 		{[]uint8{0x4F, 0xBC, 0xFF, 0xFF}, "CHK.W #0xFFFF,D7"}, // -1
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }

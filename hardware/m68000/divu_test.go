@@ -3,10 +3,7 @@ package m68000
 import "testing"
 
 func TestDisassembleDIVU(t *testing.T) {
-	testCases := []struct {
-		bytes    []uint8
-		expected string
-	}{
+	testCases := []testCase{
 		// DIVU - Divide Unsigned
 		// Format: 1000 rrr 011 eeeeee
 		// Where:
@@ -189,12 +186,5 @@ func TestDisassembleDIVU(t *testing.T) {
 		{[]uint8{0x8E, 0xFB, 0xDE, 0xF7}, "DIVU (0xDE,PC,D7.W),D7"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.expected, func(t *testing.T) {
-			result := DisassembleInstruction(tc.bytes, 0)
-			if result != tc.expected {
-				t.Errorf("Expected %s, got %s", tc.expected, result)
-			}
-		})
-	}
+	runTests(t, testCases)
 }
