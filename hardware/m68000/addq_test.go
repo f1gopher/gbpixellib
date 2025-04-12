@@ -1,0 +1,222 @@
+package m68000
+
+import "testing"
+
+func TestDisassembleADDQ(t *testing.T) {
+	testCases := []struct {
+		bytes    []uint8
+		expected string
+	}{
+		// ADDQ - Add Quick
+		// Operation: Immediate Data + Destination → Destination
+		// Sizes: Byte (00), Word (01), Long (10)
+		// Quick data range: 1-8 (encoded as 1-7, 0 represents 8)
+
+		// ADDQ.B #n,Dn
+		{[]uint8{0x50, 0x00}, "ADDQ.B #1,D0"},
+		{[]uint8{0x52, 0x01}, "ADDQ.B #1,D1"},
+		{[]uint8{0x54, 0x02}, "ADDQ.B #2,D2"},
+		{[]uint8{0x56, 0x03}, "ADDQ.B #3,D3"},
+		{[]uint8{0x58, 0x04}, "ADDQ.B #4,D4"},
+		{[]uint8{0x5A, 0x05}, "ADDQ.B #5,D5"},
+		{[]uint8{0x5C, 0x06}, "ADDQ.B #6,D6"},
+		{[]uint8{0x5E, 0x07}, "ADDQ.B #7,D7"},
+		{[]uint8{0x50, 0x00}, "ADDQ.B #1,D0"},
+		{[]uint8{0x52, 0x00}, "ADDQ.B #1,D0"},
+		{[]uint8{0x54, 0x00}, "ADDQ.B #2,D0"},
+		{[]uint8{0x56, 0x00}, "ADDQ.B #3,D0"},
+		{[]uint8{0x58, 0x00}, "ADDQ.B #4,D0"},
+		{[]uint8{0x5A, 0x00}, "ADDQ.B #5,D0"},
+		{[]uint8{0x5C, 0x00}, "ADDQ.B #6,D0"},
+		{[]uint8{0x5E, 0x00}, "ADDQ.B #7,D0"},
+		{[]uint8{0x50, 0x00}, "ADDQ.B #1,D0"},
+
+		// Test value 8 (encoded as 0)
+		{[]uint8{0x50, 0x07}, "ADDQ.B #8,D7"},
+
+		// ADDQ.W #n,Dn
+		{[]uint8{0x50, 0x40}, "ADDQ.W #1,D0"},
+		{[]uint8{0x52, 0x41}, "ADDQ.W #1,D1"},
+		{[]uint8{0x54, 0x42}, "ADDQ.W #2,D2"},
+		{[]uint8{0x56, 0x43}, "ADDQ.W #3,D3"},
+		{[]uint8{0x58, 0x44}, "ADDQ.W #4,D4"},
+		{[]uint8{0x5A, 0x45}, "ADDQ.W #5,D5"},
+		{[]uint8{0x5C, 0x46}, "ADDQ.W #6,D6"},
+		{[]uint8{0x5E, 0x47}, "ADDQ.W #7,D7"},
+		{[]uint8{0x50, 0x40}, "ADDQ.W #1,D0"},
+
+		// Test value 8 (encoded as 0)
+		{[]uint8{0x50, 0x47}, "ADDQ.W #8,D7"},
+
+		// ADDQ.L #n,Dn
+		{[]uint8{0x50, 0x80}, "ADDQ.L #1,D0"},
+		{[]uint8{0x52, 0x81}, "ADDQ.L #1,D1"},
+		{[]uint8{0x54, 0x82}, "ADDQ.L #2,D2"},
+		{[]uint8{0x56, 0x83}, "ADDQ.L #3,D3"},
+		{[]uint8{0x58, 0x84}, "ADDQ.L #4,D4"},
+		{[]uint8{0x5A, 0x85}, "ADDQ.L #5,D5"},
+		{[]uint8{0x5C, 0x86}, "ADDQ.L #6,D6"},
+		{[]uint8{0x5E, 0x87}, "ADDQ.L #7,D7"},
+		{[]uint8{0x50, 0x80}, "ADDQ.L #1,D0"},
+
+		// Test value 8 (encoded as 0)
+		{[]uint8{0x50, 0x87}, "ADDQ.L #8,D7"},
+
+		// ADDQ.W #n,An (byte size not valid for address registers)
+		{[]uint8{0x50, 0x48}, "ADDQ.W #1,A0"},
+		{[]uint8{0x52, 0x49}, "ADDQ.W #1,A1"},
+		{[]uint8{0x54, 0x4A}, "ADDQ.W #2,A2"},
+		{[]uint8{0x56, 0x4B}, "ADDQ.W #3,A3"},
+		{[]uint8{0x58, 0x4C}, "ADDQ.W #4,A4"},
+		{[]uint8{0x5A, 0x4D}, "ADDQ.W #5,A5"},
+		{[]uint8{0x5C, 0x4E}, "ADDQ.W #6,A6"},
+		{[]uint8{0x5E, 0x4F}, "ADDQ.W #7,A7"},
+		{[]uint8{0x50, 0x48}, "ADDQ.W #1,A0"},
+
+		// Test value 8 (encoded as 0)
+		{[]uint8{0x50, 0x4F}, "ADDQ.W #8,A7"},
+
+		// ADDQ.L #n,An
+		{[]uint8{0x50, 0x88}, "ADDQ.L #1,A0"},
+		{[]uint8{0x52, 0x89}, "ADDQ.L #1,A1"},
+		{[]uint8{0x54, 0x8A}, "ADDQ.L #2,A2"},
+		{[]uint8{0x56, 0x8B}, "ADDQ.L #3,A3"},
+		{[]uint8{0x58, 0x8C}, "ADDQ.L #4,A4"},
+		{[]uint8{0x5A, 0x8D}, "ADDQ.L #5,A5"},
+		{[]uint8{0x5C, 0x8E}, "ADDQ.L #6,A6"},
+		{[]uint8{0x5E, 0x8F}, "ADDQ.L #7,A7"},
+		{[]uint8{0x50, 0x88}, "ADDQ.L #1,A0"},
+
+		// Test value 8 (encoded as 0)
+		{[]uint8{0x50, 0x8F}, "ADDQ.L #8,A7"},
+
+		// ADDQ.B #n,(An)
+		{[]uint8{0x50, 0x10}, "ADDQ.B #1,(A0)"},
+		{[]uint8{0x52, 0x11}, "ADDQ.B #1,(A1)"},
+		{[]uint8{0x54, 0x12}, "ADDQ.B #2,(A2)"},
+		{[]uint8{0x56, 0x13}, "ADDQ.B #3,(A3)"},
+		{[]uint8{0x58, 0x14}, "ADDQ.B #4,(A4)"},
+		{[]uint8{0x5A, 0x15}, "ADDQ.B #5,(A5)"},
+		{[]uint8{0x5C, 0x16}, "ADDQ.B #6,(A6)"},
+		{[]uint8{0x5E, 0x17}, "ADDQ.B #7,(A7)"},
+		{[]uint8{0x50, 0x10}, "ADDQ.B #1,(A0)"},
+
+		// Test value 8 (encoded as 0)
+		{[]uint8{0x50, 0x17}, "ADDQ.B #8,(A7)"},
+
+		// ADDQ.W #n,(An)
+		{[]uint8{0x50, 0x50}, "ADDQ.W #1,(A0)"},
+		{[]uint8{0x54, 0x53}, "ADDQ.W #2,(A3)"},
+		{[]uint8{0x58, 0x57}, "ADDQ.W #4,(A7)"},
+
+		// ADDQ.L #n,(An)
+		{[]uint8{0x50, 0x90}, "ADDQ.L #1,(A0)"},
+		{[]uint8{0x54, 0x94}, "ADDQ.L #2,(A4)"},
+		{[]uint8{0x5E, 0x96}, "ADDQ.L #7,(A6)"},
+
+		// ADDQ.B #n,(An)+
+		{[]uint8{0x50, 0x18}, "ADDQ.B #1,(A0)+"},
+		{[]uint8{0x54, 0x1D}, "ADDQ.B #2,(A5)+"},
+		{[]uint8{0x5E, 0x1F}, "ADDQ.B #7,(A7)+"},
+
+		// ADDQ.W #n,(An)+
+		{[]uint8{0x50, 0x58}, "ADDQ.W #1,(A0)+"},
+		{[]uint8{0x56, 0x5A}, "ADDQ.W #3,(A2)+"},
+		{[]uint8{0x5C, 0x5F}, "ADDQ.W #6,(A7)+"},
+
+		// ADDQ.L #n,(An)+
+		{[]uint8{0x50, 0x98}, "ADDQ.L #1,(A0)+"},
+		{[]uint8{0x56, 0x9D}, "ADDQ.L #3,(A5)+"},
+		{[]uint8{0x5E, 0x9E}, "ADDQ.L #7,(A6)+"},
+
+		// ADDQ.B #n,-(An)
+		{[]uint8{0x50, 0x20}, "ADDQ.B #1,-(A0)"},
+		{[]uint8{0x56, 0x25}, "ADDQ.B #3,-(A5)"},
+		{[]uint8{0x5C, 0x27}, "ADDQ.B #6,-(A7)"},
+
+		// ADDQ.W #n,-(An)
+		{[]uint8{0x50, 0x60}, "ADDQ.W #1,-(A0)"},
+		{[]uint8{0x58, 0x63}, "ADDQ.W #4,-(A3)"},
+		{[]uint8{0x5E, 0x67}, "ADDQ.W #7,-(A7)"},
+
+		// ADDQ.L #n,-(An)
+		{[]uint8{0x50, 0xA0}, "ADDQ.L #1,-(A0)"},
+		{[]uint8{0x58, 0xA4}, "ADDQ.L #4,-(A4)"},
+		{[]uint8{0x5E, 0xA6}, "ADDQ.L #7,-(A6)"},
+
+		// ADDQ.B #n,d16(An)
+		{[]uint8{0x50, 0x28, 0x12, 0x34}, "ADDQ.B #1,(0x1234,A0)"},
+		{[]uint8{0x56, 0x2D, 0x00, 0x10}, "ADDQ.B #3,(0x0010,A5)"},
+		{[]uint8{0x5C, 0x2F, 0xFF, 0xFE}, "ADDQ.B #6,(0xFFFE,A7)"},
+
+		// ADDQ.W #n,d16(An)
+		{[]uint8{0x50, 0x68, 0x12, 0x34}, "ADDQ.W #1,(0x1234,A0)"},
+		{[]uint8{0x58, 0x6A, 0x00, 0x10}, "ADDQ.W #4,(0x0010,A2)"},
+		{[]uint8{0x5E, 0x6F, 0xFF, 0xFE}, "ADDQ.W #7,(0xFFFE,A7)"},
+
+		// ADDQ.L #n,d16(An)
+		{[]uint8{0x50, 0xA8, 0x12, 0x34}, "ADDQ.L #1,(0x1234,A0)"},
+		{[]uint8{0x58, 0xAB, 0x00, 0x10}, "ADDQ.L #4,(0x0010,A3)"},
+		{[]uint8{0x5E, 0xAE, 0xFF, 0xFE}, "ADDQ.L #7,(0xFFFE,A6)"},
+
+		// ADDQ.B #n,d8(An,Xn)
+		{[]uint8{0x50, 0x30, 0x12, 0x34}, "ADDQ.B #1,(0x12,A0,D4.W)"},
+		{[]uint8{0x56, 0x33, 0x56, 0x78}, "ADDQ.B #3,(0x56,A3,D7.W)"},
+		{[]uint8{0x5C, 0x37, 0x91, 0x00}, "ADDQ.B #6,(0x91,A7,D0.W)"},
+		{[]uint8{0x50, 0x30, 0x12, 0xB4}, "ADDQ.B #1,(0x12,A0,A4.W)"},
+		{[]uint8{0x56, 0x33, 0x56, 0xF8}, "ADDQ.B #3,(0x56,A3,A7.W)"},
+		{[]uint8{0x5C, 0x37, 0x91, 0x30}, "ADDQ.B #6,(0x91,A7,A0.W)"},
+
+		// ADDQ.W #n,d8(An,Xn)
+		{[]uint8{0x50, 0x70, 0x12, 0x34}, "ADDQ.W #1,(0x12,A0,D4.W)"},
+		{[]uint8{0x58, 0x75, 0x56, 0x78}, "ADDQ.W #4,(0x56,A5,D7.W)"},
+		{[]uint8{0x5E, 0x72, 0x91, 0x80}, "ADDQ.W #7,(0x91,A2,D0.L)"},
+		{[]uint8{0x50, 0x70, 0x12, 0xB4}, "ADDQ.W #1,(0x12,A0,A4.W)"},
+		{[]uint8{0x58, 0x75, 0x56, 0xF8}, "ADDQ.W #4,(0x56,A5,A7.W)"},
+		{[]uint8{0x5E, 0x72, 0x91, 0xB0}, "ADDQ.W #7,(0x91,A2,A0.L)"},
+
+		// ADDQ.L #n,d8(An,Xn)
+		{[]uint8{0x50, 0xB0, 0x12, 0x34}, "ADDQ.L #1,(0x12,A0,D4.W)"},
+		{[]uint8{0x58, 0xB6, 0x56, 0x78}, "ADDQ.L #4,(0x56,A6,D7.W)"},
+		{[]uint8{0x5E, 0xB1, 0x91, 0x80}, "ADDQ.L #7,(0x91,A1,D0.L)"},
+		{[]uint8{0x50, 0xB0, 0x12, 0xB4}, "ADDQ.L #1,(0x12,A0,A4.W)"},
+		{[]uint8{0x58, 0xB6, 0x56, 0xF8}, "ADDQ.L #4,(0x56,A6,A7.W)"},
+		{[]uint8{0x5E, 0xB1, 0x91, 0xB0}, "ADDQ.L #7,(0x91,A1,A0.L)"},
+
+		// ADDQ.B #n,xxx.W
+		{[]uint8{0x50, 0x38, 0x12, 0x34}, "ADDQ.B #1,(0x1234).W"},
+		{[]uint8{0x56, 0x38, 0x56, 0x78}, "ADDQ.B #3,(0x5678).W"},
+		{[]uint8{0x5C, 0x38, 0x90, 0xAB}, "ADDQ.B #6,(0x90AB).W"},
+
+		// ADDQ.W #n,xxx.W
+		{[]uint8{0x50, 0x78, 0x12, 0x34}, "ADDQ.W #1,(0x1234).W"},
+		{[]uint8{0x58, 0x78, 0x56, 0x78}, "ADDQ.W #4,(0x5678).W"},
+		{[]uint8{0x5E, 0x78, 0x90, 0xAB}, "ADDQ.W #7,(0x90AB).W"},
+
+		// ADDQ.L #n,xxx.W
+		{[]uint8{0x50, 0xB8, 0x12, 0x34}, "ADDQ.L #1,(0x1234).W"},
+		{[]uint8{0x58, 0xB8, 0x56, 0x78}, "ADDQ.L #4,(0x5678).W"},
+		{[]uint8{0x5E, 0xB8, 0x90, 0xAB}, "ADDQ.L #7,(0x90AB).W"},
+
+		// ADDQ.B #n,xxx.L
+		{[]uint8{0x50, 0x39, 0x12, 0x34, 0x56, 0x78}, "ADDQ.B #1,(0x12345678).L"},
+		{[]uint8{0x56, 0x39, 0x9A, 0xBC, 0xDE, 0xF0}, "ADDQ.B #3,(0x9ABCDEF0).L"},
+
+		// ADDQ.W #n,xxx.L
+		{[]uint8{0x50, 0x79, 0x12, 0x34, 0x56, 0x78}, "ADDQ.W #1,(0x12345678).L"},
+		{[]uint8{0x58, 0x79, 0x9A, 0xBC, 0xDE, 0xF0}, "ADDQ.W #4,(0x9ABCDEF0).L"},
+
+		// ADDQ.L #n,xxx.L
+		{[]uint8{0x50, 0xB9, 0x12, 0x34, 0x56, 0x78}, "ADDQ.L #1,(0x12345678).L"},
+		{[]uint8{0x5E, 0xB9, 0x9A, 0xBC, 0xDE, 0xF0}, "ADDQ.L #7,(0x9ABCDEF0).L"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.expected, func(t *testing.T) {
+			result := DisassembleInstruction(tc.bytes, 0)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
+}

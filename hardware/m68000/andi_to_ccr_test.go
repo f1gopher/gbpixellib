@@ -1,0 +1,69 @@
+package m68000
+
+import "testing"
+
+func TestDisassembleANDI_to_CCR(t *testing.T) {
+	testCases := []struct {
+		bytes    []uint8
+		expected string
+	}{
+		// ANDI to CCR (Condition Code Register)
+		// Format: 0000 0010 0011 1100 xxxx xxxx
+		// Where xxxx xxxx is an 8-bit immediate value that will be ANDed with the CCR
+		// Only the lowest 5 bits are actually used (XNZVC)
+
+		// Test with all possible bit patterns for the lowest 5 bits
+		{[]uint8{0x02, 0x3C, 0x00, 0x00}, "ANDI #0x00,CCR"}, // Clear all flags
+		{[]uint8{0x02, 0x3C, 0x00, 0x01}, "ANDI #0x01,CCR"}, // Clear all but C
+		{[]uint8{0x02, 0x3C, 0x00, 0x02}, "ANDI #0x02,CCR"}, // Clear all but V
+		{[]uint8{0x02, 0x3C, 0x00, 0x03}, "ANDI #0x03,CCR"}, // Clear all but V,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x04}, "ANDI #0x04,CCR"}, // Clear all but Z
+		{[]uint8{0x02, 0x3C, 0x00, 0x05}, "ANDI #0x05,CCR"}, // Clear all but Z,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x06}, "ANDI #0x06,CCR"}, // Clear all but Z,V
+		{[]uint8{0x02, 0x3C, 0x00, 0x07}, "ANDI #0x07,CCR"}, // Clear all but Z,V,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x08}, "ANDI #0x08,CCR"}, // Clear all but N
+		{[]uint8{0x02, 0x3C, 0x00, 0x09}, "ANDI #0x09,CCR"}, // Clear all but N,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x0A}, "ANDI #0x0A,CCR"}, // Clear all but N,V
+		{[]uint8{0x02, 0x3C, 0x00, 0x0B}, "ANDI #0x0B,CCR"}, // Clear all but N,V,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x0C}, "ANDI #0x0C,CCR"}, // Clear all but N,Z
+		{[]uint8{0x02, 0x3C, 0x00, 0x0D}, "ANDI #0x0D,CCR"}, // Clear all but N,Z,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x0E}, "ANDI #0x0E,CCR"}, // Clear all but N,Z,V
+		{[]uint8{0x02, 0x3C, 0x00, 0x0F}, "ANDI #0x0F,CCR"}, // Clear all but N,Z,V,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x10}, "ANDI #0x10,CCR"}, // Clear all but X
+		{[]uint8{0x02, 0x3C, 0x00, 0x11}, "ANDI #0x11,CCR"}, // Clear all but X,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x12}, "ANDI #0x12,CCR"}, // Clear all but X,V
+		{[]uint8{0x02, 0x3C, 0x00, 0x13}, "ANDI #0x13,CCR"}, // Clear all but X,V,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x14}, "ANDI #0x14,CCR"}, // Clear all but X,Z
+		{[]uint8{0x02, 0x3C, 0x00, 0x15}, "ANDI #0x15,CCR"}, // Clear all but X,Z,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x16}, "ANDI #0x16,CCR"}, // Clear all but X,Z,V
+		{[]uint8{0x02, 0x3C, 0x00, 0x17}, "ANDI #0x17,CCR"}, // Clear all but X,Z,V,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x18}, "ANDI #0x18,CCR"}, // Clear all but X,N
+		{[]uint8{0x02, 0x3C, 0x00, 0x19}, "ANDI #0x19,CCR"}, // Clear all but X,N,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x1A}, "ANDI #0x1A,CCR"}, // Clear all but X,N,V
+		{[]uint8{0x02, 0x3C, 0x00, 0x1B}, "ANDI #0x1B,CCR"}, // Clear all but X,N,V,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x1C}, "ANDI #0x1C,CCR"}, // Clear all but X,N,Z
+		{[]uint8{0x02, 0x3C, 0x00, 0x1D}, "ANDI #0x1D,CCR"}, // Clear all but X,N,Z,C
+		{[]uint8{0x02, 0x3C, 0x00, 0x1E}, "ANDI #0x1E,CCR"}, // Clear all but X,N,Z,V
+		{[]uint8{0x02, 0x3C, 0x00, 0x1F}, "ANDI #0x1F,CCR"}, // No flags cleared (all preserved)
+
+		// Test with higher (unused) bits set - should still work
+		{[]uint8{0x02, 0x3C, 0x00, 0xFF}, "ANDI #0xFF,CCR"}, // All bits set, no flags cleared
+		{[]uint8{0x02, 0x3C, 0x00, 0xA5}, "ANDI #0xA5,CCR"}, // Mixed pattern
+		{[]uint8{0x02, 0x3C, 0x00, 0x5A}, "ANDI #0x5A,CCR"}, // Mixed pattern
+
+		// Even though the immediate value is technically 16 bits in the encoding,
+		// the upper byte should always be 0x00 for CCR operations
+		// Some assemblers might accept other values but they're ignored
+		{[]uint8{0x02, 0x3C, 0xFF, 0x00}, "ANDI #0x00,CCR"}, // Upper byte should be ignored
+		{[]uint8{0x02, 0x3C, 0xFF, 0x1F}, "ANDI #0x1F,CCR"}, // Upper byte should be ignored
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.expected, func(t *testing.T) {
+			result := DisassembleInstruction(tc.bytes, 0)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
+}

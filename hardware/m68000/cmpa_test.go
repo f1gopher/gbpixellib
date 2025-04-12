@@ -1,0 +1,199 @@
+package m68000
+
+import "testing"
+
+func TestDisassembleCMPA(t *testing.T) {
+	testCases := []struct {
+		bytes    []uint8
+		expected string
+	}{
+		// CMPA - Compare Address
+		// Format: 1011 rrr s11 eeeeee
+		// Where:
+		// - rrr is the address register number (A0-A7)
+		// - s is the size (0=word, 1=long)
+		// - eeeeee defines the effective address (source operand)
+
+		// CMPA.W Dm,An (Compare word data register to address register)
+		{[]uint8{0xB0, 0xC0}, "CMPA.W D0,A0"},
+		{[]uint8{0xB0, 0xC1}, "CMPA.W D1,A0"},
+		{[]uint8{0xB0, 0xC2}, "CMPA.W D2,A0"},
+		{[]uint8{0xB0, 0xC3}, "CMPA.W D3,A0"},
+		{[]uint8{0xB0, 0xC4}, "CMPA.W D4,A0"},
+		{[]uint8{0xB0, 0xC5}, "CMPA.W D5,A0"},
+		{[]uint8{0xB0, 0xC6}, "CMPA.W D6,A0"},
+		{[]uint8{0xB0, 0xC7}, "CMPA.W D7,A0"},
+
+		{[]uint8{0xB2, 0xC0}, "CMPA.W D0,A1"},
+		{[]uint8{0xB4, 0xC0}, "CMPA.W D0,A2"},
+		{[]uint8{0xB6, 0xC0}, "CMPA.W D0,A3"},
+		{[]uint8{0xB8, 0xC0}, "CMPA.W D0,A4"},
+		{[]uint8{0xBA, 0xC0}, "CMPA.W D0,A5"},
+		{[]uint8{0xBC, 0xC0}, "CMPA.W D0,A6"},
+		{[]uint8{0xBE, 0xC0}, "CMPA.W D0,A7"},
+
+		// Cross register tests for word
+		{[]uint8{0xB2, 0xC3}, "CMPA.W D3,A1"},
+		{[]uint8{0xB4, 0xC5}, "CMPA.W D5,A2"},
+		{[]uint8{0xB6, 0xC6}, "CMPA.W D6,A3"},
+		{[]uint8{0xBC, 0xC7}, "CMPA.W D7,A6"},
+
+		// CMPA.L Dm,An (Compare long data register to address register)
+		{[]uint8{0xB1, 0xC0}, "CMPA.L D0,A0"},
+		{[]uint8{0xB1, 0xC1}, "CMPA.L D1,A0"},
+		{[]uint8{0xB1, 0xC2}, "CMPA.L D2,A0"},
+		{[]uint8{0xB1, 0xC7}, "CMPA.L D7,A0"},
+
+		{[]uint8{0xB3, 0xC0}, "CMPA.L D0,A1"},
+		{[]uint8{0xB5, 0xC2}, "CMPA.L D2,A2"},
+		{[]uint8{0xBF, 0xC7}, "CMPA.L D7,A7"},
+
+		// CMPA.W Am,An (Compare word address register to address register)
+		{[]uint8{0xB0, 0xC8}, "CMPA.W A0,A0"},
+		{[]uint8{0xB0, 0xC9}, "CMPA.W A1,A0"},
+		{[]uint8{0xB0, 0xCA}, "CMPA.W A2,A0"},
+		{[]uint8{0xB0, 0xCB}, "CMPA.W A3,A0"},
+		{[]uint8{0xB0, 0xCC}, "CMPA.W A4,A0"},
+		{[]uint8{0xB0, 0xCD}, "CMPA.W A5,A0"},
+		{[]uint8{0xB0, 0xCE}, "CMPA.W A6,A0"},
+		{[]uint8{0xB0, 0xCF}, "CMPA.W A7,A0"},
+
+		{[]uint8{0xB2, 0xC8}, "CMPA.W A0,A1"},
+		{[]uint8{0xB4, 0xC9}, "CMPA.W A1,A2"},
+		{[]uint8{0xBE, 0xCF}, "CMPA.W A7,A7"},
+
+		// CMPA.L Am,An (Compare long address register to address register)
+		{[]uint8{0xB1, 0xC8}, "CMPA.L A0,A0"},
+		{[]uint8{0xB1, 0xC9}, "CMPA.L A1,A0"},
+		{[]uint8{0xB1, 0xCF}, "CMPA.L A7,A0"},
+
+		{[]uint8{0xB3, 0xC8}, "CMPA.L A0,A1"},
+		{[]uint8{0xBF, 0xCF}, "CMPA.L A7,A7"},
+
+		// CMPA.W (An),Am (Compare memory to address register)
+		{[]uint8{0xB0, 0xD0}, "CMPA.W (A0),A0"},
+		{[]uint8{0xB0, 0xD1}, "CMPA.W (A1),A0"},
+		{[]uint8{0xB0, 0xD7}, "CMPA.W (A7),A0"},
+
+		{[]uint8{0xB2, 0xD0}, "CMPA.W (A0),A1"},
+		{[]uint8{0xBE, 0xD7}, "CMPA.W (A7),A7"},
+
+		// CMPA.L (An),Am
+		{[]uint8{0xB1, 0xD0}, "CMPA.L (A0),A0"},
+		{[]uint8{0xB1, 0xD1}, "CMPA.L (A1),A0"},
+		{[]uint8{0xB1, 0xD7}, "CMPA.L (A7),A0"},
+
+		// CMPA.W (An)+,Am (Compare memory with postincrement to address register)
+		{[]uint8{0xB0, 0xD8}, "CMPA.W (A0)+,A0"},
+		{[]uint8{0xB0, 0xD9}, "CMPA.W (A1)+,A0"},
+		{[]uint8{0xB0, 0xDF}, "CMPA.W (A7)+,A0"},
+
+		// CMPA.L (An)+,Am
+		{[]uint8{0xB1, 0xD8}, "CMPA.L (A0)+,A0"},
+		{[]uint8{0xB1, 0xD9}, "CMPA.L (A1)+,A0"},
+		{[]uint8{0xB1, 0xDF}, "CMPA.L (A7)+,A0"},
+
+		// CMPA.W -(An),Am (Compare memory with predecrement to address register)
+		{[]uint8{0xB0, 0xE0}, "CMPA.W -(A0),A0"},
+		{[]uint8{0xB0, 0xE1}, "CMPA.W -(A1),A0"},
+		{[]uint8{0xB0, 0xE7}, "CMPA.W -(A7),A0"},
+
+		// CMPA.L -(An),Am
+		{[]uint8{0xB1, 0xE0}, "CMPA.L -(A0),A0"},
+		{[]uint8{0xB1, 0xE1}, "CMPA.L -(A1),A0"},
+		{[]uint8{0xB1, 0xE7}, "CMPA.L -(A7),A0"},
+
+		// CMPA.W d16(An),Am (Compare memory with displacement to address register)
+		{[]uint8{0xB0, 0xE8, 0x12, 0x34}, "CMPA.W (0x1234,A0),A0"},
+		{[]uint8{0xB0, 0xE9, 0x56, 0x78}, "CMPA.W (0x5678,A1),A0"},
+		{[]uint8{0xB0, 0xEF, 0x9A, 0xBC}, "CMPA.W (0x9ABC,A7),A0"},
+
+		// CMPA.L d16(An),Am
+		{[]uint8{0xB1, 0xE8, 0x12, 0x34}, "CMPA.L (0x1234,A0),A0"},
+		{[]uint8{0xB1, 0xE9, 0x56, 0x78}, "CMPA.L (0x5678,A1),A0"},
+		{[]uint8{0xB1, 0xEF, 0x9A, 0xBC}, "CMPA.L (0x9ABC,A7),A0"},
+
+		// CMPA.W d8(An,Xn),Am (Compare memory with index to address register)
+		{[]uint8{0xB0, 0xF0, 0x12, 0x34}, "CMPA.W (0x12,A0,D4.W),A0"},
+		{[]uint8{0xB0, 0xF1, 0x56, 0x70}, "CMPA.W (0x56,A1,D0.W),A0"},
+		{[]uint8{0xB0, 0xF7, 0x9A, 0xBC}, "CMPA.W (0x9A,A7,D12.W),A0"},
+
+		// CMPA.W d8(An,Xn),Am with address register index
+		{[]uint8{0xB0, 0xF0, 0x12, 0xB4}, "CMPA.W (0x12,A0,A4.W),A0"},
+		{[]uint8{0xB0, 0xF1, 0x56, 0xF0}, "CMPA.W (0x56,A1,A0.W),A0"},
+		{[]uint8{0xB0, 0xF7, 0x9A, 0xF7}, "CMPA.W (0x9A,A7,A7.W),A0"},
+
+		// CMPA.L d8(An,Xn),Am
+		{[]uint8{0xB1, 0xF0, 0x12, 0x34}, "CMPA.L (0x12,A0,D4.W),A0"},
+		{[]uint8{0xB1, 0xF0, 0x12, 0xB4}, "CMPA.L (0x12,A0,A4.W),A0"},
+
+		// CMPA.W xxx.W,Am (Compare absolute short address to address register)
+		{[]uint8{0xB0, 0xF8, 0x12, 0x34}, "CMPA.W (0x1234).W,A0"},
+		{[]uint8{0xB0, 0xF8, 0x56, 0x78}, "CMPA.W (0x5678).W,A0"},
+		{[]uint8{0xB2, 0xF8, 0x9A, 0xBC}, "CMPA.W (0x9ABC).W,A1"},
+
+		// CMPA.L xxx.W,Am
+		{[]uint8{0xB1, 0xF8, 0x12, 0x34}, "CMPA.L (0x1234).W,A0"},
+		{[]uint8{0xB1, 0xF8, 0x56, 0x78}, "CMPA.L (0x5678).W,A0"},
+		{[]uint8{0xB3, 0xF8, 0x9A, 0xBC}, "CMPA.L (0x9ABC).W,A1"},
+
+		// CMPA.W xxx.L,Am (Compare absolute long address to address register)
+		{[]uint8{0xB0, 0xF9, 0x12, 0x34, 0x56, 0x78}, "CMPA.W (0x12345678).L,A0"},
+		{[]uint8{0xB0, 0xF9, 0x9A, 0xBC, 0xDE, 0xF0}, "CMPA.W (0x9ABCDEF0).L,A0"},
+		{[]uint8{0xB2, 0xF9, 0x00, 0x00, 0x00, 0x01}, "CMPA.W (0x00000001).L,A1"},
+
+		// CMPA.L xxx.L,Am
+		{[]uint8{0xB1, 0xF9, 0x12, 0x34, 0x56, 0x78}, "CMPA.L (0x12345678).L,A0"},
+		{[]uint8{0xB1, 0xF9, 0x9A, 0xBC, 0xDE, 0xF0}, "CMPA.L (0x9ABCDEF0).L,A0"},
+		{[]uint8{0xB3, 0xF9, 0x00, 0x00, 0x00, 0x01}, "CMPA.L (0x00000001).L,A1"},
+
+		// CMPA.W #imm,Am (Compare immediate to address register)
+		{[]uint8{0xB0, 0xFC, 0x12, 0x34}, "CMPA.W #0x1234,A0"},
+		{[]uint8{0xB0, 0xFC, 0x56, 0x78}, "CMPA.W #0x5678,A0"},
+		{[]uint8{0xB2, 0xFC, 0x9A, 0xBC}, "CMPA.W #0x9ABC,A1"},
+		{[]uint8{0xB2, 0xFC, 0xDE, 0xF0}, "CMPA.W #0xDEF0,A1"},
+		{[]uint8{0xBE, 0xFC, 0x00, 0x00}, "CMPA.W #0x0000,A7"},
+		{[]uint8{0xBE, 0xFC, 0xFF, 0xFF}, "CMPA.W #0xFFFF,A7"},
+
+		// CMPA.L #imm,Am
+		{[]uint8{0xB1, 0xFC, 0x12, 0x34, 0x56, 0x78}, "CMPA.L #0x12345678,A0"},
+		{[]uint8{0xB1, 0xFC, 0x9A, 0xBC, 0xDE, 0xF0}, "CMPA.L #0x9ABCDEF0,A0"},
+		{[]uint8{0xB3, 0xFC, 0x00, 0x00, 0x00, 0x00}, "CMPA.L #0x00000000,A1"},
+		{[]uint8{0xB3, 0xFC, 0xFF, 0xFF, 0xFF, 0xFF}, "CMPA.L #0xFFFFFFFF,A1"},
+		{[]uint8{0xBF, 0xFC, 0x80, 0x00, 0x00, 0x00}, "CMPA.L #0x80000000,A7"},
+		{[]uint8{0xBF, 0xFC, 0x7F, 0xFF, 0xFF, 0xFF}, "CMPA.L #0x7FFFFFFF,A7"},
+
+		// CMPA.W d16(PC),Am (Compare PC-relative to address register)
+		{[]uint8{0xB0, 0xFA, 0x12, 0x34}, "CMPA.W (0x1234,PC),A0"},
+		{[]uint8{0xB0, 0xFA, 0x56, 0x78}, "CMPA.W (0x5678,PC),A0"},
+		{[]uint8{0xB2, 0xFA, 0x9A, 0xBC}, "CMPA.W (0x9ABC,PC),A1"},
+
+		// CMPA.L d16(PC),Am
+		{[]uint8{0xB1, 0xFA, 0x12, 0x34}, "CMPA.L (0x1234,PC),A0"},
+		{[]uint8{0xB1, 0xFA, 0x56, 0x78}, "CMPA.L (0x5678,PC),A0"},
+		{[]uint8{0xB3, 0xFA, 0x9A, 0xBC}, "CMPA.L (0x9ABC,PC),A1"},
+
+		// CMPA.W d8(PC,Xn),Am (Compare PC-relative with index to address register)
+		{[]uint8{0xB0, 0xFB, 0x12, 0x34}, "CMPA.W (0x12,PC,D4.W),A0"},
+		{[]uint8{0xB0, 0xFB, 0x56, 0x70}, "CMPA.W (0x56,PC,D0.W),A0"},
+		{[]uint8{0xB2, 0xFB, 0x9A, 0xBC}, "CMPA.W (0x9A,PC,D12.W),A1"},
+
+		// CMPA.W d8(PC,Xn),Am with address register index
+		{[]uint8{0xB0, 0xFB, 0x12, 0xB4}, "CMPA.W (0x12,PC,A4.W),A0"},
+		{[]uint8{0xB0, 0xFB, 0x56, 0xF0}, "CMPA.W (0x56,PC,A0.W),A0"},
+		{[]uint8{0xB2, 0xFB, 0x9A, 0xF7}, "CMPA.W (0x9A,PC,A7.W),A1"},
+
+		// CMPA.L d8(PC,Xn),Am
+		{[]uint8{0xB1, 0xFB, 0x12, 0x34}, "CMPA.L (0x12,PC,D4.W),A0"},
+		{[]uint8{0xB1, 0xFB, 0x12, 0xB4}, "CMPA.L (0x12,PC,A4.W),A0"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.expected, func(t *testing.T) {
+			result := DisassembleInstruction(tc.bytes, 0)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
+}
