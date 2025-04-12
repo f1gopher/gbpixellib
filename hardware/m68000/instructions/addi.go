@@ -44,14 +44,14 @@ func CreateADDI(value uint16, code []uint8, codeOffset int) *addi {
 func (a *addi) Name() string {
 	if a.data < 0 {
 		return fmt.Sprintf(
-			"addi.%s  #-$%x, %s",
+			"ADDI.%s #-$%x,%s",
 			a.opSize.string(),
 			-a.data,
 			a.dest.string())
 	}
 
 	return fmt.Sprintf(
-		"addi.%s  #$%x, %s",
+		"ADDI.%s #$%x,%s",
 		a.opSize.string(),
 		a.data,
 		a.dest.string())

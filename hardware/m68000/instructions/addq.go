@@ -30,7 +30,7 @@ func CreateADDQ(value uint16, code []uint8, codeOffset int) *addq {
 
 func (a *addq) Name() string {
 	return fmt.Sprintf(
-		"addq.%s  #%d, %s",
+		"ADDQ.%s #%d,%s",
 		a.size.string(),
 		a.value,
 		a.dest.string())

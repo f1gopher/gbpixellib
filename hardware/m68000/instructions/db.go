@@ -28,7 +28,7 @@ func CreateDB(value uint16, code []uint8, codeOffset int) *db {
 
 func (d *db) Name() string {
 	return fmt.Sprintf(
-		"db%s    %s, $%x",
+		"DB%s %s,$%x",
 		d.condition.string(),
 		d.count.string(),
 		d.tmpStartOffset+d.displacement,

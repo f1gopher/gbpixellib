@@ -27,7 +27,7 @@ func CreateCMPA(value uint16, code []uint8, codeOffset int) *cmpa {
 
 func (c *cmpa) Name() string {
 	return fmt.Sprintf(
-		"cmpa.%s  %s, A%d",
+		"CMPA.%s %s,A%d",
 		c.size.string(),
 		c.src.string(),
 		c.reg)

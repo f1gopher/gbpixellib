@@ -63,7 +63,7 @@ func CreateBTST(value uint16, code []uint8, codeOffset int) *btst {
 
 func (b *btst) Name() string {
 	return fmt.Sprintf(
-		"btst    %s, %s",
+		"BTST %s,%s",
 		b.src.string(),
 		b.dest.string())
 }

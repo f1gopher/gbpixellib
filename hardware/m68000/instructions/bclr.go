@@ -49,7 +49,7 @@ func CreateBCLR(value uint16, code []uint8, codeOffset int) *bclr {
 
 func (b *bclr) Name() string {
 	return fmt.Sprintf(
-		"bclr    %s, %s",
+		"BCLR %s,%s",
 		b.src.string(),
 		b.dest.string())
 }

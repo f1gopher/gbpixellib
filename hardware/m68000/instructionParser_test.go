@@ -38,7 +38,7 @@ func Test_A(t *testing.T) {
 func Test_Comparison(t *testing.T) {
 	const input = ""
 
-	file, err := os.Open("../../../cps1/test/Comparison/" + input + "/input.dmp")
+	file, err := os.Open("../../../cps1/test/Comparison/" + input + ".dmp")
 
 	assert.Nil(t, err, "missing test data file")
 	defer file.Close()
@@ -61,7 +61,7 @@ func Test_Comparison(t *testing.T) {
 
 	parser := instructionParser{}
 
-	expected, err := os.ReadFile("../../../cps1/test/Comparison/" + input + "/output.asm")
+	expected, err := os.ReadFile("../../../cps1/test/Comparison/" + input + ".asm")
 	assert.Nil(t, err, "Missing expected result file")
 
 	expectedLines := strings.Split(string(expected), "\n")

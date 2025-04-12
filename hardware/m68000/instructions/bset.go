@@ -53,7 +53,7 @@ func CreateBSET(value uint16, code []uint8, codeOffset int) *bset {
 
 func (b *bset) Name() string {
 	return fmt.Sprintf(
-		"bset    %s, %s",
+		"BSET %s,%s",
 		b.src.string(),
 		b.dest.string())
 }

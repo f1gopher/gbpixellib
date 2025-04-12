@@ -380,10 +380,6 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		// }
 		if opcode&0xff80 == 0xf500 {
 			result = instructions.CreateUNKNOWN(opcode)
-		} else if opcode == 0b1111000001001000 {
-			result = instructions.CreatePBAS(opcode)
-		} else if opcode == 0b1111000000000000 {
-			result = instructions.CreatePMOVE(opcode)
 		}
 	}
 

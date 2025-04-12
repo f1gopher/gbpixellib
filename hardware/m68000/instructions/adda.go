@@ -28,7 +28,7 @@ func CreateADDA(value uint16, code []uint8, codeOffset int) *adda {
 
 func (a *adda) Name() string {
 	return fmt.Sprintf(
-		"adda.%s  %s, A%d",
+		"ADDA.%s %s,A%d",
 		a.size.string(),
 		a.src.string(),
 		a.reg)

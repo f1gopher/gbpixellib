@@ -13,7 +13,7 @@ func CreateANDIToCCR(value uint16, code []uint8, codeOffset int) *andiToCCR {
 }
 
 func (a *andiToCCR) Name() string {
-	return fmt.Sprintf("andi    #$%x, CCR", a.data)
+	return fmt.Sprintf("ANDI #0x%02X,CCR", a.data)
 }
 
 func (a *andiToCCR) Length() int {

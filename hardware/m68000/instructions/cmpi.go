@@ -39,32 +39,32 @@ func (c *cmpi) Name() string {
 	if c.size == byteSize &&
 		(c.data == 0xF7 || c.data == 0xF9) {
 		return fmt.Sprintf(
-			"cmpi.%s  #-$7, %s",
+			"CMPI.%s #-$7,%s",
 			c.size.string(),
 			c.src.string())
 	}
 	if c.size == byteSize && c.data == 0x91 {
 		return fmt.Sprintf(
-			"cmpi.%s  #-$6f, %s",
+			"CMPI.%s #-$6f,%s",
 			c.size.string(),
 			c.src.string())
 	}
 	if c.size == wordSize && c.data == 0xfff4 {
 		return fmt.Sprintf(
-			"cmpi.%s  #-$c, %s",
+			"CMPI.%s #-$c,%s",
 			c.size.string(),
 			c.src.string())
 	}
 	if c.size == byteSize && c.data == 0xFF {
 		return fmt.Sprintf(
-			"cmpi.%s  #-$1, %s",
+			"CMPI.%s #-$1,%s",
 			c.size.string(),
 			c.src.string())
 	}
 
 	if c.data < 0 {
 		return fmt.Sprintf(
-			"cmpi.%s  #-$%x, %s",
+			"CMPI.%s #-$%x,%s",
 			c.size.string(),
 			// TODO - need to subtract to/from another value and wrap
 			// around to fit the size.
@@ -73,7 +73,7 @@ func (c *cmpi) Name() string {
 	}
 
 	return fmt.Sprintf(
-		"cmpi.%s  #$%x, %s",
+		"CMPI.%s #$%x,%s",
 		c.size.string(),
 		// TODO - need to subtract to/from another value and wrap
 		// around to fit the size.

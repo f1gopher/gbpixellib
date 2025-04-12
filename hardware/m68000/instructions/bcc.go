@@ -32,7 +32,7 @@ func CreateBcc(value uint16, code []uint8, codeOffset int) *bcc {
 
 func (b *bcc) Name() string {
 	return fmt.Sprintf(
-		"b%s     $%x",
+		"B%s $%x",
 		b.condition.string(),
 		b.tmpStartOffset+b.displacement,
 	)

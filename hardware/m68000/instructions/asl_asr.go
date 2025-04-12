@@ -55,14 +55,14 @@ func CreateASL_ASR(value uint16, code []uint8, codeOffset int) *asl_asr {
 }
 
 func (a *asl_asr) Name() string {
-	dir := "l"
+	dir := "L"
 	if a.direction == right {
-		dir = "r"
+		dir = "R"
 	}
 
 	if a.isMemoryShift {
 		return fmt.Sprintf(
-			"as%s.%s   %s",
+			"AS%s.%s %s",
 			dir,
 			a.size.string(),
 			a.src.string())
@@ -73,7 +73,7 @@ func (a *asl_asr) Name() string {
 		srcPrefix = "D"
 	}
 	return fmt.Sprintf(
-		"as%s.%s   %s%d, D%d",
+		"AS%s.%s %s%d,D%d",
 		dir,
 		a.size.string(),
 		srcPrefix,

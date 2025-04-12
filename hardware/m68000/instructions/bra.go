@@ -28,7 +28,7 @@ func CreateBRA(value uint16, code []uint8, codeOffset int) *bra {
 }
 
 func (b *bra) Name() string {
-	return fmt.Sprintf("bra     $%x", b.tmpStartOffset+b.displacement)
+	return fmt.Sprintf("BRA $%x", b.tmpStartOffset+b.displacement)
 }
 
 func (b *bra) Length() int {

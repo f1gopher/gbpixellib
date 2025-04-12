@@ -21,7 +21,7 @@ func CreateCLR(value uint16, code []uint8, codeOffset int) *clr {
 
 func (c *clr) Name() string {
 	return fmt.Sprintf(
-		"clr.%s   %s",
+		"CLR.%s %s",
 		c.size.string(),
 		c.dest.string())
 }

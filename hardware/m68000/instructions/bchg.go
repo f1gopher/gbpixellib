@@ -39,14 +39,14 @@ func CreateBCHG(value uint16, code []uint8, codeOffset int) *bchg {
 func (b *bchg) Name() string {
 	if b.isImmediate {
 		return fmt.Sprintf(
-			"bchg    #$%x, %s",
+			"BCHG 0x%x,%s",
 			b.data,
 			b.src.string(),
 		)
 	}
 
 	return fmt.Sprintf(
-		"bchg    D%d, %s",
+		"BCHG D%d,%s",
 		b.register,
 		b.src.string(),
 	)

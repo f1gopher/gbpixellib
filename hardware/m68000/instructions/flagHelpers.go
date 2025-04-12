@@ -17,11 +17,11 @@ const (
 func (i instSize) string() string {
 	switch i {
 	case byteSize:
-		return "b"
+		return "B"
 	case wordSize:
-		return "w"
+		return "W"
 	case longSize:
-		return "l"
+		return "L"
 	}
 	panic("Zero size not supported")
 }

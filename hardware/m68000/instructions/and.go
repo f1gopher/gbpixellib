@@ -28,7 +28,7 @@ func CreateAND(value uint16, code []uint8, codeOffset int) *and {
 func (a *and) Name() string {
 	if a.opmode == 0 || a.opmode == 0b00000001 || a.opmode == 0b00000010 {
 		return fmt.Sprintf(
-			"and.%s   %s, D%d",
+			"AND.%s %s,D%d",
 			a.size.string(),
 			a.src.string(),
 			a.destReg,
@@ -36,7 +36,7 @@ func (a *and) Name() string {
 	}
 
 	return fmt.Sprintf(
-		"and.%s   D%d, %s",
+		"AND.%s D%d,%s",
 		a.size.string(),
 		a.destReg,
 		a.src.string())

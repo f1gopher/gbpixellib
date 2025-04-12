@@ -34,7 +34,7 @@ func CreateEOR(value uint16, code []uint8, codeOffset int) *eor {
 
 func (e *eor) Name() string {
 	return fmt.Sprintf(
-		"eor.%s   D%d, %s",
+		"EOR.%s D%d,%s",
 		e.size.string(),
 		e.destReg,
 		e.src.string())

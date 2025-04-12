@@ -23,7 +23,7 @@ func CreateDIVU(value uint16, code []uint8, codeOffset int) *divu {
 
 func (d *divu) Name() string {
 	return fmt.Sprintf(
-		"divu.%s  %s, D%d",
+		"DIVU.%s %s,D%d",
 		d.size.string(),
 		d.src.string(),
 		d.reg)

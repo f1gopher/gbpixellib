@@ -2,7 +2,6 @@ package instructions
 
 import (
 	"fmt"
-	"math"
 )
 
 type addressMode int
@@ -231,21 +230,21 @@ func (a *addressModeInfo) string() string {
 	case addressRegisterIndirectWithPostIncrement:
 		return fmt.Sprintf("(A%d)+", a.reg)
 	case absoluteWord:
-		return fmt.Sprintf("$%x.w", a.data)
+		return fmt.Sprintf("(0x%X).W", a.data)
 	case absoluteLong:
-		return fmt.Sprintf("$%x.l", a.data)
+		return fmt.Sprintf("(0x%X).L", a.data)
 	case preIndexedImediate:
-		return fmt.Sprintf("#$%x", a.data)
+		return fmt.Sprintf("0x%X", a.data)
 	case addressRegisterIndirectWithDisplacement:
-		if a.displacement < 0 {
-			return fmt.Sprintf("(-$%x,A%d)", int(math.Abs(float64(a.displacement))), a.reg)
-		}
-		return fmt.Sprintf("($%x,A%d)", a.displacement, a.reg)
+		// if a.displacement < 0 {
+		// 	return fmt.Sprintf("(-$%x,A%d)", int(math.Abs(float64(a.displacement))), a.reg)
+		// }
+		return fmt.Sprintf("(0x%04X,A%d)", a.displacement, a.reg)
 	case programCounterIndirectWithDisplacement:
-		if a.displacement < 0 {
-			return fmt.Sprintf("(-$%x,PC) ; ($%x)", -a.displacement, a.pc+a.displacement)
-		}
-		return fmt.Sprintf("($%x,PC) ; ($%x)", a.displacement, a.pc+a.displacement)
+		// if a.displacement < 0 {
+		// 	return fmt.Sprintf("(-$%x,PC) ; ($%x)", -a.displacement, a.pc+a.displacement)
+		// }
+		return fmt.Sprintf("(0x%X,PC) ; ($%x)", a.displacement, a.pc+a.displacement)
 	case addressRegisterIndirectWithIndexAnd8BitDisplacement:
 		if a.invalid != "" {
 			return a.invalid
@@ -263,15 +262,28 @@ func (a *addressModeInfo) string() string {
 		return fmt.Sprintf("-(A%d)", a.reg)
 	case programCounterIndirectWithIndex8bitDisplacement:
 		if a.displacement == 0 {
-			return fmt.Sprintf("(PC,D%d.w)", a.data)
+			return fmt.Sprintf("(PC,D%d.W)", a.data)
 		}
 		if a.displacement < 0 {
-			return fmt.Sprintf("(-$%x,PC,D%d.w)", -a.displacement, a.data)
+			return fmt.Sprintf("(-$%x,PC,D%d.W)", -a.displacement, a.data)
 		}
 
-		return fmt.Sprintf("($%x,PC,D%d.w)", a.displacement, a.data)
+		return fmt.Sprintf("($%x,PC,D%d.W)", a.displacement, a.data)
 	}
 
 	// panic(fmt.Sprintf("Unknown address mode %d", a.mode))
 	return "unknown address mode"
+}
+
+func formatAddress(address uint32, size instSize) string {
+	switch size {
+	case byteSize:
+		return fmt.Sprintf("0x%02X", address)
+	case wordSize:
+		return fmt.Sprintf("0x%04X", address)
+	case longSize:
+		return fmt.Sprintf("0x%08X", address)
+	}
+
+	panic("Unknown size")
 }

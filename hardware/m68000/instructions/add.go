@@ -33,7 +33,7 @@ func CreateADD(value uint16, code []uint8, codeOffset int) *add {
 func (a *add) Name() string {
 	if a.mode == 0b0 || a.mode == 0b00000001 || a.mode == 0b00000010 {
 		return fmt.Sprintf(
-			"add.%s   %s, D%d",
+			"ADD.%s %s,D%d",
 			a.opSize.string(),
 			a.src.string(),
 			a.destReg,
@@ -41,7 +41,7 @@ func (a *add) Name() string {
 	}
 
 	return fmt.Sprintf(
-		"add.%s   D%d, %s",
+		"ADD.%s D%d,%s",
 		a.opSize.string(),
 		a.destReg,
 		a.src.string(),

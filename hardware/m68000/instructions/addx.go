@@ -35,7 +35,7 @@ func (a *addx) Name() string {
 	}
 
 	return fmt.Sprintf(
-		"addx.%s  %s%d, %s%d",
+		"ADDX.%s %s%d,%s%d",
 		a.size.string(),
 		prefix,
 		a.regY,

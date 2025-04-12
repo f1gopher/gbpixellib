@@ -34,7 +34,7 @@ func CreateCHK(value uint16, code []uint8, codeOffset int) *chk {
 
 func (c *chk) Name() string {
 	return fmt.Sprintf(
-		"chk.%s   %s, D%d",
+		"CHK.%s %s,D%d",
 		c.size.string(),
 		c.src.string(),
 		c.reg)

@@ -24,10 +24,10 @@ func CreateABCD(value uint16, code []uint8, codeOffset int) *abcd {
 func (a *abcd) Name() string {
 
 	if a.isMemoryOp {
-		return fmt.Sprintf("abcd    -(A%d), -(A%d)", a.yReg, a.xReg)
+		return fmt.Sprintf("ABCD -(A%d),-(A%d)", a.yReg, a.xReg)
 	}
 
-	return fmt.Sprintf("abcd    D%d, D%d", a.yReg, a.xReg)
+	return fmt.Sprintf("ABCD D%d,D%d", a.yReg, a.xReg)
 }
 
 func (a *abcd) Length() int {

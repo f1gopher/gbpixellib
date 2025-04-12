@@ -38,7 +38,7 @@ func CreateMOVE(value uint16, code []uint8, codeOffset int) *move {
 
 func (m *move) Name() string {
 	return fmt.Sprintf(
-		"move.%s  %s, %s",
+		"MOVE.%s %s, %s",
 		m.size.string(),
 		m.src.string(),
 		m.dest.string())

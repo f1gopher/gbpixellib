@@ -30,7 +30,7 @@ func CreateCMP(value uint16, code []uint8, codeOffset int) *cmp {
 
 func (c *cmp) Name() string {
 	return fmt.Sprintf(
-		"cmp.%s   %s, D%d",
+		"CMP.%s %s,D%d",
 		c.size.string(),
 		c.src.string(),
 		c.destReg)

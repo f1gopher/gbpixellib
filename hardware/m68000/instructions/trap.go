@@ -13,7 +13,7 @@ func CreateTRAP(value uint16) *trap {
 }
 
 func (t *trap) Name() string {
-	return fmt.Sprintf("trap    #$%d", t.vector)
+	return fmt.Sprintf("TRAP #%d", t.vector)
 }
 
 func (t *trap) Length() int {

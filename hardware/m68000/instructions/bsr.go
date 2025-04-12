@@ -26,7 +26,7 @@ func CreateBSR(value uint16, code []uint8, codeOffset int) *bsr {
 
 func (b *bsr) Name() string {
 	return fmt.Sprintf(
-		"bsr     $%x",
+		"BSR $%x",
 		b.tmpStartOffset+b.displacement)
 }
 
