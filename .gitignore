@@ -18,3 +18,4 @@ rom/games
 bios/gameboy
 opcodes_used.txt
 *.png
+settings.json
