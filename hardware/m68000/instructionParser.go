@@ -164,8 +164,10 @@ const (
 	oriToCCRPrefix     uint16 = 0b0000000000111100
 	linkMask           uint16 = 0b1111111111111000
 	linkPrefix         uint16 = 0b0100111001010000
-	addaMask           uint16 = 0b1111000011000000
-	addaPrefix         uint16 = 0b1101000011000000
+	addaMask1          uint16 = 0b1111000011000000
+	addaPrefix1        uint16 = 0b1101000011000000
+	addaMask2          uint16 = 0b1111000111000000
+	addaPrefix2        uint16 = 0b1101000111000000
 	divsMask           uint16 = 0b1111000111000000
 	divsPrefix         uint16 = 0b1000000111000000
 	subaMask           uint16 = 0b1111000011000000
@@ -348,10 +350,10 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 		}
 	case 0b0000000000001101:
 		// ADD/ADDX
-		if opcode&addxMask == addxPrefix {
-			result = instructions.CreateADDX(opcode, code, offset)
-		} else if opcode&addaMask == addaPrefix {
+		if opcode&addaMask1 == addaPrefix1 || opcode&addaMask2 == addaPrefix2 {
 			result = instructions.CreateADDA(opcode, code, offset)
+		} else if opcode&addxMask == addxPrefix {
+			result = instructions.CreateADDX(opcode, code, offset)
 		} else if opcode&addMask == addPrefix {
 			result = instructions.CreateADD(opcode, code, offset)
 		}

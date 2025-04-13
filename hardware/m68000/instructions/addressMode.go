@@ -122,11 +122,14 @@ func readAddressMode(
 
 	if mode == addressRegisterIndirectWithDisplacement ||
 		mode == programCounterIndirectWithDisplacement {
-		displacement = int32(signExtend16BitTo32Bits(uint16(readData(code, codeOffset, wordSize))))
+		//displacement = int32(signExtend16BitTo32Bits(uint16(readData(code, codeOffset, wordSize))))
+		displacement = int32(readData(code, codeOffset, wordSize))
 		bytesUsed = 2
+		paramSize = size
 	} else if mode == preIndexedImediate {
 		data = readData(code, codeOffset, size)
 		bytesUsed = size.bytesUsed()
+		paramSize = size
 	} else if mode == dataRegisterDirect || mode == addressRegisterDirect {
 		bytesUsed = 0
 	} else if mode == absoluteWord {
@@ -144,16 +147,16 @@ func readAddressMode(
 	} else if mode == addressRegisterIndirectWithIndexAnd8BitDisplacement {
 		extraData := uint16(readData(code, codeOffset, wordSize))
 
-		if ((extraData >> 8) & 0b0000000000000111) != 0 {
+		// if ((extraData >> 8) & 0b0000000000000111) != 0 {
 
-			if modeOffset > registerOffset {
-				invalid = fmt.Sprintf("INVALID %x", value&0x3f)
-			} else {
-				// Need to swap mode and register bits around so they match the expected output
-				t := ((value >> uint16(registerOffset)) & 0b111) | ((value >> (uint16(modeOffset) - 3)) & 0b111000)
-				invalid = fmt.Sprintf("INVALID %x", t&0x3f)
-			}
-		}
+		// 	if modeOffset > registerOffset {
+		// 		invalid = fmt.Sprintf("INVALID %x", value&0x3f)
+		// 	} else {
+		// 		// Need to swap mode and register bits around so they match the expected output
+		// 		t := ((value >> uint16(registerOffset)) & 0b111) | ((value >> (uint16(modeOffset) - 3)) & 0b111000)
+		// 		invalid = fmt.Sprintf("INVALID %x", t&0x3f)
+		// 	}
+		// }
 
 		// Only want the first 8bits of info
 		displacement = int32(twosComplementToInt8Bit(uint8(extraData)))
@@ -234,7 +237,7 @@ func (a *addressModeInfo) string() string {
 	case absoluteLong:
 		return fmt.Sprintf("(0x%X).L", a.data)
 	case preIndexedImediate:
-		return fmt.Sprintf("0x%X", a.data)
+		return "#" + formatAddress(a.data, a.size)
 	case addressRegisterIndirectWithDisplacement:
 		// if a.displacement < 0 {
 		// 	return fmt.Sprintf("(-$%x,A%d)", int(math.Abs(float64(a.displacement))), a.reg)
@@ -244,7 +247,7 @@ func (a *addressModeInfo) string() string {
 		// if a.displacement < 0 {
 		// 	return fmt.Sprintf("(-$%x,PC) ; ($%x)", -a.displacement, a.pc+a.displacement)
 		// }
-		return fmt.Sprintf("(0x%X,PC) ; ($%x)", a.displacement, a.pc+a.displacement)
+		return fmt.Sprintf("(%s,PC)", formatAddress(uint32(a.displacement), wordSize))
 	case addressRegisterIndirectWithIndexAnd8BitDisplacement:
 		if a.invalid != "" {
 			return a.invalid
@@ -254,19 +257,19 @@ func (a *addressModeInfo) string() string {
 			return fmt.Sprintf("(A%d,D%d.%s)", a.reg, a.data, a.size.string())
 		}
 
-		if a.displacement < 0 {
-			return fmt.Sprintf("(-$%x,A%d,D%d.%s)", -a.displacement, a.reg, a.data, a.size.string())
-		}
-		return fmt.Sprintf("($%x,A%d,D%d.%s)", a.displacement, a.reg, a.data, a.size.string())
+		// if a.displacement < 0 {
+		// 	return fmt.Sprintf("(-$%x,A%d,D%d.%s)", -a.displacement, a.reg, a.data, a.size.string())
+		// }
+		return fmt.Sprintf("(0x%X,A%d,D%d.%s)", a.displacement, a.reg, a.data, a.size.string())
 	case addressRegisterIndirectWithPreDecrement:
 		return fmt.Sprintf("-(A%d)", a.reg)
 	case programCounterIndirectWithIndex8bitDisplacement:
 		if a.displacement == 0 {
 			return fmt.Sprintf("(PC,D%d.W)", a.data)
 		}
-		if a.displacement < 0 {
-			return fmt.Sprintf("(-$%x,PC,D%d.W)", -a.displacement, a.data)
-		}
+		// if a.displacement < 0 {
+		// 	return fmt.Sprintf("(-$%x,PC,D%d.W)", -a.displacement, a.data)
+		// }
 
 		return fmt.Sprintf("($%x,PC,D%d.W)", a.displacement, a.data)
 	}

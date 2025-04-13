@@ -16,7 +16,7 @@ func CreateADDA(value uint16, code []uint8, codeOffset int) *adda {
 		size = longSize
 	}
 	reg := valueFrom3Bits(value, 9)
-	src, _, instSize := readEffectiveAddressMode(value, 0, wordSize, code, codeOffset, codeOffset)
+	src, _, instSize := readEffectiveAddressMode(value, 0, size, code, codeOffset, codeOffset)
 
 	return &adda{
 		length: 2 + instSize,

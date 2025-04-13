@@ -51,9 +51,9 @@ func (a *addi) Name() string {
 	}
 
 	return fmt.Sprintf(
-		"ADDI.%s #$%x,%s",
+		"ADDI.%s #%s,%s",
 		a.opSize.string(),
-		a.data,
+		formatAddress(uint32(a.data), a.opSize),
 		a.dest.string())
 }
 
