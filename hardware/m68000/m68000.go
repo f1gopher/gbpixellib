@@ -25,9 +25,14 @@ func (m *M68000) Init() {
 }
 
 func (m *M68000) Reset() {
-
+	m.memory.Reset()
+	m.registers.reset()
 }
 
 func (m *M68000) ExecuteCycle() (breakpoint bool) {
 	return false
+}
+
+func (m *M68000) test_registers() *registers {
+	return &m.registers
 }
