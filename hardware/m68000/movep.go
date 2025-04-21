@@ -62,5 +62,6 @@ func (m *movep) Length() int {
 	return m.length
 }
 
-func (m *movep) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m *movep) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

@@ -30,5 +30,6 @@ func (m *moveToSR) Length() int {
 	return m.instSize
 }
 
-func (m *moveToSR) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m *moveToSR) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

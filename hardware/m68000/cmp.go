@@ -44,5 +44,6 @@ func (c *cmp) Length() int {
 	return c.length
 }
 
-func (c *cmp) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (c *cmp) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

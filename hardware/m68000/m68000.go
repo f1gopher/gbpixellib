@@ -30,6 +30,8 @@ type M68000 struct {
 	prefetchAddress         uint32
 	prefetchValue           uint16
 	prefetchCyclesRemaining uint8
+
+	currentInstruction instruction
 }
 
 func CreateM68000(log *log.Log, memory memory.Memory[uint32]) *M68000 {
@@ -50,6 +52,8 @@ func (m *M68000) Init() {
 	m.prefetchAddress = 0
 	m.prefetchValue = 0
 	m.prefetchCyclesRemaining = 0
+
+	m.currentInstruction = nil
 }
 
 func (m *M68000) Reset() {
@@ -78,7 +82,7 @@ func (m *M68000) Step() {
 	// Increment PC
 	// IR -> instruction decoder
 	// maybe read more bytes for the same instruction so multiple read cycles
-	// Execute cycle
+	// Step cycle
 	// 4 steps/cycles??
 	//
 	// fetch instruction
@@ -92,7 +96,7 @@ func (m *M68000) Step() {
 
 	//instruction := m.parser.parse(m.memory.RawBuffer(), int(m.registers.Get16(instructions.PC)))
 
-	//instruction.Execute(m.registers, m.memory)
+	//instruction.Step(m.registers, m.memory)
 
 	for x := 0; x < 4; x++ {
 		m.ExecuteCycle()
@@ -161,12 +165,9 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 			m.state = Execute_Cycle2
 		} else if m.state == Execute_Cycle2 {
 			opcode := m.registers.Get16(IRD_Executing)
-			instruction := m.parser.decode(
-				opcode,
-				m.memory.RawBuffer(),
-				int(m.registers.Get16(PC)))
+			m.currentInstruction = m.parser.decode2(opcode)
 
-			instruction.Execute(&m.registers, m.memory)
+			m.currentInstruction.Step(&m.registers, m.memory)
 
 			// Execution finished???? so either idle and wait for the next instruction
 			// or start decoding the next intruction

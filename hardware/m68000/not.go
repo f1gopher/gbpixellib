@@ -42,5 +42,6 @@ func (n *not) Length() int {
 	return n.length
 }
 
-func (n *not) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (n *not) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

@@ -7,5 +7,5 @@ import (
 type instruction interface {
 	Name() string
 	Length() int
-	Execute(registers *Registers, memory memory.Memory[uint32])
+	Step(registers *Registers, memory memory.Memory[uint32]) bool
 }

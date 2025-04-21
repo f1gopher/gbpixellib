@@ -50,5 +50,6 @@ func (s *subq) Length() int {
 	return s.length
 }
 
-func (s *subq) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (s *subq) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

@@ -29,5 +29,6 @@ func (l *link) Length() int {
 	return 4
 }
 
-func (l *link) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (l *link) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

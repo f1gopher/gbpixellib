@@ -2,6 +2,7 @@ package m68000
 
 import (
 	"encoding/binary"
+	"fmt"
 	"reflect"
 )
 
@@ -396,4 +397,223 @@ func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) inst
 
 	// Illegal instructions are called dc.w for some reason
 	return CreateDC(opcode)
+}
+
+func (i *instructionParser) decode2(opcode uint16) instruction {
+	// var result instruction = nil
+
+	operation := opcode >> 12 & 0b0000000000001111
+	switch operation {
+	// case 0b0000000000000000:
+	// 	// Bit Manipulation/MOVEP/Immed iate
+	// 	if opcode&dcPrefix == dcPrefix || opcode&dc2Mask == dc2Prefix {
+	// 		result = CreateDC(opcode)
+	// 	} else if opcode&oriToSRMask == oriToSRPrefix {
+	// 		result = CreateORIToSR(opcode, code, offset)
+	// 	} else if opcode&oriToCCRMask == oriToCCRPrefix {
+	// 		result = CreateORIToCCR(opcode, code, offset)
+	// 	} else if opcode&oriMask == oriPrefix {
+	// 		result = CreateORI(opcode, code, offset)
+	// 	} else if opcode&cmpiMask == cmpiPrefix {
+	// 		result = CreateCMPI(opcode, code, offset)
+	// 	} else if opcode&bclrMask == bclrPrefix || opcode&bclrMask2 == bclrPrefix2 {
+	// 		result = CreateBCLR(opcode, code, offset)
+	// 	} else if opcode&eoriMask == eoriPrefix {
+	// 		result = CreateEORI(opcode, code, offset)
+	// 	} else if opcode&movepMask == movepPrefix {
+	// 		result = CreateMOVEP(opcode, code, offset)
+	// 	} else if opcode&btstMask == btstPrefix || opcode&btstMask2 == btstPrefix2 {
+	// 		result = CreateBTST(opcode, code, offset)
+	// 	} else if opcode&addiMask == addiPrefix {
+	// 		result = CreateADDI(opcode, code, offset)
+	// 	} else if opcode&andiToCCRMask == andiToCCRPrefix {
+	// 		result = CreateANDIToCCR(opcode, code, offset)
+	// 	} else if opcode&andiMask == andiPrefix {
+	// 		result = CreateANDI(opcode, code, offset)
+	// 	} else if opcode&subiMask == subiPrefix {
+	// 		result = CreateSUBI(opcode, code, offset)
+	// 	} else if opcode&bchgMask1 == bchgPrefix1 || opcode&bchgMask2 == bchgPrefix2 {
+	// 		result = CreateBCHG(opcode, code, offset)
+	// 	} else if opcode&bsetMask == bsetPrefix {
+	// 		result = CreateBSET(opcode, code, offset)
+	// 	}
+	// case 0b0000000000000001:
+	// 	// Move Byte
+	// 	result = CreateMOVE(opcode, code, offset)
+	// case 0b0000000000000010:
+	// 	// Move L
+	// 	if opcode&moveaMask == moveaPrefix1 ||
+	// 		opcode&moveaMask == moveaPrefix2 {
+	// 		result = CreateMOVEA(opcode, code, offset)
+	// 	} else if opcode&moveMask == moveLPrefix {
+	// 		result = CreateMOVE(opcode, code, offset)
+	// 	}
+	// case 0b0000000000000011:
+	// 	// Move Word
+	// 	if opcode&moveaMask == moveaPrefix1 ||
+	// 		opcode&moveaMask == moveaPrefix2 {
+	// 		result = CreateMOVEA(opcode, code, offset)
+	// 	} else {
+	// 		result = CreateMOVE(opcode, code, offset)
+	//	}
+	case 0b0000000000000100:
+		// Miscellaneous
+		if opcode == illegalInstruction {
+			return &illegal{}
+			// } else if opcode&nopMask == nopPrefix {
+			// 	result = CreateNOP(opcode, code, offset)
+			// } else if opcode == rteInstruction {
+			// 	result = CreateRTE()
+			// } else if opcode&rtsMask == rtsPrefix {
+			// 	result = CreateRTS(opcode)
+		} else if opcode&clrMask == clrPrefix {
+			return &clr{opcode: opcode}
+			// } else if opcode&jsrMask == jsrPrefix {
+			// 	result = CreateJSR(opcode, code, offset)
+			// } else if opcode&moveToSRMask == moveToSRPrefix {
+			// 	result = CreateMOVEToSR(opcode, code, offset)
+			// } else if opcode&tstMask == tstPrefix {
+			// 	result = CreateTST(opcode, code, offset)
+			// } else if opcode&swapMask == swapPrefix {
+			// 	result = CreateSWAP(opcode, code, offset)
+			// } else if opcode&extMask == extPrefix {
+			// 	result = CreateEXT(opcode)
+			// } else if opcode&movemMask == movemPrefix {
+			// 	result = CreateMOVEM(opcode, code, offset)
+			// } else if opcode&notMask == notPrefix {
+			// 	result = CreateNOT(opcode, code, offset)
+			// } else if opcode&stopMask == stopPrefix {
+			// 	result = CreateSTOP(opcode, code, offset)
+			// } else if opcode&peaMask == peaPrefix {
+			// 	result = CreatePEA(opcode, code, offset)
+			// } else if opcode&jmpMask == jmpPrefix {
+			// 	result = CreateJMP(opcode, code, offset)
+			// } else if opcode&moveUSPMask == moveUSPPrefix {
+			// 	result = CreateMOVEToUSP(opcode)
+			// } else if opcode&moveCCRMask == moveCCRPrefix {
+			// 	result = CreateMOVEToCCR(opcode, code, offset)
+			// } else if opcode&trapMask == trapPrefix {
+			// 	result = CreateTRAP(opcode)
+			// } else if opcode&leaMask == leaPrefix {
+			// 	result = CreateLEA(opcode, code, offset)
+			// } else if opcode&negMask == negPrefix {
+			// 	result = CreateNEG(opcode, code, offset)
+			// } else if opcode&chkMask == chkPrefix {
+			// 	result = CreateCHK(opcode, code, offset)
+			// } else if opcode&negxMask == negxPrefix {
+			// 	result = CreateNEGX(opcode, code, offset)
+			// } else if opcode&linkMask == linkPrefix {
+			// 	result = CreateLINK(opcode, code, offset)
+		}
+		// case 0b0000000000000101:
+		// 	// ADDQ/SUBQ/Scc/DBcc/TRAPc c
+		// 	if opcode&dbccMask == dbccPrefix {
+		// 		result = CreateDB(opcode, code, offset)
+		// 	} else if opcode&sccMask == sccPrefix {
+		// 		result = CreateScc(opcode, code, offset)
+		// 	} else if opcode&addqMask == addqPrefix {
+		// 		result = CreateADDQ(opcode, code, offset)
+		// 	} else if opcode&subqMask == subqPrefix {
+		// 		result = CreateSUBQ(opcode, code, offset)
+		// 	}
+		// case 0b0000000000000110:
+		// 	// Bcc/BSR/BRA
+		// 	if opcode&bsrMask == bsrPrefix {
+		// 		result = CreateBSR(opcode, code, offset)
+		// 	} else if opcode&braMask == braPrefix {
+		// 		result = CreateBRA(opcode, code, offset)
+		// 	} else if opcode&bccMask == bccPrefix {
+		// 		result = CreateBcc(opcode, code, offset)
+		// 	}
+		// case 0b0000000000000111:
+		// 	// MOVEQ
+		// 	if opcode&moveqMask == moveqPrefix {
+		// 		result = CreateMOVEQ(opcode)
+		// 	}
+		// case 0b0000000000001000:
+		// 	// OR/DIV/SBCD
+		// 	if opcode&divuMask == divuPrefix {
+		// 		result = CreateDIVU(opcode, code, offset)
+		// 	} else if opcode&sbcdMask == sbcdPrefix {
+		// 		result = CreateSBCD(opcode, code, offset)
+		// 	} else if opcode&divsMask == divsPrefix {
+		// 		result = CreateDIVS(opcode, code, offset)
+		// 	} else if opcode&orMask == orPrefix {
+		// 		result = CreateOR(opcode, code, offset)
+		// 	}
+		// case 0b0000000000001001:
+		// 	// SUB/SUBX
+		// 	if opcode&subaMask == subaPrefix {
+		// 		result = CreateSUBA(opcode, code, offset)
+		// 	} else if opcode&subMask == subPrefix {
+		// 		result = CreateSUB(opcode, code, offset)
+		// 	}
+		// case 0b0000000000001010:
+		// 	// (Unassigned, Reserved)
+		// case 0b0000000000001011:
+		// 	// CMP/EOR
+		// 	opmode := (opcode >> 6) & 0b000000000000111
+
+		// 	if opmode == 0 || opmode == 0b00000001 || opmode == 0b00000010 {
+		// 		result = CreateCMP(opcode, code, offset)
+		// 	} else if opmode == 0b00000011 || opmode == 0b00000111 {
+		// 		result = CreateCMPA(opcode, code, offset)
+		// 	} else {
+		// 		result = CreateEOR(opcode, code, offset)
+		// 	}
+		// case 0b0000000000001100:
+		// 	// AND/MUL/ABCD/EXG
+		// 	if opcode&abcdMask == abcdPrefix {
+		// 		result = CreateABCD(opcode, code, offset)
+		// 	} else if opcode&exgMask == exgPrefix {
+		// 		result = CreateEXG(opcode, code, offset)
+		// 	} else if opcode&muluMask == muluPrefix {
+		// 		result = CreateMULU(opcode, code, offset)
+		// 	} else if opcode&andMask == andPrefix {
+		// 		result = CreateAND(opcode, code, offset)
+		// 	}
+		// case 0b0000000000001101:
+		// 	// ADD/ADDX
+		// 	if opcode&addxMask == addxPrefix {
+		// 		result = CreateADDX(opcode, code, offset)
+		// 	} else if opcode&addaMask == addaPrefix {
+		// 		result = CreateADDA(opcode, code, offset)
+		// 	} else if opcode&addMask == addPrefix {
+		// 		result = CreateADD(opcode, code, offset)
+		// 	}
+		// case 0b0000000000001110:
+		// 	// Shift/Rotate/Bit Field
+		// 	if opcode&rol_rorMask == rol_rorPrefix {
+		// 		result = CreateROL_ROR(opcode, code, offset)
+		// 	} else if opcode&roxl_roxrMask1 == roxl_roxrPrefix1 || opcode&roxl_roxrMask2 == roxl_roxrPrefix2 {
+		// 		result = CreateROXL_ROXR(opcode, code, offset)
+		// 	} else if opcode&lsl_lsrMask1 == lsl_lsrPrefix1 || opcode&lsl_lsrMask2 == lsl_lsrPrefix2 {
+		// 		result = CreateLSL_LSR(opcode, code, offset)
+		// 	} else if opcode&asl_asrMask1 == asl_asrPrefix1 || opcode&asl_asrMask2 == asl_asrPrefix2 {
+		// 		result = CreateASL_ASR(opcode, code, offset)
+		// 	}
+		// case 0b0000000000001111:
+		// 	// Coprocessor Interface/MC68040 and CPU32 Extensions
+
+		// 	// // TODO - don't think this is right
+		// 	// if opcode&dcPrefix == dcPrefix {
+		// 	// 	result = instructions.CreateDC(opcode)
+		// 	// }
+		// 	if opcode&0xff80 == 0xf500 {
+		// 		result = CreateUNKNOWN(opcode)
+		// 	} else if opcode == 0b1111000001001000 {
+		// 		result = CreatePBAS(opcode)
+		// 	} else if opcode == 0b1111000000000000 {
+		// 		result = CreatePMOVE(opcode)
+		// 	}
+	}
+
+	// if result != nil && !reflect.ValueOf(result).IsNil() {
+	// 	return result
+	// }
+
+	// // Illegal instructions are called dc.w for some reason
+	// return CreateDC(opcode)
+
+	panic(fmt.Sprintf("Not implemented decode for %016b", opcode))
 }

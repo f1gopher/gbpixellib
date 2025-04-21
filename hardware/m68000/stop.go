@@ -24,5 +24,6 @@ func (s *stop) Length() int {
 	return 4
 }
 
-func (s *stop) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (s *stop) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

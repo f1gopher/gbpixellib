@@ -41,5 +41,6 @@ func (c *cmpa) Length() int {
 	return c.length
 }
 
-func (c *cmpa) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (c *cmpa) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

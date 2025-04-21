@@ -29,5 +29,6 @@ func (m *moveToCCR) Length() int {
 	return m.length
 }
 
-func (m *moveToCCR) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m *moveToCCR) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

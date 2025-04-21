@@ -34,5 +34,6 @@ func (e *ext) Length() int {
 	return 2
 }
 
-func (e *ext) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (e *ext) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

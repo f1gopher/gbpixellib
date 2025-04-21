@@ -92,5 +92,6 @@ func (r *roxl_roxr) Length() int {
 	return r.length
 }
 
-func (r *roxl_roxr) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (r *roxl_roxr) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

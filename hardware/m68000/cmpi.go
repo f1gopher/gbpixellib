@@ -89,5 +89,6 @@ func (c *cmpi) Length() int {
 	return c.length
 }
 
-func (c *cmpi) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (c *cmpi) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

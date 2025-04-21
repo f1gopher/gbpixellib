@@ -40,6 +40,7 @@ func (m *moveq) Length() int {
 	return 2
 }
 
-func (m *moveq) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m *moveq) Step(registers *Registers, memory memory.Memory[uint32]) bool {
 	registers.SetDReg32(m.destReg, uint32(m.data))
+	return true
 }

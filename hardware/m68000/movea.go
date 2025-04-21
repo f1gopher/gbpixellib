@@ -37,5 +37,6 @@ func (m *movea) Length() int {
 	return m.instSize
 }
 
-func (m *movea) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m *movea) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

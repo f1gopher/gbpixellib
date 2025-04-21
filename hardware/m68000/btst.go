@@ -74,5 +74,6 @@ func (b *btst) Length() int {
 	return b.length
 }
 
-func (b *btst) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (b *btst) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

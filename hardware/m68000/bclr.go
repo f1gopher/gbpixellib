@@ -62,5 +62,6 @@ func (b *bclr) Length() int {
 	return b.length
 }
 
-func (b *bclr) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (b *bclr) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

@@ -16,5 +16,6 @@ func (i *illegal) Length() int {
 	return 2
 }
 
-func (i *illegal) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (i *illegal) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

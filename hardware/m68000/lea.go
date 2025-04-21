@@ -46,5 +46,6 @@ func (l *lea) Length() int {
 	return l.length
 }
 
-func (l *lea) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (l *lea) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

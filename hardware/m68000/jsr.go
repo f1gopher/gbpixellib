@@ -31,5 +31,6 @@ func (j *jsr) Length() int {
 	return j.instSize
 }
 
-func (j *jsr) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (j *jsr) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

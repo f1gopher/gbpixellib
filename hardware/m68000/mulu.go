@@ -34,5 +34,6 @@ func (m *mulu) Length() int {
 	return m.length
 }
 
-func (m *mulu) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m *mulu) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

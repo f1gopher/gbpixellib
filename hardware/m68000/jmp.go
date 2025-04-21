@@ -29,5 +29,6 @@ func (j *jmp) Length() int {
 	return j.length
 }
 
-func (j *jmp) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (j *jmp) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

@@ -47,5 +47,6 @@ func (a *andi) Length() int {
 	return a.length
 }
 
-func (a *andi) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (a *andi) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

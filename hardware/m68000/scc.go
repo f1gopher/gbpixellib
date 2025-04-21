@@ -33,5 +33,6 @@ func (s *scc) Length() int {
 	return s.length
 }
 
-func (s *scc) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (s *scc) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

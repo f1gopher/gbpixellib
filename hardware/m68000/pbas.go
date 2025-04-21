@@ -18,5 +18,6 @@ func (p *pbas) Length() int {
 	return 6
 }
 
-func (p *pbas) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (p *pbas) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

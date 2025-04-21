@@ -39,5 +39,6 @@ func (p *pea) Length() int {
 	return p.length
 }
 
-func (p *pea) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (p *pea) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

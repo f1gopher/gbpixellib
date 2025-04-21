@@ -152,5 +152,6 @@ func (m *movem) firstAndLastReg(value byte) (left byte, right byte, anySet bool)
 	return leftMostBitSet, rigthMostBitSet, true
 }
 
-func (m movem) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m movem) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

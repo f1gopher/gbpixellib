@@ -42,5 +42,6 @@ func (a *adda) Length() int {
 	return a.length
 }
 
-func (a *adda) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (a *adda) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

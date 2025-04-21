@@ -51,5 +51,6 @@ func (e *eori) Length() int {
 	return e.length
 }
 
-func (e *eori) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (e *eori) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

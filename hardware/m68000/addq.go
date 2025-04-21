@@ -45,5 +45,6 @@ func (a *addq) Length() int {
 	return a.length
 }
 
-func (a *addq) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (a *addq) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

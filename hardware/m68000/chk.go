@@ -48,5 +48,6 @@ func (c *chk) Length() int {
 	return c.length
 }
 
-func (c *chk) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (c *chk) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

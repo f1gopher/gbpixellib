@@ -104,5 +104,6 @@ func (r *ror_rol) Length() int {
 	return 2
 }
 
-func (r *ror_rol) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (r *ror_rol) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

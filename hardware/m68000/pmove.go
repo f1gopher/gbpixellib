@@ -18,5 +18,6 @@ func (p *pmove) Length() int {
 	return 4
 }
 
-func (p *pmove) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (p *pmove) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

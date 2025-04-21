@@ -60,5 +60,6 @@ func (o *or) Length() int {
 	return o.length
 }
 
-func (o *or) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (o *or) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

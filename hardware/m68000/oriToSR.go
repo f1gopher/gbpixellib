@@ -24,5 +24,6 @@ func (o *oriToSR) Length() int {
 	return 4
 }
 
-func (o *oriToSR) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (o *oriToSR) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

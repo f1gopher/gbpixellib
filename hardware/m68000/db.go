@@ -43,5 +43,6 @@ func (d *db) Length() int {
 	return 4
 }
 
-func (d *db) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (d *db) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

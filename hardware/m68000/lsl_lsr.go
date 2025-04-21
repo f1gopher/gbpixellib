@@ -90,5 +90,6 @@ func (l *lsl_lsr) Length() int {
 	return 2
 }
 
-func (l *lsl_lsr) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (l *lsl_lsr) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

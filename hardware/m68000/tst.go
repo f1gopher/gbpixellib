@@ -41,5 +41,6 @@ func (t *tst) Length() int {
 	return t.length
 }
 
-func (t *tst) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (t *tst) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

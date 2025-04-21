@@ -37,5 +37,6 @@ func (d *divu) Length() int {
 	return d.length
 }
 
-func (d *divu) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (d *divu) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

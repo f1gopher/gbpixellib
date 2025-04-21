@@ -34,5 +34,6 @@ func (n *negx) Length() int {
 	return n.length
 }
 
-func (n *negx) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (n *negx) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

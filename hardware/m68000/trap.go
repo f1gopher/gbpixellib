@@ -24,5 +24,6 @@ func (t *trap) Length() int {
 	return 2
 }
 
-func (t *trap) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (t *trap) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

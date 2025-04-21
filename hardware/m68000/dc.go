@@ -28,5 +28,6 @@ func (d *dc) Length() int {
 	return 2
 }
 
-func (d *dc) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (d *dc) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

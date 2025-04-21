@@ -17,5 +17,6 @@ func (n *nop) Length() int {
 	return 2
 }
 
-func (n *nop) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (n *nop) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

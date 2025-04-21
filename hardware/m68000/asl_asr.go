@@ -89,5 +89,6 @@ func (a *asl_asr) Length() int {
 	return a.length
 }
 
-func (a *asl_asr) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (a *asl_asr) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

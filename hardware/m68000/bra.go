@@ -39,5 +39,6 @@ func (b *bra) Length() int {
 	return 2 + b.size.bytesUsed()
 }
 
-func (b *bra) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (b *bra) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

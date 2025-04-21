@@ -24,5 +24,6 @@ func (s *swap) Length() int {
 	return 2
 }
 
-func (s *swap) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (s *swap) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

@@ -7,6 +7,7 @@ import (
 )
 
 type clr struct {
+	opcode uint16
 	length int
 	size   instSize
 	dest   addressModeInfo
@@ -34,6 +35,7 @@ func (c *clr) Length() int {
 	return c.length
 }
 
-func (c *clr) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (c *clr) Step(registers *Registers, memory memory.Memory[uint32]) bool {
 	c.dest.setValueWithSize(registers, memory, 0, c.size)
+	return true
 }

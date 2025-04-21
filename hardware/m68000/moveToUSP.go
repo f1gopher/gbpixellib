@@ -29,5 +29,6 @@ func (m *moveToUSP) Length() int {
 	return 2
 }
 
-func (m *moveToUSP) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (m *moveToUSP) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

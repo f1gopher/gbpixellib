@@ -24,5 +24,6 @@ func (a *andiToCCR) Length() int {
 	return 4
 }
 
-func (a *andiToCCR) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (a *andiToCCR) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }

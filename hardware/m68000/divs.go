@@ -34,5 +34,6 @@ func (d *divs) Length() int {
 	return d.length
 }
 
-func (d *divs) Execute(registers *Registers, memory memory.Memory[uint32]) {
+func (d *divs) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+	return true
 }
