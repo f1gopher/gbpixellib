@@ -3,7 +3,6 @@ package m68000
 import (
 	"fmt"
 
-	"github.com/f1gopher/gbpixellib/hardware/m68000/instructions"
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 	"github.com/f1gopher/gbpixellib/log"
 )
@@ -20,7 +19,7 @@ const (
 type M68000 struct {
 	log *log.Log
 
-	registers instructions.Registers
+	registers Registers
 	memory    memory.Memory[uint32]
 	parser    instructionParser
 
@@ -110,14 +109,14 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 			m.prefetchRequested = false
 			m.prefetchAddress = 0
 			m.registers.Set16(
-				instructions.IRC_Prefetch,
+				IRC_Prefetch,
 				m.prefetchValue)
 			m.prefetchValue = 0
 		}
 	}
 
-	irc := m.registers.Get16(instructions.IRC_Prefetch)
-	ir := m.registers.Get16(instructions.IR_Decoding)
+	irc := m.registers.Get16(IRC_Prefetch)
+	ir := m.registers.Get16(IR_Decoding)
 
 	// If the prefetch buffer is completely empty then request a new instruction
 	// and do nothing else
@@ -126,28 +125,28 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 	} else if irc != 0 && ir == 0 {
 		// If the first prefetch buffer has a value but the second doesn't
 		// then move the first value along and request the next instruction
-		m.registers.Set16(instructions.IR_Decoding, irc)
-		m.registers.Set16(instructions.IRC_Prefetch, 0)
-		m.requestPrefetch(m.registers.Get32(instructions.PC))
+		m.registers.Set16(IR_Decoding, irc)
+		m.registers.Set16(IRC_Prefetch, 0)
+		m.requestPrefetch(m.registers.Get32(PC))
 	} else {
 		// We must have an instruction for ready to execute
 
 		// If the first prefetch is empty then request an instruction
 		if irc == 0 {
-			m.requestPrefetch(m.registers.Get32(instructions.PC) + 2)
+			m.requestPrefetch(m.registers.Get32(PC) + 2)
 		}
 
 		// Start executing the instruction we have
 		if m.state == Idle {
 			// Move the next instruction out from prefetch queue into executing
 			// and clear the prefetch
-			m.registers.Set16(instructions.IRD_Executing, ir)
-			m.registers.Set16(instructions.IR_Decoding, 0)
+			m.registers.Set16(IRD_Executing, ir)
+			m.registers.Set16(IR_Decoding, 0)
 			// Now move the first prefetch value along into decoding and request
 			// another instruction
-			m.registers.Set16(instructions.IR_Decoding, irc)
-			m.registers.Set16(instructions.IRC_Prefetch, 0)
-			m.requestPrefetch(m.registers.Get32(instructions.PC) + 4)
+			m.registers.Set16(IR_Decoding, irc)
+			m.registers.Set16(IRC_Prefetch, 0)
+			m.requestPrefetch(m.registers.Get32(PC) + 4)
 
 			// Increment PC by 2 now we have started executing that instruction
 			m.registers.IncrementPC(2)
@@ -161,17 +160,17 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 		} else if m.state == Execute_Cycle1 {
 			m.state = Execute_Cycle2
 		} else if m.state == Execute_Cycle2 {
-			opcode := m.registers.Get16(instructions.IRD_Executing)
+			opcode := m.registers.Get16(IRD_Executing)
 			instruction := m.parser.decode(
 				opcode,
 				m.memory.RawBuffer(),
-				int(m.registers.Get16(instructions.PC)))
+				int(m.registers.Get16(PC)))
 
 			instruction.Execute(&m.registers, m.memory)
 
 			// Execution finished???? so either idle and wait for the next instruction
 			// or start decoding the next intruction
-			if m.registers.Get16(instructions.IRC_Prefetch) == 0 {
+			if m.registers.Get16(IRC_Prefetch) == 0 {
 				m.state = Idle
 			} else {
 				m.state = Decode_Cycle1
@@ -186,6 +185,6 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 	return false
 }
 
-func (m *M68000) test_registers() *instructions.Registers {
+func (m *M68000) test_registers() *Registers {
 	return &m.registers
 }

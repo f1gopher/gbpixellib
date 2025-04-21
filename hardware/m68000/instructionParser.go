@@ -3,8 +3,6 @@ package m68000
 import (
 	"encoding/binary"
 	"reflect"
-
-	"github.com/f1gopher/gbpixellib/hardware/m68000/instructions"
 )
 
 type instructionParser struct{}
@@ -191,146 +189,146 @@ func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) inst
 	case 0b0000000000000000:
 		// Bit Manipulation/MOVEP/Immed iate
 		if opcode&dcPrefix == dcPrefix || opcode&dc2Mask == dc2Prefix {
-			result = instructions.CreateDC(opcode)
+			result = CreateDC(opcode)
 		} else if opcode&oriToSRMask == oriToSRPrefix {
-			result = instructions.CreateORIToSR(opcode, code, offset)
+			result = CreateORIToSR(opcode, code, offset)
 		} else if opcode&oriToCCRMask == oriToCCRPrefix {
-			result = instructions.CreateORIToCCR(opcode, code, offset)
+			result = CreateORIToCCR(opcode, code, offset)
 		} else if opcode&oriMask == oriPrefix {
-			result = instructions.CreateORI(opcode, code, offset)
+			result = CreateORI(opcode, code, offset)
 		} else if opcode&cmpiMask == cmpiPrefix {
-			result = instructions.CreateCMPI(opcode, code, offset)
+			result = CreateCMPI(opcode, code, offset)
 		} else if opcode&bclrMask == bclrPrefix || opcode&bclrMask2 == bclrPrefix2 {
-			result = instructions.CreateBCLR(opcode, code, offset)
+			result = CreateBCLR(opcode, code, offset)
 		} else if opcode&eoriMask == eoriPrefix {
-			result = instructions.CreateEORI(opcode, code, offset)
+			result = CreateEORI(opcode, code, offset)
 		} else if opcode&movepMask == movepPrefix {
-			result = instructions.CreateMOVEP(opcode, code, offset)
+			result = CreateMOVEP(opcode, code, offset)
 		} else if opcode&btstMask == btstPrefix || opcode&btstMask2 == btstPrefix2 {
-			result = instructions.CreateBTST(opcode, code, offset)
+			result = CreateBTST(opcode, code, offset)
 		} else if opcode&addiMask == addiPrefix {
-			result = instructions.CreateADDI(opcode, code, offset)
+			result = CreateADDI(opcode, code, offset)
 		} else if opcode&andiToCCRMask == andiToCCRPrefix {
-			result = instructions.CreateANDIToCCR(opcode, code, offset)
+			result = CreateANDIToCCR(opcode, code, offset)
 		} else if opcode&andiMask == andiPrefix {
-			result = instructions.CreateANDI(opcode, code, offset)
+			result = CreateANDI(opcode, code, offset)
 		} else if opcode&subiMask == subiPrefix {
-			result = instructions.CreateSUBI(opcode, code, offset)
+			result = CreateSUBI(opcode, code, offset)
 		} else if opcode&bchgMask1 == bchgPrefix1 || opcode&bchgMask2 == bchgPrefix2 {
-			result = instructions.CreateBCHG(opcode, code, offset)
+			result = CreateBCHG(opcode, code, offset)
 		} else if opcode&bsetMask == bsetPrefix {
-			result = instructions.CreateBSET(opcode, code, offset)
+			result = CreateBSET(opcode, code, offset)
 		}
 	case 0b0000000000000001:
 		// Move Byte
-		result = instructions.CreateMOVE(opcode, code, offset)
+		result = CreateMOVE(opcode, code, offset)
 	case 0b0000000000000010:
 		// Move L
 		if opcode&moveaMask == moveaPrefix1 ||
 			opcode&moveaMask == moveaPrefix2 {
-			result = instructions.CreateMOVEA(opcode, code, offset)
+			result = CreateMOVEA(opcode, code, offset)
 		} else if opcode&moveMask == moveLPrefix {
-			result = instructions.CreateMOVE(opcode, code, offset)
+			result = CreateMOVE(opcode, code, offset)
 		}
 	case 0b0000000000000011:
 		// Move Word
 		if opcode&moveaMask == moveaPrefix1 ||
 			opcode&moveaMask == moveaPrefix2 {
-			result = instructions.CreateMOVEA(opcode, code, offset)
+			result = CreateMOVEA(opcode, code, offset)
 		} else {
-			result = instructions.CreateMOVE(opcode, code, offset)
+			result = CreateMOVE(opcode, code, offset)
 		}
 	case 0b0000000000000100:
 		// Miscellaneous
 		if opcode == illegalInstruction {
-			result = instructions.CreateILLEGAL()
+			result = CreateILLEGAL()
 		} else if opcode&nopMask == nopPrefix {
-			result = instructions.CreateNOP(opcode, code, offset)
+			result = CreateNOP(opcode, code, offset)
 		} else if opcode == rteInstruction {
-			result = instructions.CreateRTE()
+			result = CreateRTE()
 		} else if opcode&rtsMask == rtsPrefix {
-			result = instructions.CreateRTS(opcode)
+			result = CreateRTS(opcode)
 		} else if opcode&clrMask == clrPrefix {
-			result = instructions.CreateCLR(opcode, code, offset)
+			result = CreateCLR(opcode, code, offset)
 		} else if opcode&jsrMask == jsrPrefix {
-			result = instructions.CreateJSR(opcode, code, offset)
+			result = CreateJSR(opcode, code, offset)
 		} else if opcode&moveToSRMask == moveToSRPrefix {
-			result = instructions.CreateMOVEToSR(opcode, code, offset)
+			result = CreateMOVEToSR(opcode, code, offset)
 		} else if opcode&tstMask == tstPrefix {
-			result = instructions.CreateTST(opcode, code, offset)
+			result = CreateTST(opcode, code, offset)
 		} else if opcode&swapMask == swapPrefix {
-			result = instructions.CreateSWAP(opcode, code, offset)
+			result = CreateSWAP(opcode, code, offset)
 		} else if opcode&extMask == extPrefix {
-			result = instructions.CreateEXT(opcode)
+			result = CreateEXT(opcode)
 		} else if opcode&movemMask == movemPrefix {
-			result = instructions.CreateMOVEM(opcode, code, offset)
+			result = CreateMOVEM(opcode, code, offset)
 		} else if opcode&notMask == notPrefix {
-			result = instructions.CreateNOT(opcode, code, offset)
+			result = CreateNOT(opcode, code, offset)
 		} else if opcode&stopMask == stopPrefix {
-			result = instructions.CreateSTOP(opcode, code, offset)
+			result = CreateSTOP(opcode, code, offset)
 		} else if opcode&peaMask == peaPrefix {
-			result = instructions.CreatePEA(opcode, code, offset)
+			result = CreatePEA(opcode, code, offset)
 		} else if opcode&jmpMask == jmpPrefix {
-			result = instructions.CreateJMP(opcode, code, offset)
+			result = CreateJMP(opcode, code, offset)
 		} else if opcode&moveUSPMask == moveUSPPrefix {
-			result = instructions.CreateMOVEToUSP(opcode)
+			result = CreateMOVEToUSP(opcode)
 		} else if opcode&moveCCRMask == moveCCRPrefix {
-			result = instructions.CreateMOVEToCCR(opcode, code, offset)
+			result = CreateMOVEToCCR(opcode, code, offset)
 		} else if opcode&trapMask == trapPrefix {
-			result = instructions.CreateTRAP(opcode)
+			result = CreateTRAP(opcode)
 		} else if opcode&leaMask == leaPrefix {
-			result = instructions.CreateLEA(opcode, code, offset)
+			result = CreateLEA(opcode, code, offset)
 		} else if opcode&negMask == negPrefix {
-			result = instructions.CreateNEG(opcode, code, offset)
+			result = CreateNEG(opcode, code, offset)
 		} else if opcode&chkMask == chkPrefix {
-			result = instructions.CreateCHK(opcode, code, offset)
+			result = CreateCHK(opcode, code, offset)
 		} else if opcode&negxMask == negxPrefix {
-			result = instructions.CreateNEGX(opcode, code, offset)
+			result = CreateNEGX(opcode, code, offset)
 		} else if opcode&linkMask == linkPrefix {
-			result = instructions.CreateLINK(opcode, code, offset)
+			result = CreateLINK(opcode, code, offset)
 		}
 	case 0b0000000000000101:
 		// ADDQ/SUBQ/Scc/DBcc/TRAPc c
 		if opcode&dbccMask == dbccPrefix {
-			result = instructions.CreateDB(opcode, code, offset)
+			result = CreateDB(opcode, code, offset)
 		} else if opcode&sccMask == sccPrefix {
-			result = instructions.CreateScc(opcode, code, offset)
+			result = CreateScc(opcode, code, offset)
 		} else if opcode&addqMask == addqPrefix {
-			result = instructions.CreateADDQ(opcode, code, offset)
+			result = CreateADDQ(opcode, code, offset)
 		} else if opcode&subqMask == subqPrefix {
-			result = instructions.CreateSUBQ(opcode, code, offset)
+			result = CreateSUBQ(opcode, code, offset)
 		}
 	case 0b0000000000000110:
 		// Bcc/BSR/BRA
 		if opcode&bsrMask == bsrPrefix {
-			result = instructions.CreateBSR(opcode, code, offset)
+			result = CreateBSR(opcode, code, offset)
 		} else if opcode&braMask == braPrefix {
-			result = instructions.CreateBRA(opcode, code, offset)
+			result = CreateBRA(opcode, code, offset)
 		} else if opcode&bccMask == bccPrefix {
-			result = instructions.CreateBcc(opcode, code, offset)
+			result = CreateBcc(opcode, code, offset)
 		}
 	case 0b0000000000000111:
 		// MOVEQ
 		if opcode&moveqMask == moveqPrefix {
-			result = instructions.CreateMOVEQ(opcode)
+			result = CreateMOVEQ(opcode)
 		}
 	case 0b0000000000001000:
 		// OR/DIV/SBCD
 		if opcode&divuMask == divuPrefix {
-			result = instructions.CreateDIVU(opcode, code, offset)
+			result = CreateDIVU(opcode, code, offset)
 		} else if opcode&sbcdMask == sbcdPrefix {
-			result = instructions.CreateSBCD(opcode, code, offset)
+			result = CreateSBCD(opcode, code, offset)
 		} else if opcode&divsMask == divsPrefix {
-			result = instructions.CreateDIVS(opcode, code, offset)
+			result = CreateDIVS(opcode, code, offset)
 		} else if opcode&orMask == orPrefix {
-			result = instructions.CreateOR(opcode, code, offset)
+			result = CreateOR(opcode, code, offset)
 		}
 	case 0b0000000000001001:
 		// SUB/SUBX
 		if opcode&subaMask == subaPrefix {
-			result = instructions.CreateSUBA(opcode, code, offset)
+			result = CreateSUBA(opcode, code, offset)
 		} else if opcode&subMask == subPrefix {
-			result = instructions.CreateSUB(opcode, code, offset)
+			result = CreateSUB(opcode, code, offset)
 		}
 	case 0b0000000000001010:
 		// (Unassigned, Reserved)
@@ -339,42 +337,42 @@ func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) inst
 		opmode := (opcode >> 6) & 0b000000000000111
 
 		if opmode == 0 || opmode == 0b00000001 || opmode == 0b00000010 {
-			result = instructions.CreateCMP(opcode, code, offset)
+			result = CreateCMP(opcode, code, offset)
 		} else if opmode == 0b00000011 || opmode == 0b00000111 {
-			result = instructions.CreateCMPA(opcode, code, offset)
+			result = CreateCMPA(opcode, code, offset)
 		} else {
-			result = instructions.CreateEOR(opcode, code, offset)
+			result = CreateEOR(opcode, code, offset)
 		}
 	case 0b0000000000001100:
 		// AND/MUL/ABCD/EXG
 		if opcode&abcdMask == abcdPrefix {
-			result = instructions.CreateABCD(opcode, code, offset)
+			result = CreateABCD(opcode, code, offset)
 		} else if opcode&exgMask == exgPrefix {
-			result = instructions.CreateEXG(opcode, code, offset)
+			result = CreateEXG(opcode, code, offset)
 		} else if opcode&muluMask == muluPrefix {
-			result = instructions.CreateMULU(opcode, code, offset)
+			result = CreateMULU(opcode, code, offset)
 		} else if opcode&andMask == andPrefix {
-			result = instructions.CreateAND(opcode, code, offset)
+			result = CreateAND(opcode, code, offset)
 		}
 	case 0b0000000000001101:
 		// ADD/ADDX
 		if opcode&addxMask == addxPrefix {
-			result = instructions.CreateADDX(opcode, code, offset)
+			result = CreateADDX(opcode, code, offset)
 		} else if opcode&addaMask == addaPrefix {
-			result = instructions.CreateADDA(opcode, code, offset)
+			result = CreateADDA(opcode, code, offset)
 		} else if opcode&addMask == addPrefix {
-			result = instructions.CreateADD(opcode, code, offset)
+			result = CreateADD(opcode, code, offset)
 		}
 	case 0b0000000000001110:
 		// Shift/Rotate/Bit Field
 		if opcode&rol_rorMask == rol_rorPrefix {
-			result = instructions.CreateROL_ROR(opcode, code, offset)
+			result = CreateROL_ROR(opcode, code, offset)
 		} else if opcode&roxl_roxrMask1 == roxl_roxrPrefix1 || opcode&roxl_roxrMask2 == roxl_roxrPrefix2 {
-			result = instructions.CreateROXL_ROXR(opcode, code, offset)
+			result = CreateROXL_ROXR(opcode, code, offset)
 		} else if opcode&lsl_lsrMask1 == lsl_lsrPrefix1 || opcode&lsl_lsrMask2 == lsl_lsrPrefix2 {
-			result = instructions.CreateLSL_LSR(opcode, code, offset)
+			result = CreateLSL_LSR(opcode, code, offset)
 		} else if opcode&asl_asrMask1 == asl_asrPrefix1 || opcode&asl_asrMask2 == asl_asrPrefix2 {
-			result = instructions.CreateASL_ASR(opcode, code, offset)
+			result = CreateASL_ASR(opcode, code, offset)
 		}
 	case 0b0000000000001111:
 		// Coprocessor Interface/MC68040 and CPU32 Extensions
@@ -384,11 +382,11 @@ func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) inst
 		// 	result = instructions.CreateDC(opcode)
 		// }
 		if opcode&0xff80 == 0xf500 {
-			result = instructions.CreateUNKNOWN(opcode)
+			result = CreateUNKNOWN(opcode)
 		} else if opcode == 0b1111000001001000 {
-			result = instructions.CreatePBAS(opcode)
+			result = CreatePBAS(opcode)
 		} else if opcode == 0b1111000000000000 {
-			result = instructions.CreatePMOVE(opcode)
+			result = CreatePMOVE(opcode)
 		}
 	}
 
@@ -397,5 +395,5 @@ func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) inst
 	}
 
 	// Illegal instructions are called dc.w for some reason
-	return instructions.CreateDC(opcode)
+	return CreateDC(opcode)
 }
