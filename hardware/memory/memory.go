@@ -16,6 +16,7 @@ type Memory[T uint16 | uint32] interface {
 	WriteBit(address T, bit uint8, value bool)
 	WriteByte(address T, value byte)
 	WriteShort(address T, value uint16)
+	WriteLong(address T, value uint32)
 	DumpCode() (data []uint8, startAddress T)
 	DumpRegionsCode(address T) (data []uint8, err error)
 	LoadData(offset T, data []uint8) error
@@ -152,6 +153,21 @@ func (m *memory[T]) WriteShort(address T, value uint16) {
 	}
 	m.WriteByte(address, lsb)
 	m.WriteByte(address+1, msb)
+}
+
+func (m *memory[T]) WriteLong(address T, value uint32) {
+	if m.readonly {
+		return
+	}
+	if m.isLitleEndian {
+		// Little endian - lsb stored first
+		m.WriteByte(address, uint8(value))
+		m.WriteByte(address+1, uint8(value>>8))
+		m.WriteByte(address+2, uint8(value>>16))
+		m.WriteByte(address+3, uint8(value>>24))
+		return
+	}
+	m.WriteLong(address, value)
 }
 
 func (m *memory[T]) DumpCode() (data []uint8, startAddress T) {

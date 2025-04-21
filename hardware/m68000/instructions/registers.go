@@ -414,6 +414,52 @@ func (r *Registers) Set32(target register68000, value uint32) {
 	}
 }
 
+func (r *Registers) SetDReg8(reg byte, value uint8) {
+	switch reg {
+	case 0:
+		setRegister[uint8](&r.d0, value)
+	case 1:
+		setRegister[uint8](&r.d1, value)
+	case 2:
+		setRegister[uint8](&r.d2, value)
+	case 3:
+		setRegister[uint8](&r.d3, value)
+	case 4:
+		setRegister[uint8](&r.d4, value)
+	case 5:
+		setRegister[uint8](&r.d5, value)
+	case 6:
+		setRegister[uint8](&r.d6, value)
+	case 7:
+		setRegister[uint8](&r.d7, value)
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", reg))
+	}
+}
+
+func (r *Registers) SetDReg16(reg byte, value uint16) {
+	switch reg {
+	case 0:
+		setRegister[uint16](&r.d0, value)
+	case 1:
+		setRegister[uint16](&r.d1, value)
+	case 2:
+		setRegister[uint16](&r.d2, value)
+	case 3:
+		setRegister[uint16](&r.d3, value)
+	case 4:
+		setRegister[uint16](&r.d4, value)
+	case 5:
+		setRegister[uint16](&r.d5, value)
+	case 6:
+		setRegister[uint16](&r.d6, value)
+	case 7:
+		setRegister[uint16](&r.d7, value)
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", reg))
+	}
+}
+
 func (r *Registers) SetDReg32(reg byte, value uint32) {
 	switch reg {
 	case 0:
@@ -437,6 +483,29 @@ func (r *Registers) SetDReg32(reg byte, value uint32) {
 	}
 }
 
+func (r *Registers) GetAReg32(reg byte) uint32 {
+	switch reg {
+	case 0:
+		return getRegister[uint32](&r.a0)
+	case 1:
+		return getRegister[uint32](&r.a1)
+	case 2:
+		return getRegister[uint32](&r.a2)
+	case 3:
+		return getRegister[uint32](&r.a3)
+	case 4:
+		return getRegister[uint32](&r.a4)
+	case 5:
+		return getRegister[uint32](&r.a5)
+	case 6:
+		return getRegister[uint32](&r.a6)
+	case 7:
+		return getRegister[uint32](r.getA7())
+	default:
+		panic(fmt.Sprintf("Unhanalea register: %v", reg))
+	}
+}
+
 func (r *Registers) IncrementPC(amount int) {
 	r.Set32(PC, r.Get32(PC)+uint32(amount))
 }
@@ -450,20 +519,11 @@ func (r *Registers) getA7() *uint32 {
 }
 
 func getRegister[T uint8 | uint16 | uint32](reg *uint32) T {
-	switch any(*reg).(type) {
-	case uint8:
-		return T(*reg)
-	case uint16:
-		return T(*reg)
-	case uint32:
-		return T(*reg)
-	default:
-		panic(fmt.Sprintf("Unhandled datatype: %T", *reg))
-	}
+	return T(*reg)
 }
 
 func setRegister[T uint8 | uint16 | uint32](reg *uint32, value T) {
-	switch any(*reg).(type) {
+	switch any(value).(type) {
 	case uint8:
 		*reg &^= 0x000000FF
 		*reg |= uint32(value)

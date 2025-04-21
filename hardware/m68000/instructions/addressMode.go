@@ -3,6 +3,8 @@ package instructions
 import (
 	"fmt"
 	"math"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
 type addressMode int
@@ -274,4 +276,48 @@ func (a *addressModeInfo) string() string {
 
 	// panic(fmt.Sprintf("Unknown address mode %d", a.mode))
 	return "unknown address mode"
+}
+
+func (a *addressModeInfo) setValueWithSize(registers *Registers, memory memory.Memory[uint32], value uint32, size instSize) {
+	switch a.mode {
+	case dataRegisterDirect:
+		switch size {
+		case byteSize:
+			registers.SetDReg8(a.reg, uint8(value))
+		case wordSize:
+			registers.SetDReg16(a.reg, uint16(value))
+		case longSize:
+			registers.SetDReg32(a.reg, value)
+		default:
+			panic(fmt.Sprintf("Unhandled size %s when setting a value %s", size.string(), a.string()))
+		}
+	case addressRegisterIndirectWithDisplacement:
+		regAddress := registers.GetAReg32(a.reg)
+		offset := displaceAddress(regAddress, a.displacement)
+
+		switch size {
+		case byteSize:
+			memory.WriteByte(offset, uint8(value))
+		case wordSize:
+			memory.WriteShort(offset, uint16(value))
+		case longSize:
+			memory.WriteLong(offset, value)
+		default:
+			panic(fmt.Sprintf("Unhandled size %s when setting a value %s", size.string(), a.string()))
+		}
+
+	default:
+		panic(fmt.Sprintf("Unhandled address mode when setting a value %s", a.string()))
+	}
+}
+
+func (a *addressModeInfo) setValue(registers *Registers, memory memory.Memory[uint32], value uint32) {
+	a.setValueWithSize(registers, memory, value, a.size)
+}
+
+func displaceAddress(address uint32, displacement int32) uint32 {
+	if displacement >= 0 {
+		return (address + uint32(displacement)) & 0xFFFFFF
+	}
+	return (address - uint32(-displacement)) & 0xFFFFFF
 }

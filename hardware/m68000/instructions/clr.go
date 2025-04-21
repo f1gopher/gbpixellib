@@ -35,4 +35,5 @@ func (c *clr) Length() int {
 }
 
 func (c *clr) Execute(registers *Registers, memory memory.Memory[uint32]) {
+	c.dest.setValueWithSize(registers, memory, 0, c.size)
 }
