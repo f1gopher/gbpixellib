@@ -2,6 +2,8 @@ package instructions
 
 import (
 	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
 type addi struct {
@@ -59,4 +61,7 @@ func (a *addi) Name() string {
 
 func (a *addi) Length() int {
 	return a.length
+}
+
+func (a *addi) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

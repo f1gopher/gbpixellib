@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type direction int
 
@@ -98,4 +102,7 @@ func (r *ror_rol) Name() string {
 
 func (r *ror_rol) Length() int {
 	return 2
+}
+
+func (r *ror_rol) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

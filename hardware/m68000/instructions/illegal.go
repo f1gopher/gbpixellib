@@ -1,5 +1,7 @@
 package instructions
 
+import "github.com/f1gopher/gbpixellib/hardware/memory"
+
 type illegal struct{}
 
 func CreateILLEGAL() *illegal {
@@ -12,4 +14,7 @@ func (i *illegal) Name() string {
 
 func (i *illegal) Length() int {
 	return 2
+}
+
+func (i *illegal) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

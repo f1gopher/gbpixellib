@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type db struct {
 	count        addressModeInfo
@@ -37,4 +41,7 @@ func (d *db) Name() string {
 
 func (d *db) Length() int {
 	return 4
+}
+
+func (d *db) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

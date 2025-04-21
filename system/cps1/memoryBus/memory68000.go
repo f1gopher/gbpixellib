@@ -24,17 +24,17 @@ func create68000(log *log.Log) (_680000 *memory68000, gfx memory.Memory[uint32],
 	kick := make([]byte, 0x00000002)
 	gfxRam := make([]byte, 0x00930000)
 	ram := make([]byte, 0x00010000)
-	gfxMemory := memory.CreateMemory[uint32]("gfx ram", &gfxRam, 0x900000)
-	jammaMemory = memory.CreateMemory[uint32]("jamma", &jamma, JammaInputAddress)
-	kickMemory = memory.CreateMemory[uint32]("kick", &kick, KickAddress)
+	gfxMemory := memory.CreateMemoryBigEndian[uint32]("gfx ram", &gfxRam, 0x900000)
+	jammaMemory = memory.CreateMemoryBigEndian[uint32]("jamma", &jamma, JammaInputAddress)
+	kickMemory = memory.CreateMemoryBigEndian[uint32]("kick", &kick, KickAddress)
 
 	return &memory68000{
 		log:    log,
-		rom:    memory.CreateReadOnlyMemory[uint32]("rom", &rom, 0x000000),
+		rom:    memory.CreateReadOnlyMemoryBigEndian[uint32]("rom", &rom, 0x000000),
 		jamma:  jammaMemory,
 		kick:   kickMemory,
 		gfxRam: gfxMemory,
-		ram:    memory.CreateMemory[uint32]("ram", &ram, 0xFF0000),
+		ram:    memory.CreateMemoryBigEndian[uint32]("ram", &ram, 0xFF0000),
 	}, gfxMemory, jammaMemory, kickMemory
 }
 
@@ -120,6 +120,10 @@ func (m *memory68000) DumpRegionsCode(address uint32) (data []uint8, err error) 
 func (m *memory68000) LoadData(offset uint32, data []uint8) error {
 	dest := m.target(offset)
 	return dest.LoadData(offset, data)
+}
+
+func (m *memory68000) RawBuffer() []uint8 {
+	panic("Not implemented")
 }
 
 func (m *memory68000) target(address uint32) memory.Memory[uint32] {

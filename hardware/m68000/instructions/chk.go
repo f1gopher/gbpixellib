@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type chk struct {
 	length int
@@ -42,4 +46,7 @@ func (c *chk) Name() string {
 
 func (c *chk) Length() int {
 	return c.length
+}
+
+func (c *chk) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

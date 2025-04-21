@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type jmp struct {
 	length int
@@ -23,4 +27,7 @@ func (j *jmp) Name() string {
 
 func (j *jmp) Length() int {
 	return j.length
+}
+
+func (j *jmp) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

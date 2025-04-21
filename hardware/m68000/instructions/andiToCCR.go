@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type andiToCCR struct {
 	data byte
@@ -18,4 +22,7 @@ func (a *andiToCCR) Name() string {
 
 func (a *andiToCCR) Length() int {
 	return 4
+}
+
+func (a *andiToCCR) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

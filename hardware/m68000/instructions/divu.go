@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type divu struct {
 	length int
@@ -31,4 +35,7 @@ func (d *divu) Name() string {
 
 func (d *divu) Length() int {
 	return d.length
+}
+
+func (d *divu) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

@@ -16,8 +16,8 @@ const NoMBCRamOffset = 0xA000
 func createCartridgeNoMBC(romSize uint32, ramSize uint32, data *[]byte) *CartridgeNoMBC {
 	ram := make([]byte, ramSize)
 	return &CartridgeNoMBC{
-		rom: memory.CreateReadOnlyMemory[uint16]("cartridge rom", data, 0),
-		ram: memory.CreateMemory[uint16]("cartridge ram", &ram, NoMBCRamOffset),
+		rom: memory.CreateReadOnlyMemoryLittleEndian[uint16]("cartridge rom", data, 0),
+		ram: memory.CreateMemoryLittleEndian[uint16]("cartridge ram", &ram, NoMBCRamOffset),
 	}
 }
 

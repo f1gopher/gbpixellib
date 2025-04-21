@@ -25,7 +25,7 @@ type ram struct {
 func CreateRam() *ram {
 	data := make([]byte, ramSize)
 	return &ram{
-		mem: memory.CreateMemory[uint16]("ram", &data, ramOffset),
+		mem: memory.CreateMemoryLittleEndian[uint16]("ram", &data, ramOffset),
 		io:  nil,
 	}
 }

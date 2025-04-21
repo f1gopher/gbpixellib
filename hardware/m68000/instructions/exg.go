@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type exg struct {
 	opmode byte
@@ -40,4 +44,7 @@ func (e *exg) Name() string {
 
 func (e *exg) Length() int {
 	return 2
+}
+
+func (e *exg) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

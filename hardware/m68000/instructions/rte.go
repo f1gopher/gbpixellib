@@ -1,5 +1,7 @@
 package instructions
 
+import "github.com/f1gopher/gbpixellib/hardware/memory"
+
 type rte struct{}
 
 func CreateRTE() *rte {
@@ -12,4 +14,7 @@ func (r *rte) Name() string {
 
 func (r *rte) Length() int {
 	return 2
+}
+
+func (r *rte) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

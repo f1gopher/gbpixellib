@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type tst struct {
 	length int
@@ -35,4 +39,7 @@ func (t *tst) Name() string {
 
 func (t *tst) Length() int {
 	return t.length
+}
+
+func (t *tst) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

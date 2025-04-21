@@ -179,6 +179,11 @@ func (i *instructionParser) parse(code []uint8, offset int) instruction {
 	// Read two bytes (the minimum for all instructions) and move the offset
 	opcode := binary.BigEndian.Uint16(code[offset:])
 	offset += 2
+
+	return i.decode(opcode, code, offset)
+}
+
+func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) instruction {
 	var result instruction = nil
 
 	operation := opcode >> 12 & 0b0000000000001111

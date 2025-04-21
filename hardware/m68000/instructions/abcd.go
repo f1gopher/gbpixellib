@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type abcd struct {
 	length     int
@@ -32,4 +36,7 @@ func (a *abcd) Name() string {
 
 func (a *abcd) Length() int {
 	return 2
+}
+
+func (a *abcd) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

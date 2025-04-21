@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type bra struct {
 	size         instSize
@@ -33,4 +37,7 @@ func (b *bra) Name() string {
 
 func (b *bra) Length() int {
 	return 2 + b.size.bytesUsed()
+}
+
+func (b *bra) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

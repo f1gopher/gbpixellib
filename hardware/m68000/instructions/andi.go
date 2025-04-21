@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type andi struct {
 	length int
@@ -41,4 +45,7 @@ func (a *andi) Name() string {
 
 func (a *andi) Length() int {
 	return a.length
+}
+
+func (a *andi) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

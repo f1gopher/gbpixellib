@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type testCondition int
 
@@ -100,4 +104,7 @@ func condition(value uint16) testCondition {
 	default:
 		panic(fmt.Sprintf("Unknown DBcc condition: %016b", condition))
 	}
+}
+
+func (t *testCondition) Execute(registers Registers, memory memory.Memory[uint32]) {
 }

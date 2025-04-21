@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type moveToSR struct {
 	instSize int
@@ -24,4 +28,7 @@ func (m *moveToSR) Name() string {
 
 func (m *moveToSR) Length() int {
 	return m.instSize
+}
+
+func (m *moveToSR) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

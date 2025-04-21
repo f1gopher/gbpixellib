@@ -1,5 +1,7 @@
 package instructions
 
+import "github.com/f1gopher/gbpixellib/hardware/memory"
+
 type nop struct {
 }
 
@@ -13,4 +15,7 @@ func (n *nop) Name() string {
 
 func (n *nop) Length() int {
 	return 2
+}
+
+func (n *nop) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

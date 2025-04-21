@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type oriToCCR struct {
 	data byte
@@ -18,4 +22,7 @@ func (o *oriToCCR) Name() string {
 
 func (o *oriToCCR) Length() int {
 	return 4
+}
+
+func (o *oriToCCR) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

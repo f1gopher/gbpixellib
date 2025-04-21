@@ -11,7 +11,7 @@ type videoRam struct {
 func CreateVideoRam() *videoRam {
 	data := make([]byte, 0x2000)
 	return &videoRam{
-		mem: memory.CreateMemory[uint16]("video ram", &data, 0x8000),
+		mem: memory.CreateMemoryLittleEndian[uint16]("video ram", &data, 0x8000),
 	}
 }
 

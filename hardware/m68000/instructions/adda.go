@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type adda struct {
 	length int
@@ -36,4 +40,7 @@ func (a *adda) Name() string {
 
 func (a *adda) Length() int {
 	return a.length
+}
+
+func (a *adda) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

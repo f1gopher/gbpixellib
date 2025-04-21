@@ -1,5 +1,7 @@
 package instructions
 
+import "github.com/f1gopher/gbpixellib/hardware/memory"
+
 type pbas struct {
 	name string
 }
@@ -14,4 +16,7 @@ func (p *pbas) Name() string {
 
 func (p *pbas) Length() int {
 	return 6
+}
+
+func (p *pbas) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type bchg struct {
 	length      int
@@ -54,4 +58,7 @@ func (b *bchg) Name() string {
 
 func (b *bchg) Length() int {
 	return b.length
+}
+
+func (b *bchg) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

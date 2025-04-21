@@ -1,5 +1,7 @@
 package instructions
 
+import "github.com/f1gopher/gbpixellib/hardware/memory"
+
 type pmove struct {
 	name string
 }
@@ -14,4 +16,7 @@ func (p *pmove) Name() string {
 
 func (p *pmove) Length() int {
 	return 4
+}
+
+func (p *pmove) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

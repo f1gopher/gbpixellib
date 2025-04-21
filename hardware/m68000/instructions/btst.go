@@ -2,6 +2,8 @@ package instructions
 
 import (
 	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
 type btst struct {
@@ -70,4 +72,7 @@ func (b *btst) Name() string {
 
 func (b *btst) Length() int {
 	return b.length
+}
+
+func (b *btst) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

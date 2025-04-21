@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type movea struct {
 	src addressModeInfo
@@ -31,4 +35,7 @@ func (m *movea) Name() string {
 
 func (m *movea) Length() int {
 	return m.instSize
+}
+
+func (m *movea) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

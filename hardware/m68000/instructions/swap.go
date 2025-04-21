@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type swap struct {
 	reg byte
@@ -18,4 +22,7 @@ func (s *swap) Name() string {
 
 func (s *swap) Length() int {
 	return 2
+}
+
+func (s *swap) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

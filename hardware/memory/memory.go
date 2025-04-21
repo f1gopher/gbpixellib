@@ -19,6 +19,7 @@ type Memory[T uint16 | uint32] interface {
 	DumpCode() (data []uint8, startAddress T)
 	DumpRegionsCode(address T) (data []uint8, err error)
 	LoadData(offset T, data []uint8) error
+	RawBuffer() []uint8
 }
 
 type memory[T uint16 | uint32] struct {
@@ -26,23 +27,39 @@ type memory[T uint16 | uint32] struct {
 	buffer        []uint8
 	addressOffset T
 	readonly      bool
+	isLitleEndian bool
 }
 
-func CreateReadOnlyMemory[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+func CreateReadOnlyMemoryLittleEndian[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+	return createReadOnlyMemory(name, data, addressOffset, true)
+}
+func CreateReadOnlyMemoryBigEndian[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+	return createReadOnlyMemory(name, data, addressOffset, false)
+}
+func CreateMemoryLittleEndian[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+	return createMemory(name, data, addressOffset, true)
+}
+func CreateMemoryBigEndian[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+	return createMemory(name, data, addressOffset, false)
+}
+
+func createReadOnlyMemory[T uint16 | uint32](name string, data *[]byte, addressOffset T, isLittleEndian bool) Memory[T] {
 	return &memory[T]{
 		name:          name,
 		buffer:        *data,
 		addressOffset: addressOffset,
 		readonly:      true,
+		isLitleEndian: isLittleEndian,
 	}
 }
 
-func CreateMemory[T uint16 | uint32](name string, data *[]byte, addressOffset T) Memory[T] {
+func createMemory[T uint16 | uint32](name string, data *[]byte, addressOffset T, isLittleEndian bool) Memory[T] {
 	return &memory[T]{
 		name:          name,
 		buffer:        *data,
 		addressOffset: addressOffset,
 		readonly:      false,
+		isLitleEndian: isLittleEndian,
 	}
 }
 
@@ -83,9 +100,15 @@ func (m *memory[T]) ReadByte(address T) byte {
 
 func (m *memory[T]) ReadShort(address T) uint16 {
 	var result uint16
-	lsb := m.ReadByte(address)
-	msb := m.ReadByte(address + 1)
-	// Little endian, lsb stored first
+	var lsb, msb uint8
+	if m.isLitleEndian {
+		// Little endian, lsb stored first
+		lsb = m.ReadByte(address)
+		msb = m.ReadByte(address + 1)
+	} else {
+		msb = m.ReadByte(address)
+		lsb = m.ReadByte(address + 1)
+	}
 	result = uint16(msb)
 	result = result << 8
 	result = result | uint16(lsb)
@@ -118,10 +141,15 @@ func (m *memory[T]) WriteShort(address T, value uint16) {
 	if m.readonly {
 		return
 	}
-
-	lsb := uint8(value)
-	msb := uint8(value >> 8)
-	// Little endian - lsb stored first
+	var lsb, msb uint8
+	if m.isLitleEndian {
+		// Little endian - lsb stored first
+		lsb = uint8(value)
+		msb = uint8(value >> 8)
+	} else {
+		msb = uint8(value)
+		lsb = uint8(value >> 8)
+	}
 	m.WriteByte(address, lsb)
 	m.WriteByte(address+1, msb)
 }
@@ -144,4 +172,8 @@ func (m *memory[T]) LoadData(offset T, data []uint8) error {
 
 	copy(m.buffer[offset:], data)
 	return nil
+}
+
+func (m *memory[T]) RawBuffer() []uint8 {
+	return m.buffer
 }

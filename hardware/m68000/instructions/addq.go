@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type addq struct {
 	length       int
@@ -39,4 +43,7 @@ func (a *addq) Name() string {
 func (a *addq) Length() int {
 	// TODO - not sure thi sis right but with long size it only read an extra word
 	return a.length
+}
+
+func (a *addq) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

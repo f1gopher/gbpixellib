@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type bcc struct {
 	size         instSize
@@ -40,4 +44,7 @@ func (b *bcc) Name() string {
 
 func (b *bcc) Length() int {
 	return 2 + b.size.bytesUsed()
+}
+
+func (b *bcc) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

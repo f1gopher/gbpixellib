@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type asl_asr struct {
 	length        int
@@ -83,4 +87,7 @@ func (a *asl_asr) Name() string {
 
 func (a *asl_asr) Length() int {
 	return a.length
+}
+
+func (a *asl_asr) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

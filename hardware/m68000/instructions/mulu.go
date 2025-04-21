@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type mulu struct {
 	length int
@@ -28,4 +32,7 @@ func (m *mulu) Name() string {
 
 func (m *mulu) Length() int {
 	return m.length
+}
+
+func (m *mulu) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

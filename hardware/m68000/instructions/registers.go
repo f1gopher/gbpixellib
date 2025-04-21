@@ -1,9 +1,11 @@
-package m68000
+package instructions
 
-type register int
+import "fmt"
+
+type register68000 int
 
 const (
-	A0 register = iota
+	A0 register68000 = iota
 	A1
 	A2
 	A3
@@ -21,10 +23,15 @@ const (
 	D7
 	PC
 	SR
+	UserStack
+	SupervisorStack
+	IRC_Prefetch
+	IR_Decoding
+	IRD_Executing
 )
 
-func (r register) string() string {
-	return [...]string{"A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "PC", "SR"}[r]
+func (r register68000) String() string {
+	return [...]string{"A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "PC", "SR", "User Stack", "Supervisor Stack", "IRC", "IR", "IRD"}[r]
 }
 
 type flag int
@@ -43,7 +50,7 @@ func (f flag) string() string {
 	return [...]string{"C", "V", "Z", "N", "X", "S", "T"}[f]
 }
 
-type registers struct {
+type Registers struct {
 	d0 uint32
 	d1 uint32
 	d2 uint32
@@ -65,9 +72,13 @@ type registers struct {
 
 	pc uint32
 	sr uint16
+
+	irc_prefetch  uint16
+	ir_decoding   uint16
+	ird_executing uint16
 }
 
-func (r *registers) reset() {
+func (r *Registers) Reset() {
 	r.d0 = 0x00000000
 	r.d1 = 0x00000000
 	r.d2 = 0x00000000
@@ -89,9 +100,13 @@ func (r *registers) reset() {
 
 	r.pc = 0x00000000
 	r.sr = 0x0000
+
+	r.irc_prefetch = 0x0000
+	r.ir_decoding = 0x0000
+	r.ird_executing = 0x0000
 }
 
-func (r *registers) getFlag(flag flag) bool {
+func (r *Registers) getFlag(flag flag) bool {
 	switch flag {
 	case C:
 		return getBit(r.sr, 0)
@@ -108,11 +123,11 @@ func (r *registers) getFlag(flag flag) bool {
 	case T:
 		return getBit(r.sr, 15)
 	default:
-		panic("Unhandled flag")
+		panic(fmt.Sprintf("Unhandled flag: %v", flag))
 	}
 }
 
-func (r *registers) setFlag(flag flag, value bool) {
+func (r *Registers) setFlag(flag flag, value bool) {
 	switch flag {
 	case C:
 		setBit(&r.sr, 0, value)
@@ -129,13 +144,13 @@ func (r *registers) setFlag(flag flag, value bool) {
 	case T:
 		setBit(&r.sr, 15, value)
 	default:
-		panic("Unhandled flag")
+		panic(fmt.Sprintf("Unhandled flag: %v", flag))
 	}
 }
 
 // TODO - interrupt mask
 
-func (r *registers) get8(target register) uint8 {
+func (r *Registers) get8(target register68000) uint8 {
 	switch target {
 	case A0:
 		return getRegister[uint8](&r.a0)
@@ -174,11 +189,11 @@ func (r *registers) get8(target register) uint8 {
 	case SR:
 		panic("Not implemented")
 	default:
-		panic("Unhandled register")
+		panic(fmt.Sprintf("Unhandled register: %v", target))
 	}
 }
 
-func (r *registers) get16(target register) uint16 {
+func (r *Registers) Get16(target register68000) uint16 {
 	switch target {
 	case A0:
 		return getRegister[uint16](&r.a0)
@@ -215,13 +230,19 @@ func (r *registers) get16(target register) uint16 {
 	case PC:
 		return getRegister[uint16](&r.pc)
 	case SR:
-		panic("Not implemented")
+		return r.sr
+	case IRC_Prefetch:
+		return r.irc_prefetch
+	case IR_Decoding:
+		return r.ir_decoding
+	case IRD_Executing:
+		return r.ird_executing
 	default:
-		panic("Unhandled register")
+		panic(fmt.Sprintf("Unhandled register: %v", target))
 	}
 }
 
-func (r *registers) get32(target register) uint32 {
+func (r *Registers) Get32(target register68000) uint32 {
 	switch target {
 	case A0:
 		return getRegister[uint32](&r.a0)
@@ -257,14 +278,18 @@ func (r *registers) get32(target register) uint32 {
 		return getRegister[uint32](&r.d7)
 	case PC:
 		return getRegister[uint32](&r.pc)
-	case SR:
+	case SR, IRC_Prefetch, IR_Decoding, IRD_Executing:
 		panic("Not implemented")
+	case UserStack:
+		return getRegister[uint32](&r.userStack)
+	case SupervisorStack:
+		return getRegister[uint32](&r.supervisorStack)
 	default:
-		panic("Unhandled register")
+		panic(fmt.Sprintf("Unhandled register: %v", target))
 	}
 }
 
-func (r *registers) set8(target register, value uint8) {
+func (r *Registers) set8(target register68000, value uint8) {
 	switch target {
 	case A0, A1, A2, A3, A4, A5, A6, A7:
 		panic("Unsupported operation for an addres register")
@@ -288,10 +313,12 @@ func (r *registers) set8(target register, value uint8) {
 		setRegister[uint8](&r.pc, value)
 	case SR:
 		panic("Not implemented")
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", target))
 	}
 }
 
-func (r *registers) set16(target register, value uint16) {
+func (r *Registers) Set16(target register68000, value uint16) {
 	switch target {
 	case A0:
 		setRegisterSignExtend(&r.a0, value)
@@ -328,11 +355,19 @@ func (r *registers) set16(target register, value uint16) {
 	case PC:
 		setRegister[uint16](&r.pc, value)
 	case SR:
-		panic("Not implemented")
+		r.sr = value
+	case IRC_Prefetch:
+		r.irc_prefetch = value
+	case IR_Decoding:
+		r.ir_decoding = value
+	case IRD_Executing:
+		r.ird_executing = value
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", target))
 	}
 }
 
-func (r *registers) set32(target register, value uint32) {
+func (r *Registers) Set32(target register68000, value uint32) {
 	switch target {
 	case A0:
 		setRegister[uint32](&r.a0, value)
@@ -368,12 +403,45 @@ func (r *registers) set32(target register, value uint32) {
 		setRegister[uint32](&r.d7, value)
 	case PC:
 		setRegister[uint32](&r.pc, value)
-	case SR:
+	case SR, IRC_Prefetch, IR_Decoding, IRD_Executing:
 		panic("Not implemented")
+	case UserStack:
+		setRegister[uint32](&r.userStack, value)
+	case SupervisorStack:
+		setRegister[uint32](&r.supervisorStack, value)
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", target))
 	}
 }
 
-func (r *registers) getA7() *uint32 {
+func (r *Registers) SetDReg32(reg byte, value uint32) {
+	switch reg {
+	case 0:
+		setRegister[uint32](&r.d0, value)
+	case 1:
+		setRegister[uint32](&r.d1, value)
+	case 2:
+		setRegister[uint32](&r.d2, value)
+	case 3:
+		setRegister[uint32](&r.d3, value)
+	case 4:
+		setRegister[uint32](&r.d4, value)
+	case 5:
+		setRegister[uint32](&r.d5, value)
+	case 6:
+		setRegister[uint32](&r.d6, value)
+	case 7:
+		setRegister[uint32](&r.d7, value)
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", reg))
+	}
+}
+
+func (r *Registers) IncrementPC(amount int) {
+	r.Set32(PC, r.Get32(PC)+uint32(amount))
+}
+
+func (r *Registers) getA7() *uint32 {
 	if r.getFlag(S) {
 		return &r.supervisorStack
 	}
@@ -390,7 +458,7 @@ func getRegister[T uint8 | uint16 | uint32](reg *uint32) T {
 	case uint32:
 		return T(*reg)
 	default:
-		panic("Unhandled datatype")
+		panic(fmt.Sprintf("Unhandled datatype: %T", *reg))
 	}
 }
 

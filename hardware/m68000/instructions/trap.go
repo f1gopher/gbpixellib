@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type trap struct {
 	vector byte
@@ -18,4 +22,7 @@ func (t *trap) Name() string {
 
 func (t *trap) Length() int {
 	return 2
+}
+
+func (t *trap) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

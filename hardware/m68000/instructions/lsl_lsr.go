@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type lsl_lsr struct {
 	// Common
@@ -84,4 +88,7 @@ func (l *lsl_lsr) Name() string {
 
 func (l *lsl_lsr) Length() int {
 	return 2
+}
+
+func (l *lsl_lsr) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

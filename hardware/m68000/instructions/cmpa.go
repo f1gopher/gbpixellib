@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type cmpa struct {
 	length int
@@ -35,4 +39,7 @@ func (c *cmpa) Name() string {
 
 func (c *cmpa) Length() int {
 	return c.length
+}
+
+func (c *cmpa) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

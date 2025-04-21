@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type link struct {
 	reg          byte
@@ -23,4 +27,7 @@ func (l *link) Name() string {
 
 func (l *link) Length() int {
 	return 4
+}
+
+func (l *link) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

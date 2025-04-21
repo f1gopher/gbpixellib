@@ -1,6 +1,14 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
+
+type InstructionRegisters interface {
+	getFlag(flag flag) bool
+}
 
 type moveq struct {
 	destReg byte
@@ -30,4 +38,8 @@ func (m *moveq) Name() string {
 
 func (m *moveq) Length() int {
 	return 2
+}
+
+func (m *moveq) Execute(registers *Registers, memory memory.Memory[uint32]) {
+	registers.SetDReg32(m.destReg, uint32(m.data))
 }

@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type stop struct {
 	immediate uint16
@@ -18,4 +22,7 @@ func (s *stop) Name() string {
 
 func (s *stop) Length() int {
 	return 4
+}
+
+func (s *stop) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

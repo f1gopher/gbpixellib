@@ -2,6 +2,8 @@ package instructions
 
 import (
 	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
 type eori struct {
@@ -47,4 +49,7 @@ func (e *eori) Name() string {
 
 func (e *eori) Length() int {
 	return e.length
+}
+
+func (e *eori) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

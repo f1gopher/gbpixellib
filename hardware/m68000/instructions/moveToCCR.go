@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type moveToCCR struct {
 	length int
@@ -23,4 +27,7 @@ func (m *moveToCCR) Name() string {
 
 func (m *moveToCCR) Length() int {
 	return m.length
+}
+
+func (m *moveToCCR) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

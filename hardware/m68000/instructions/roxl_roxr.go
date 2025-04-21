@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type roxl_roxr struct {
 	// Common
@@ -86,4 +90,7 @@ func (r *roxl_roxr) Name() string {
 
 func (r *roxl_roxr) Length() int {
 	return r.length
+}
+
+func (r *roxl_roxr) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

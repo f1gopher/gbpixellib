@@ -21,7 +21,7 @@ func splitDataIntoBanks(bank0StartAddress uint16, otherBankStartAddress uint16, 
 			offset = otherBankStartAddress
 		}
 
-		result := memory.CreateReadOnlyMemory(fmt.Sprintf("cartridge %s bank %d", name, currentBank), &bank, offset)
+		result := memory.CreateReadOnlyMemoryLittleEndian(fmt.Sprintf("cartridge %s bank %d", name, currentBank), &bank, offset)
 		banks[currentBank] = result
 		currentBank++
 	}

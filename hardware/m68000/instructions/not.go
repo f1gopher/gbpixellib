@@ -2,6 +2,8 @@ package instructions
 
 import (
 	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
 type not struct {
@@ -38,4 +40,7 @@ func (n *not) Name() string {
 
 func (n *not) Length() int {
 	return n.length
+}
+
+func (n *not) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

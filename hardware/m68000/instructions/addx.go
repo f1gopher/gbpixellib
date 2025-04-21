@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type addx struct {
 	size         instSize
@@ -45,4 +49,7 @@ func (a *addx) Name() string {
 
 func (a *addx) Length() int {
 	return 2
+}
+
+func (a *addx) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

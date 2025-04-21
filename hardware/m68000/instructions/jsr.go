@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type jsr struct {
 	instSize int
@@ -25,4 +29,7 @@ func (j *jsr) Name() string {
 
 func (j *jsr) Length() int {
 	return j.instSize
+}
+
+func (j *jsr) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

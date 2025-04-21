@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type neg struct {
 	length int
@@ -24,4 +28,7 @@ func (n *neg) Name() string {
 
 func (n *neg) Length() int {
 	return n.length
+}
+
+func (n *neg) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

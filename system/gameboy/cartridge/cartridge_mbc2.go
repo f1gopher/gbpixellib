@@ -21,7 +21,7 @@ func createCartridgeMBC2(romSize uint32, ramSize uint32, data *[]byte) Cartridge
 	ram := make([]byte, 512)
 	return &cartridgeMBC2{
 		romBanks:          splitDataIntoBanks(0x0000, 0x4000, M_16Kb, data, "ROM"),
-		ramBank:           memory.CreateReadOnlyMemory[uint16]("RAM", &ram, 0xA000),
+		ramBank:           memory.CreateReadOnlyMemoryLittleEndian[uint16]("RAM", &ram, 0xA000),
 		romBankMask:       0b00000111,
 		ramEnable:         0x00,
 		romBankNumber:     0x01,

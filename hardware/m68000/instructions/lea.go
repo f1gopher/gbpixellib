@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type lea struct {
 	length int
@@ -40,4 +44,7 @@ func (l *lea) Name() string {
 
 func (l *lea) Length() int {
 	return l.length
+}
+
+func (l *lea) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

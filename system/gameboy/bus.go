@@ -66,7 +66,7 @@ func (b *Bus) SetTimer(timer timerDivide) {
 
 func (b *Bus) Load(bios *[]byte, cartridge cartridge.Cartridge) {
 	if bios != nil {
-		b.bios = memory.CreateReadOnlyMemory[uint16]("bios", bios, 0)
+		b.bios = memory.CreateReadOnlyMemoryLittleEndian[uint16]("bios", bios, 0)
 	} else {
 		b.bios = nil
 	}

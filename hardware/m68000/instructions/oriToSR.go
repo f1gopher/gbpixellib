@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type oriToSR struct {
 	data uint16
@@ -18,4 +22,7 @@ func (o *oriToSR) Name() string {
 
 func (o *oriToSR) Length() int {
 	return 4
+}
+
+func (o *oriToSR) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }

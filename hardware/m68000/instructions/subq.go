@@ -1,6 +1,10 @@
 package instructions
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/f1gopher/gbpixellib/hardware/memory"
+)
 
 type subq struct {
 	length int
@@ -44,4 +48,7 @@ func (s *subq) Name() string {
 
 func (s *subq) Length() int {
 	return s.length
+}
+
+func (s *subq) Execute(registers *Registers, memory memory.Memory[uint32]) {
 }
