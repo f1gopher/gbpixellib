@@ -8,6 +8,8 @@ import (
 
 type clr struct {
 	opcode uint16
+	cycle  uint8
+
 	length int
 	size   instSize
 	dest   addressModeInfo
@@ -36,6 +38,22 @@ func (c *clr) Length() int {
 }
 
 func (c *clr) Step(registers *Registers, memory memory.Memory[uint32]) bool {
-	c.dest.setValueWithSize(registers, memory, 0, c.size)
-	return true
+	switch c.cycle {
+	case 0:
+		size := twoBitSize(c.opcode, 6)
+		dest, _, instSize := readEffectiveAddressMode(c.opcode, 0, size, memory, codeOffset, codeOffset)
+		c.length = 2 + instSize
+		c.size = size
+		c.dest = dest
+
+		c.cycle++
+	case 1, 2:
+		c.cycle++
+	case 3:
+		c.dest.setValueWithSize(registers, memory, 0, c.size)
+		c.cycle++
+		return true
+	}
+
+	return false
 }

@@ -43,6 +43,7 @@ func TestExecution(t *testing.T) {
 	testFiles := []string{
 		"../../test_data/m68000/CLR.b.json",
 		"../../test_data/m68000/MOVE.q.json",
+		"../../test_data/m68000/NOP.json",
 	}
 
 	for _, testFile := range testFiles {

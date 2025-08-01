@@ -460,8 +460,8 @@ func (i *instructionParser) decode2(opcode uint16) instruction {
 		// Miscellaneous
 		if opcode == illegalInstruction {
 			return &illegal{}
-			// } else if opcode&nopMask == nopPrefix {
-			// 	result = CreateNOP(opcode, code, offset)
+		} else if opcode&nopMask == nopPrefix {
+			return &nop{}
 			// } else if opcode == rteInstruction {
 			// 	result = CreateRTE()
 			// } else if opcode&rtsMask == rtsPrefix {
@@ -505,31 +505,31 @@ func (i *instructionParser) decode2(opcode uint16) instruction {
 			// } else if opcode&linkMask == linkPrefix {
 			// 	result = CreateLINK(opcode, code, offset)
 		}
-		// case 0b0000000000000101:
-		// 	// ADDQ/SUBQ/Scc/DBcc/TRAPc c
-		// 	if opcode&dbccMask == dbccPrefix {
-		// 		result = CreateDB(opcode, code, offset)
-		// 	} else if opcode&sccMask == sccPrefix {
-		// 		result = CreateScc(opcode, code, offset)
-		// 	} else if opcode&addqMask == addqPrefix {
-		// 		result = CreateADDQ(opcode, code, offset)
-		// 	} else if opcode&subqMask == subqPrefix {
-		// 		result = CreateSUBQ(opcode, code, offset)
-		// 	}
-		// case 0b0000000000000110:
-		// 	// Bcc/BSR/BRA
-		// 	if opcode&bsrMask == bsrPrefix {
-		// 		result = CreateBSR(opcode, code, offset)
-		// 	} else if opcode&braMask == braPrefix {
-		// 		result = CreateBRA(opcode, code, offset)
-		// 	} else if opcode&bccMask == bccPrefix {
-		// 		result = CreateBcc(opcode, code, offset)
-		// 	}
-		// case 0b0000000000000111:
-		// 	// MOVEQ
-		// 	if opcode&moveqMask == moveqPrefix {
-		// 		result = CreateMOVEQ(opcode)
-		// 	}
+	// case 0b0000000000000101:
+	// 	// ADDQ/SUBQ/Scc/DBcc/TRAPc c
+	// 	if opcode&dbccMask == dbccPrefix {
+	// 		result = CreateDB(opcode, code, offset)
+	// 	} else if opcode&sccMask == sccPrefix {
+	// 		result = CreateScc(opcode, code, offset)
+	// 	} else if opcode&addqMask == addqPrefix {
+	// 		result = CreateADDQ(opcode, code, offset)
+	// 	} else if opcode&subqMask == subqPrefix {
+	// 		result = CreateSUBQ(opcode, code, offset)
+	// 	}
+	// case 0b0000000000000110:
+	// 	// Bcc/BSR/BRA
+	// 	if opcode&bsrMask == bsrPrefix {
+	// 		result = CreateBSR(opcode, code, offset)
+	// 	} else if opcode&braMask == braPrefix {
+	// 		result = CreateBRA(opcode, code, offset)
+	// 	} else if opcode&bccMask == bccPrefix {
+	// 		result = CreateBcc(opcode, code, offset)
+	// 	}
+	case 0b0000000000000111:
+		// MOVEQ
+		if opcode&moveqMask == moveqPrefix {
+			return &moveq{opcode: opcode}
+		}
 		// case 0b0000000000001000:
 		// 	// OR/DIV/SBCD
 		// 	if opcode&divuMask == divuPrefix {

@@ -11,9 +11,7 @@ type executionState int
 
 const (
 	Idle executionState = iota
-	Decode_Cycle1
-	Execute_Cycle1
-	Execute_Cycle2
+	Executing
 )
 
 type M68000 struct {
@@ -98,8 +96,7 @@ func (m *M68000) Step() {
 
 	//instruction.Step(m.registers, m.memory)
 
-	for x := 0; x < 4; x++ {
-		m.ExecuteCycle()
+	for !m.ExecuteCycle() {
 	}
 }
 
@@ -119,6 +116,7 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 		}
 	}
 
+	instructionComplete := false
 	irc := m.registers.Get16(IRC_Prefetch)
 	ir := m.registers.Get16(IR_Decoding)
 
@@ -150,31 +148,28 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 			// another instruction
 			m.registers.Set16(IR_Decoding, irc)
 			m.registers.Set16(IRC_Prefetch, 0)
+			// PC+4 because we already have the next 4 bytes read into the prefetch
+			// queue
 			m.requestPrefetch(m.registers.Get32(PC) + 4)
 
 			// Increment PC by 2 now we have started executing that instruction
 			m.registers.IncrementPC(2)
 
-			// TODO - start decoding
-
-			m.state = Decode_Cycle1
-		} else if m.state == Decode_Cycle1 {
-			// This is the second cycle for decoding
-			m.state = Execute_Cycle1
-		} else if m.state == Execute_Cycle1 {
-			m.state = Execute_Cycle2
-		} else if m.state == Execute_Cycle2 {
+			// Work out what instruction the next opcode is for and do the first
+			// cycle of execution
 			opcode := m.registers.Get16(IRD_Executing)
 			m.currentInstruction = m.parser.decode2(opcode)
 
+			// Start decoding and executing the instruction
 			m.currentInstruction.Step(&m.registers, m.memory)
 
-			// Execution finished???? so either idle and wait for the next instruction
-			// or start decoding the next intruction
-			if m.registers.Get16(IRC_Prefetch) == 0 {
+			m.state = Executing
+		} else if m.state == Executing {
+			// Execute the next cycle of the instruction
+			if m.currentInstruction.Step(&m.registers, m.memory) {
+				// Instruction completed
+				instructionComplete = true
 				m.state = Idle
-			} else {
-				m.state = Decode_Cycle1
 			}
 		} else {
 			panic(fmt.Sprintf("Unhandled CPU state %v", m.state))
@@ -183,7 +178,7 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 
 	m.cycle++
 
-	return false
+	return instructionComplete
 }
 
 func (m *M68000) test_registers() *Registers {

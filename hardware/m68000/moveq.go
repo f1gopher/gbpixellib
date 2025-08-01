@@ -11,6 +11,9 @@ type InstructionRegisters interface {
 }
 
 type moveq struct {
+	opcode uint16
+	cycle  uint8
+
 	destReg byte
 
 	data int16
@@ -41,6 +44,21 @@ func (m *moveq) Length() int {
 }
 
 func (m *moveq) Step(registers *Registers, memory memory.Memory[uint32]) bool {
-	registers.SetDReg32(m.destReg, uint32(m.data))
-	return true
+	switch m.cycle {
+	case 0:
+		m.destReg = uint8((m.opcode >> 9) & 0b0000000000000111)
+		// TODO - "8 bits sign extended to a long"
+		m.data = int16(int8(m.opcode & 0b0000000011111111))
+		m.cycle++
+	case 1:
+		m.cycle++
+	case 2:
+		m.cycle++
+	case 3:
+		registers.SetDReg32(m.destReg, uint32(m.data))
+		m.cycle++
+		return true
+	}
+
+	return false
 }
