@@ -2,6 +2,7 @@ package z80
 
 import (
 	"errors"
+
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
@@ -31,6 +32,10 @@ func (o *opcode_RLCA) doCycle(cycleNumber int, reg RegistersInterface, mem Memor
 	value := reg.Get8(A)
 	bit7 := memory.GetBit(value, 7)
 	result := value << 1
+	// Set the last bit after rotating to match the original first bit
+	if bit7 {
+		result = result | 0x00000001
+	}
 	reg.Set8(A, result)
 
 	reg.SetFlag(ZFlag, false)
