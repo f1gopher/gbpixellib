@@ -2,6 +2,7 @@ package gameboy
 
 import (
 	"fmt"
+
 	"github.com/f1gopher/gbpixellib/system/gameboy/cartridge"
 )
 
@@ -245,7 +246,7 @@ func newLicenseeCodeName(code uint16) string {
 	case 0xA4:
 		return "Konami (Yu-Gi-Oh!)"
 	default:
-		return fmt.Sprintf("Unknown code: 0x02X", code)
+		return fmt.Sprintf("Unknown code: 0x%02X", code)
 	}
 }
 
@@ -308,7 +309,7 @@ func cartridgeTypeName(code uint8) string {
 	case 0xFF:
 		return "HuC1+RAM+BATTERY"
 	default:
-		return fmt.Sprintf("Unknown code: 0xX", code)
+		return fmt.Sprintf("Unknown code: 0x%X", code)
 	}
 }
 
@@ -335,7 +336,7 @@ func romSizeInfo(code uint8) (string, uint32) {
 	case 0x52, 0x53, 0x54:
 		panic(fmt.Sprintf("Unsupported rom size: 0x%X", code))
 	default:
-		return fmt.Sprintf("Unknown code: 0xX", code), 0
+		return fmt.Sprintf("Unknown code: 0x%X", code), 0
 	}
 }
 
@@ -354,7 +355,7 @@ func ramSizeInfo(code uint8) (string, uint32) {
 	case 0x05:
 		return "64 KiB - 8 banks of 8 KiB each", 64 * cartridge.M_1Kb
 	default:
-		return fmt.Sprintf("Unknown code: 0xX", code), 0
+		return fmt.Sprintf("Unknown code: 0x%X", code), 0
 	}
 }
 
@@ -365,7 +366,7 @@ func destinationCodeName(code uint8) string {
 	case 0x01:
 		return "Overseas only"
 	default:
-		return fmt.Sprintf("Unknown code 0xX", code)
+		return fmt.Sprintf("Unknown code 0x%X", code)
 	}
 }
 
@@ -667,6 +668,6 @@ func oldLicenseeCodeName(code uint8) string {
 	case 0xFF:
 		return "LJN"
 	default:
-		return fmt.Sprintf("Unknown code 0xX", code)
+		return fmt.Sprintf("Unknown code 0x%X", code)
 	}
 }

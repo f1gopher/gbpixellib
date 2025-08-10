@@ -131,7 +131,7 @@ func (s *Gameboy) Start() {
 	s.cartridgeHeader = readHeader(&rom)
 
 	if !s.IsCartridgeSupported() {
-		s.log.Debug(fmt.Sprintf("Unsupported cartridge type: %s", s.cartridgeHeader.CartridgeType))
+		s.log.Debug(fmt.Sprintf("Unsupported cartridge type: %d", s.cartridgeHeader.CartridgeType))
 	}
 
 	s.cartridge = cartridge.CreateCartridge(
