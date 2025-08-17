@@ -1,13 +1,13 @@
 module github.com/f1gopher/gbpixellib
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.23.3
+toolchain go1.24.5
 
 require (
-	github.com/stretchr/testify v1.9.0
-	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
-	golang.org/x/image v0.22.0
+	github.com/stretchr/testify v1.10.0
+	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6
+	golang.org/x/image v0.30.0
 )
 
 require (
