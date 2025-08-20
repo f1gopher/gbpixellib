@@ -17,8 +17,8 @@ import (
 )
 
 const cyclesPerSecond = 4194304
-const framesPerSecond = 60
-const cyclesPerFrame = cyclesPerSecond / framesPerSecond
+const framesPerSecond = 60 // 59.73 actually
+const cyclesPerFrame = 70224
 const cyclesPerMCycle = 4
 const mCyclesPerFrame = cyclesPerFrame / cyclesPerMCycle
 const dmaMCycles = 160
@@ -231,9 +231,9 @@ func (s *Gameboy) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err err
 					}
 				}
 			}
-
-			s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 		}
+
+		s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 
 		if !didDMA && !wasHalted {
 			_, prevCompleted, info.Opcode, info.Name, err = s.cpu.ExecuteMCycle()
@@ -256,6 +256,9 @@ func (s *Gameboy) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err err
 			return true, x, nil
 		}
 	}
+
+	// TODO - handle the number of m cycles exceeding a frame and carrying over into the next frame
+	// when doing a dma or interrupt at the end of the frame
 
 	return false, mCyclesCompleted, nil
 }
