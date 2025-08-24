@@ -79,6 +79,8 @@ type Screen struct {
 	buffer []ScreenColor
 
 	currentCycleForScanline uint
+
+	renderBuffer []byte
 }
 
 func CreateScreen(memory z80.MemoryInterface, interuptHandler interuptHandler) *Screen {
@@ -89,6 +91,7 @@ func CreateScreen(memory z80.MemoryInterface, interuptHandler interuptHandler) *
 		interuptHandler:         interuptHandler,
 		buffer:                  make([]ScreenColor, screenWidth*screenHeight),
 		currentCycleForScanline: 0,
+		renderBuffer:            make([]byte, 4*screenWidth*screenHeight),
 	}
 }
 
@@ -602,26 +605,42 @@ func (s *Screen) renderSprites() {
 	}
 }
 
-func (s *Screen) Render(callback func(x int, y int, color color.RGBA)) {
+func (s *Screen) Render() *[]byte {
+
+	poffset := 0
+
 	for y := 0; y < screenHeight; y++ {
+		offset := y * screenWidth
 		for x := 0; x < screenWidth; x++ {
-			var c color.RGBA
-			switch s.buffer[(y*screenWidth)+x] {
+			switch s.buffer[offset+x] {
 			case Off:
-				c = color.RGBA{255, 0, 0, 255}
+				s.renderBuffer[poffset] = screenOff.R
+				s.renderBuffer[poffset+1] = screenOff.G
+				s.renderBuffer[poffset+2] = screenOff.B
 			case White:
-				c = screenWhite
+				s.renderBuffer[poffset] = screenWhite.R
+				s.renderBuffer[poffset+1] = screenWhite.G
+				s.renderBuffer[poffset+2] = screenWhite.B
 			case LightGray:
-				c = screenLightGrey
+				s.renderBuffer[poffset] = screenLightGrey.R
+				s.renderBuffer[poffset+1] = screenLightGrey.G
+				s.renderBuffer[poffset+2] = screenLightGrey.B
 			case DarkGray:
-				c = screenDarkGrey
+				s.renderBuffer[poffset] = screenDarkGrey.R
+				s.renderBuffer[poffset+1] = screenDarkGrey.G
+				s.renderBuffer[poffset+2] = screenDarkGrey.B
 			case Black:
-				c = screenBlack
+				s.renderBuffer[poffset] = screenBlack.R
+				s.renderBuffer[poffset+1] = screenBlack.G
+				s.renderBuffer[poffset+2] = screenBlack.B
 			}
 
-			callback(x, y, c)
+			s.renderBuffer[poffset+3] = 0xFF
+			poffset += 4
 		}
 	}
+
+	return &s.renderBuffer
 }
 
 func (s *Screen) colorForBGPixel(block uint16, index byte) ScreenColor {

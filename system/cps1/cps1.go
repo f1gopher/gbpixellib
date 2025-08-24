@@ -2,7 +2,6 @@ package cps1
 
 import (
 	"fmt"
-	"image/color"
 	"strings"
 
 	"github.com/f1gopher/gbpixellib/hardware/m68000"
@@ -59,10 +58,15 @@ func (c *CPS1) Reset() {
 	c.Start()
 }
 
-func (c *CPS1) Render(callback func(x int, y int, color color.RGBA)) {
+func (c *CPS1) Render() *[]byte {
+	return nil
 }
 
-func (c *CPS1) SingleFrame() (breakpoint bool, cyclesCompleted uint, err error) {
+func (c *CPS1) SingleFrame() (err error) {
+	return nil
+}
+
+func (c *CPS1) SingleFrameWithDebugInfo() (breakpoint bool, cyclesCompleted uint, err error) {
 	return false, 0, nil
 }
 

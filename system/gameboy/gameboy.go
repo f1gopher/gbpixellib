@@ -3,7 +3,6 @@ package gameboy
 import (
 	"errors"
 	"fmt"
-	"image/color"
 	"os"
 	"sync"
 
@@ -163,15 +162,71 @@ func (s *Gameboy) Reset() {
 	s.Start()
 }
 
-func (s *Gameboy) Render(callback func(x int, y int, color color.RGBA)) {
+func (s *Gameboy) Render() *[]byte {
 	s.displayLock.Lock()
 	defer s.displayLock.Unlock()
 
-	s.screen.Render(callback)
+	return s.screen.Render()
 }
 
-func (s *Gameboy) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err error) {
+func (s *Gameboy) SingleFrame() (err error) {
+	prevCompleted := false
+	didDMA := false
+	var mCyclesCompleted uint = 0
+	wasHalted := false
+	var x uint
 
+	for x = 0; x < mCyclesPerFrame; {
+		mCyclesCompleted = 1
+		if prevCompleted {
+			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
+				mCyclesCompleted += dmaMCycles
+			} else {
+				wasHalted = s.regs.GetHALT()
+				if wasHalted {
+					if s.interuptHandler.HasInterrupt() {
+						s.regs.SetHALT(false)
+					} else {
+					}
+					mCyclesCompleted++
+				} else {
+					// If handled an interrupt don't process any instructions this cycle
+					if interupted, _ := s.interuptHandler.Update(s.cpu.GetOpcodePC()); interupted {
+						if err := s.cpu.DoInterruptCycle(); err != nil {
+							return err
+						}
+						mCyclesCompleted = handleInterruptMCycles
+						s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+						x += mCyclesCompleted
+
+						continue
+					}
+				}
+			}
+		}
+
+		s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+
+		if !didDMA && !wasHalted {
+			_, prevCompleted, _, _, err = s.cpu.ExecuteMCycle()
+
+			if err != nil {
+				return err
+			}
+		}
+
+		s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
+
+		x += mCyclesCompleted
+	}
+
+	// TODO - handle the number of m cycles exceeding a frame and carrying over into the next frame
+	// when doing a dma or interrupt at the end of the frame
+
+	return nil
+}
+
+func (s *Gameboy) SingleFrameWithDebugInfo() (breakpoint bool, mCyclesCompleted uint, err error) {
 	prevCompleted := false
 	didDMA := false
 	mCyclesCompleted = 0
