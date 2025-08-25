@@ -125,7 +125,7 @@ func TestExecution(t *testing.T) {
 					expected := uint8(test.Final.RAM[x][1])
 
 					if actual != expected {
-						t.Errorf("RAM at 0x04%X should be 0x%02X but is 0x%02X", test.Final.RAM[x][0], expected, actual)
+						t.Errorf("RAM at 0x%04X should be 0x%02X but is 0x%02X", test.Final.RAM[x][0], expected, actual)
 					}
 				}
 

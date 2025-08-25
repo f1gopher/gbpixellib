@@ -90,6 +90,10 @@ func (m *memory68000) WriteShort(address uint32, value uint16) {
 	m.target(address).WriteShort(address, value)
 }
 
+func (m *memory68000) WriteLong(address uint32, value uint32) {
+	m.target(address).WriteLong(address, value)
+}
+
 func (m *memory68000) DumpCode() (data []uint8, startAddress uint32) {
 	dump := make([]uint8, m.Size())
 

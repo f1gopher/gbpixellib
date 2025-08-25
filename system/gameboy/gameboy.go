@@ -3,7 +3,6 @@ package gameboy
 import (
 	"errors"
 	"fmt"
-	"image/color"
 	"os"
 	"sync"
 
@@ -11,14 +10,15 @@ import (
 	"github.com/f1gopher/gbpixellib/system/gameboy/display"
 	"github.com/f1gopher/gbpixellib/system/gameboy/input"
 	"github.com/f1gopher/gbpixellib/system/gameboy/interupt"
+	"github.com/f1gopher/gbpixellib/system/gameboy/sound"
 
 	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"github.com/f1gopher/gbpixellib/log"
 )
 
 const cyclesPerSecond = 4194304
-const framesPerSecond = 60
-const cyclesPerFrame = cyclesPerSecond / framesPerSecond
+const framesPerSecond = 60 // 59.73 actually
+const cyclesPerFrame = 70224
 const cyclesPerMCycle = 4
 const mCyclesPerFrame = cyclesPerFrame / cyclesPerMCycle
 const dmaMCycles = 160
@@ -40,6 +40,7 @@ type Gameboy struct {
 	debugger        Debugger
 	log             *log.Log
 	screen          *display.Screen
+	sound           *sound.Sound
 	memory          z80.MemoryInterface
 	bus             *Bus
 	regs            z80.RegistersInterface
@@ -76,6 +77,7 @@ func CreateGameboy(bios string, rom string, useDebugger bool) *Gameboy {
 	memoryBus.SetIO(system.controller, system.interuptHandler)
 	system.timer = CreateTimer(system.memory, system.interuptHandler)
 	memoryBus.SetTimer(system.timer)
+	system.sound = sound.CreateSound(system.memory)
 
 	system.dump = dumpInterface{
 		regs:             system.regs,
@@ -131,7 +133,7 @@ func (s *Gameboy) Start() {
 	s.cartridgeHeader = readHeader(&rom)
 
 	if !s.IsCartridgeSupported() {
-		s.log.Debug(fmt.Sprintf("Unsupported cartridge type: %s", s.cartridgeHeader.CartridgeType))
+		s.log.Debug(fmt.Sprintf("Unsupported cartridge type: %d", s.cartridgeHeader.CartridgeType))
 	}
 
 	s.cartridge = cartridge.CreateCartridge(
@@ -149,6 +151,7 @@ func (s *Gameboy) Reset() {
 	s.cpu.Reset()
 	s.interuptHandler.Reset()
 	s.screen.Reset()
+	s.sound.Reset()
 	if s.isTestROM {
 		s.cpu.InitForTestROM()
 		// Disable bios because we load as a ROM
@@ -163,15 +166,72 @@ func (s *Gameboy) Reset() {
 	s.Start()
 }
 
-func (s *Gameboy) Render(callback func(x int, y int, color color.RGBA)) {
+func (s *Gameboy) Render() *[]byte {
 	s.displayLock.Lock()
 	defer s.displayLock.Unlock()
 
-	s.screen.Render(callback)
+	return s.screen.Render()
 }
 
-func (s *Gameboy) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err error) {
+func (s *Gameboy) SingleFrame() (err error) {
+	prevCompleted := false
+	didDMA := false
+	var mCyclesCompleted uint = 0
+	wasHalted := false
+	var x uint
 
+	for x = 0; x < mCyclesPerFrame; {
+		mCyclesCompleted = 1
+		if prevCompleted {
+			if didDMA = s.memory.ExecuteDMAIfPending(); didDMA {
+				mCyclesCompleted += dmaMCycles
+			} else {
+				wasHalted = s.regs.GetHALT()
+				if wasHalted {
+					if s.interuptHandler.HasInterrupt() {
+						s.regs.SetHALT(false)
+					} else {
+					}
+					mCyclesCompleted++
+				} else {
+					// If handled an interrupt don't process any instructions this cycle
+					if interupted, _ := s.interuptHandler.Update(s.cpu.GetOpcodePC()); interupted {
+						if err := s.cpu.DoInterruptCycle(); err != nil {
+							return err
+						}
+						mCyclesCompleted = handleInterruptMCycles
+						s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+						x += mCyclesCompleted
+
+						continue
+					}
+				}
+			}
+		}
+
+		s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+		s.sound.Update()
+
+		if !didDMA && !wasHalted {
+			_, prevCompleted, _, _, err = s.cpu.ExecuteMCycle()
+
+			if err != nil {
+				return err
+			}
+		}
+
+		s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
+
+		x += mCyclesCompleted
+	}
+
+	// TODO - handle the number of m cycles exceeding a frame and carrying over into the next frame
+	// when doing a dma or interrupt at the end of the frame
+
+	return nil
+}
+
+func (s *Gameboy) SingleFrameWithDebugInfo() (breakpoint bool, mCyclesCompleted uint, err error) {
 	prevCompleted := false
 	didDMA := false
 	mCyclesCompleted = 0
@@ -231,9 +291,10 @@ func (s *Gameboy) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err err
 					}
 				}
 			}
-
-			s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
 		}
+
+		s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+		s.sound.Update()
 
 		if !didDMA && !wasHalted {
 			_, prevCompleted, info.Opcode, info.Name, err = s.cpu.ExecuteMCycle()
@@ -256,6 +317,9 @@ func (s *Gameboy) SingleFrame() (breakpoint bool, mCyclesCompleted uint, err err
 			return true, x, nil
 		}
 	}
+
+	// TODO - handle the number of m cycles exceeding a frame and carrying over into the next frame
+	// when doing a dma or interrupt at the end of the frame
 
 	return false, mCyclesCompleted, nil
 }
@@ -317,6 +381,7 @@ func (s *Gameboy) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, e
 
 	// Update timers
 	s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+	s.sound.Update()
 
 	s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
 

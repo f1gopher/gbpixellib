@@ -74,6 +74,19 @@ func CreateCPU(log *log.Log, regs RegistersInterface, memory MemoryInterface) *C
 	}
 }
 
+func (c *Cpu) TestInit() {
+	c.executeOpcodePC = c.reg.Get16(PC) - 1
+	opcode := c.memory.ReadByte(c.executeOpcodePC)
+	var cbOpcode uint8 = 0x00
+	if opcode == 0xCB {
+		cbOpcode = c.memory.ReadByte(c.executeOpcodePC + 1)
+		c.reg.Set16(PC, c.reg.Get16(PC)+1)
+	}
+
+	// Assign it straight to execute so it will be ready for the next cycle
+	c.executeOpcode, _ = c.getOpcode(opcode, cbOpcode)
+}
+
 func (c *Cpu) InitForTestROM() {
 	c.executeOpcode = nil
 
@@ -184,7 +197,12 @@ func (c *Cpu) DoInterruptCycle() error {
 	return nil
 }
 
-func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcode uint8, opcodeDescription string, err error) {
+func (c *Cpu) ExecuteMCycle() (breakpoint bool,
+	instructionCompleted bool,
+	opcode uint8,
+	opcodeDescription string,
+	err error) {
+
 	// On startup we will have no fetched opcode so
 	// fetch a nw opcode then end the cycle
 	if c.executeOpcode == nil {
@@ -283,6 +301,78 @@ func (c *Cpu) ExecuteMCycle() (breakpoint bool, instructionCompleted bool, opcod
 	return breakpointHit, completed, opcodeRanId, opcodeRanDescription, nil
 }
 
+func (c *Cpu) ExecuteUnitTestMCycle() (
+	instructionCompleted bool,
+	err error) {
+
+	// On startup we will have no fetched opcode so
+	// fetch a nw opcode then end the cycle
+	if c.executeOpcode == nil {
+		c.executeOpcodePC = c.reg.Get16(PC)
+		opcode := readAndIncPC(c.reg, c.memory)
+		var cbOpcode uint8 = 0x00
+		if opcode == 0xCB {
+			cbOpcode = readAndIncPC(c.reg, c.memory)
+		}
+
+		var err error
+		// Assign it straight to execute so it will be ready for the next cycle
+		c.executeOpcode, err = c.getOpcode(opcode, cbOpcode)
+
+		c.executeOpcodesMCycle = 0
+
+		if err != nil {
+			return false, err
+		}
+
+		// TODO - not sure is this is right, hack to match the other app for testing
+
+		//return false, false, err
+	}
+
+	// We already have an opcode so do an excute on that opcode
+	completed, err := c.executeOpcode.doCycle(
+		c.executeOpcodesMCycle+1,
+		c.reg,
+		c.memory)
+
+	if err != nil {
+		return false, errors.Join(errors.New(fmt.Sprintf("Opcode %s cycle %d", c.executeOpcode.name(), c.executeOpcodesMCycle)), err)
+	}
+
+	c.executeOpcodesMCycle++
+
+	// TODO - directly check registers/memory for breakpoints here (and clear
+	// before execution)
+
+	// If the current opcode has finished then do a fetch for the next opcode
+	// in the same cycle (overlapping execute and fetch)
+	if completed {
+		c.executeOpcodesMCycle = 0
+
+		c.prevOpcodePC = c.executeOpcodePC
+		c.executeOpcodePC = c.reg.Get16(PC)
+		c.prevOpcode = c.executeOpcode.opcode()
+		opcode := readAndIncPC(c.reg, c.memory)
+		var cbOpcode uint8 = 0x00
+		if opcode == 0xCB {
+			cbOpcode = readAndIncPC(c.reg, c.memory)
+			// TODO - remove this
+			c.reg.Set16(PC, c.reg.Get16(PC)-1)
+		}
+		c.isCB = opcode == 0xCB
+
+		var err error
+		c.executeOpcode, err = c.getOpcode(opcode, cbOpcode)
+
+		// If we had an error fetching the opcode fail
+		if err != nil {
+			return completed, err
+		}
+	}
+
+	return completed, nil
+}
 func (c *Cpu) GetOpcode() string {
 	if c.executeOpcode == nil {
 		return "N/A"
