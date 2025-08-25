@@ -275,6 +275,8 @@ func createOpcodesTable() [256]opcode {
 	opcodes = append(opcodes, createCP_n(0xFE))
 	opcodes = append(opcodes, createRST_n(0xFF, 0x38))
 
+	opcodes = append(opcodes, createSTOP(0x10))
+
 	// Populate the opcodes table according to the opcode value set on each opcode
 	var table [256]opcode
 	for _, x := range opcodes {
