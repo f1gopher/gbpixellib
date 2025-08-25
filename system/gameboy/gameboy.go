@@ -10,6 +10,7 @@ import (
 	"github.com/f1gopher/gbpixellib/system/gameboy/display"
 	"github.com/f1gopher/gbpixellib/system/gameboy/input"
 	"github.com/f1gopher/gbpixellib/system/gameboy/interupt"
+	"github.com/f1gopher/gbpixellib/system/gameboy/sound"
 
 	"github.com/f1gopher/gbpixellib/hardware/z80"
 	"github.com/f1gopher/gbpixellib/log"
@@ -39,6 +40,7 @@ type Gameboy struct {
 	debugger        Debugger
 	log             *log.Log
 	screen          *display.Screen
+	sound           *sound.Sound
 	memory          z80.MemoryInterface
 	bus             *Bus
 	regs            z80.RegistersInterface
@@ -75,6 +77,7 @@ func CreateGameboy(bios string, rom string, useDebugger bool) *Gameboy {
 	memoryBus.SetIO(system.controller, system.interuptHandler)
 	system.timer = CreateTimer(system.memory, system.interuptHandler)
 	memoryBus.SetTimer(system.timer)
+	system.sound = sound.CreateSound(system.memory)
 
 	system.dump = dumpInterface{
 		regs:             system.regs,
@@ -148,6 +151,7 @@ func (s *Gameboy) Reset() {
 	s.cpu.Reset()
 	s.interuptHandler.Reset()
 	s.screen.Reset()
+	s.sound.Reset()
 	if s.isTestROM {
 		s.cpu.InitForTestROM()
 		// Disable bios because we load as a ROM
@@ -206,6 +210,7 @@ func (s *Gameboy) SingleFrame() (err error) {
 		}
 
 		s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+		s.sound.Update()
 
 		if !didDMA && !wasHalted {
 			_, prevCompleted, _, _, err = s.cpu.ExecuteMCycle()
@@ -289,6 +294,7 @@ func (s *Gameboy) SingleFrameWithDebugInfo() (breakpoint bool, mCyclesCompleted 
 		}
 
 		s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+		s.sound.Update()
 
 		if !didDMA && !wasHalted {
 			_, prevCompleted, info.Opcode, info.Name, err = s.cpu.ExecuteMCycle()
@@ -375,6 +381,7 @@ func (s *Gameboy) SingleInstruction() (breakpoint bool, mCyclesCompleted uint, e
 
 	// Update timers
 	s.screen.UpdateForCycles(mCyclesCompleted * cyclesPerMCycle)
+	s.sound.Update()
 
 	s.timer.Update(uint8(mCyclesCompleted * cyclesPerMCycle))
 
