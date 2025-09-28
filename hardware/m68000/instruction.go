@@ -4,8 +4,12 @@ import (
 	"github.com/f1gopher/gbpixellib/hardware/memory"
 )
 
+type prefetchQueue interface {
+	ReadNextValue() uint16
+}
+
 type instruction interface {
 	Name() string
 	Length() int
-	Step(registers *Registers, memory memory.Memory[uint32]) bool
+	StepClockCycle(registers *Registers, memory memory.Memory[uint32], pc uint32, prefetch prefetchQueue) (finished bool, newPC uint32)
 }

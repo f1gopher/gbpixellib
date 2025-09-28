@@ -18,8 +18,8 @@ func (n *nop) Length() int {
 	return 2
 }
 
-func (n *nop) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+func (n *nop) StepClockCycle(registers *Registers, memory memory.Memory[uint32], pc uint32, prefetch prefetchQueue) (finished bool, newPC uint32) {
 	// Doesn't do anything but takes 4 cycles
 	n.cycle++
-	return n.cycle == 4
+	return n.cycle == 4, pc
 }

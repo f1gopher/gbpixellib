@@ -13,6 +13,7 @@ type Memory[T uint16 | uint32] interface {
 	ReadBit(address T, bit uint8) bool
 	ReadByte(address T) byte
 	ReadShort(address T) uint16
+	ReadLong(address T) uint32
 	WriteBit(address T, bit uint8, value bool)
 	WriteByte(address T, value byte)
 	WriteShort(address T, value uint16)
@@ -114,6 +115,10 @@ func (m *memory[T]) ReadShort(address T) uint16 {
 	result = result << 8
 	result = result | uint16(lsb)
 	return result
+}
+
+func (m *memory[T]) ReadLong(address T) uint32 {
+	panic("implement this")
 }
 
 func (m *memory[T]) WriteBit(address T, bit uint8, value bool) {

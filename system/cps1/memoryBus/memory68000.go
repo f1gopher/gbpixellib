@@ -78,6 +78,10 @@ func (m *memory68000) ReadShort(address uint32) uint16 {
 	return m.target(address).ReadShort(address)
 }
 
+func (m *memory68000) ReadLong(address uint32) uint32 {
+	return m.target(address).ReadLong(address)
+}
+
 func (m *memory68000) WriteBit(address uint32, bit uint8, value bool) {
 	m.target(address).WriteBit(address, bit, value)
 }

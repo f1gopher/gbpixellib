@@ -71,7 +71,9 @@ func (c *CPS1) SingleFrameWithDebugInfo() (breakpoint bool, cyclesCompleted uint
 }
 
 func (c *CPS1) SingleInstruction() (breakpoint bool, cyclesCompleted uint, err error) {
-	c.cpu.ExecuteCycle()
+	// TODO - update to loop until one instruction has finished
+	// NOTE - 2 cpu microcycles per clock cycle
+	c.cpu.ExecuteCPUMicroCycle()
 	return false, 0, nil
 }
 

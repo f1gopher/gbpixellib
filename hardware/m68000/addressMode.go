@@ -295,6 +295,9 @@ func (a *addressModeInfo) setValueWithSize(registers *Registers, memory memory.M
 		regAddress := registers.GetAReg32(a.reg)
 		offset := displaceAddress(regAddress, a.displacement)
 
+		fmt.Printf("**** Addr: 0x%08X Disp: %d\n", regAddress, a.displacement)
+		fmt.Printf(" 0x%X %v size %v\n", offset, value, size.string())
+
 		switch size {
 		case byteSize:
 			memory.WriteByte(offset, uint8(value))

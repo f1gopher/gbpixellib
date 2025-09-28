@@ -21,13 +21,13 @@ type M68000 struct {
 	memory    memory.Memory[uint32]
 	parser    instructionParser
 
-	cycle uint64
-	state executionState
+	clockCycle uint64
+	state      executionState
 
-	prefetchRequested       bool
-	prefetchAddress         uint32
-	prefetchValue           uint16
-	prefetchCyclesRemaining uint8
+	prefetchRequested            bool
+	prefetchAddress              uint32
+	prefetchValue                uint16
+	prefetchClockCyclesRemaining uint8
 
 	currentInstruction instruction
 }
@@ -37,19 +37,19 @@ func CreateM68000(log *log.Log, memory memory.Memory[uint32]) *M68000 {
 		log:    log,
 		memory: memory,
 		// registers: instructions.Registers{},
-		state: Idle,
-		cycle: 0,
+		state:      Idle,
+		clockCycle: 0,
 	}
 }
 
 func (m *M68000) Init() {
 	m.state = Idle
-	m.cycle = 0
+	m.clockCycle = 0
 
 	m.prefetchRequested = false
 	m.prefetchAddress = 0
 	m.prefetchValue = 0
-	m.prefetchCyclesRemaining = 0
+	m.prefetchClockCyclesRemaining = 0
 
 	m.currentInstruction = nil
 }
@@ -70,11 +70,11 @@ func (m *M68000) requestPrefetch(pc uint32) {
 	// Fetch next instruction from PC address and store in prefetch queue
 	m.prefetchRequested = true
 	m.prefetchAddress = pc
-	m.prefetchCyclesRemaining = 4
+	m.prefetchClockCyclesRemaining = 4
 	m.prefetchValue = m.memory.ReadShort(pc)
 }
 
-func (m *M68000) Step() {
+func (m *M68000) Step() (clockCyclesRan uint64) {
 
 	// Read cycle - fetch value for PC address and store in IR (instruction register)
 	// Increment PC
@@ -96,17 +96,19 @@ func (m *M68000) Step() {
 
 	//instruction.Step(m.registers, m.memory)
 
-	for !m.ExecuteCycle() {
+	for !m.ExecuteCPUMicroCycle() {
 	}
+
+	return m.clockCycle
 }
 
-func (m *M68000) ExecuteCycle() (breakpoint bool) {
-	// If a prefetch has been requested it takes 4 cycles so update
+func (m *M68000) ExecuteCPUMicroCycle() (breakpoint bool) {
+	// If a prefetch has been requested it takes 4 clock cycles (2 cpu cycles) so update
 	if m.prefetchRequested {
-		m.prefetchCyclesRemaining--
+		m.prefetchClockCyclesRemaining--
 
 		// If 4 cycles are up then place the value in IRC
-		if m.prefetchCyclesRemaining == 1 {
+		if m.prefetchClockCyclesRemaining == 1 {
 			m.prefetchRequested = false
 			m.prefetchAddress = 0
 			m.registers.Set16(
@@ -161,12 +163,43 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 			m.currentInstruction = m.parser.decode2(opcode)
 
 			// Start decoding and executing the instruction
-			m.currentInstruction.Step(&m.registers, m.memory)
+			pc := m.registers.Get32(PC)
+			// TODO - need to handle finished being true after 1 cycle?
+			_, newPC := m.currentInstruction.StepClockCycle(&m.registers, m.memory, pc, m)
+
+			// If the decode has moved PC on then need to update the current PC
+			// and the prefetch and decode buffers
+			if newPC != pc {
+				m.registers.Set32(PC, newPC)
+				// TODO - do we update/clear the prefetch/decode now or next cycle?
+				// clear irc and ir?
+				// requestPrefecth() using newPC
+				m.registers.Set16(IR_Decoding, 0)
+			}
 
 			m.state = Executing
 		} else if m.state == Executing {
 			// Execute the next cycle of the instruction
-			if m.currentInstruction.Step(&m.registers, m.memory) {
+			pc := m.registers.Get32(PC)
+			finished, newPC := m.currentInstruction.StepClockCycle(&m.registers, m.memory, pc, m)
+
+			// TODO - Instruction extension words don't go through the prefetch registers
+			//
+			// During the first stage extra fetch cycles are performed, one for each extension word. Most of the
+			// extension words are processed directly by the instruction and not transferred to the prefetch queue.
+			// Otherwise extension words would reach the decoder. Only the last word fetched at this stage is
+			// transferred to IRC. This last word is actually not part of the current instruction, it is instead the
+			// opcode of the next one. Remember that one extension word was already fetched during the previous instruction.
+
+			// If the decode has moved PC on then need to update the current PC
+			// and the prefetch and decode buffers
+			if newPC != pc {
+				m.registers.Set32(PC, newPC)
+				// TODO - do we update/clear the prefetch/decode now or next cycle?
+				m.registers.Set16(IR_Decoding, 0)
+			}
+
+			if finished {
 				// Instruction completed
 				instructionComplete = true
 				m.state = Idle
@@ -176,11 +209,17 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 		}
 	}
 
-	m.cycle++
+	m.clockCycle++
 
 	return instructionComplete
 }
 
 func (m *M68000) test_registers() *Registers {
 	return &m.registers
+}
+
+func (m *M68000) ReadNextValue() uint16 {
+	value := m.registers.Get16(IR_Decoding)
+	m.registers.Set16(IR_Decoding, 0)
+	return value
 }

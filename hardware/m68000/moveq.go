@@ -43,7 +43,7 @@ func (m *moveq) Length() int {
 	return 2
 }
 
-func (m *moveq) Step(registers *Registers, memory memory.Memory[uint32]) bool {
+func (m *moveq) StepClockCycle(registers *Registers, memory memory.Memory[uint32], pc uint32, prefetch prefetchQueue) (finished bool, newPC uint32) {
 	switch m.cycle {
 	case 0:
 		m.destReg = uint8((m.opcode >> 9) & 0b0000000000000111)
@@ -57,8 +57,8 @@ func (m *moveq) Step(registers *Registers, memory memory.Memory[uint32]) bool {
 	case 3:
 		registers.SetDReg32(m.destReg, uint32(m.data))
 		m.cycle++
-		return true
+		return true, pc
 	}
 
-	return false
+	return false, pc
 }

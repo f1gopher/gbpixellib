@@ -16,6 +16,6 @@ func (i *illegal) Length() int {
 	return 2
 }
 
-func (i *illegal) Step(registers *Registers, memory memory.Memory[uint32]) bool {
-	return true
+func (i *illegal) StepClockCycle(registers *Registers, memory memory.Memory[uint32], pc uint32, prefetch prefetchQueue) (finished bool, newPC uint32) {
+	return true, pc
 }
