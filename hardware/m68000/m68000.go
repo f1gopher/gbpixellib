@@ -150,7 +150,7 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 			// another instruction
 			m.registers.Set16(IR_Decoding, irc)
 			m.registers.Set16(IRC_Prefetch, 0)
-			m.requestPrefetch(m.registers.Get32(PC) + 4)
+			m.requestPrefetch(m.registers.Get32(PC))
 
 			// Increment PC by 2 now we have started executing that instruction
 			m.registers.IncrementPC(2)

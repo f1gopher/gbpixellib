@@ -41,8 +41,8 @@ type jsonTestCase struct {
 
 func TestExecution(t *testing.T) {
 	testFiles := []string{
-		"../../test_data/m68000/CLR.b.json",
-		"../../test_data/m68000/MOVE.q.json",
+		"../../../external/m68000_tests/v1/NOP.json",
+		"../../../external/m68000_tests/v1/MOVE.q.json",
 	}
 
 	for _, testFile := range testFiles {

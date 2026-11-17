@@ -460,8 +460,9 @@ func (i *instructionParser) decode2(opcode uint16) instruction {
 		// Miscellaneous
 		if opcode == illegalInstruction {
 			return &illegal{}
-			// } else if opcode&nopMask == nopPrefix {
+		} else if opcode&nopMask == nopPrefix {
 			// 	result = CreateNOP(opcode, code, offset)
+			return &nop{}
 			// } else if opcode == rteInstruction {
 			// 	result = CreateRTE()
 			// } else if opcode&rtsMask == rtsPrefix {
