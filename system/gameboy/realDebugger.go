@@ -45,8 +45,8 @@ func ParseBreakpointComparison(value string) (bp BreakpointComparison, err error
 
 type realDebugger struct {
 	log    *log.Log
-	regs   debugRegisters
-	memory debugMemory
+	regs   *debugRegisters
+	memory *debugMemory
 }
 
 func createRealDebugger(log *log.Log) (Debugger, z80.RegistersInterface, z80.MemoryInterface, *Bus) {
@@ -63,11 +63,11 @@ func createRealDebugger(log *log.Log) (Debugger, z80.RegistersInterface, z80.Mem
 	}
 
 	d := &realDebugger{
-		regs:   r,
-		memory: m,
+		regs:   &r,
+		memory: &m,
 	}
 
-	return d, &d.regs, &d.memory, d.memory.memory
+	return d, d.regs, d.memory, d.memory.memory
 }
 
 func (d *realDebugger) StartCycle(cycle uint, pc uint16) {
