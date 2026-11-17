@@ -258,7 +258,7 @@ func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) inst
 		} else if opcode&tstMask == tstPrefix {
 			result = CreateTST(opcode, code, offset)
 		} else if opcode&swapMask == swapPrefix {
-			result = CreateSWAP(opcode, code, offset)
+			result = CreateSWAP(opcode)
 		} else if opcode&extMask == extPrefix {
 			result = CreateEXT(opcode)
 		} else if opcode&movemMask == movemPrefix {
@@ -475,8 +475,8 @@ func (i *instructionParser) decode2(opcode uint16) instruction {
 			// 	result = CreateMOVEToSR(opcode, code, offset)
 			// } else if opcode&tstMask == tstPrefix {
 			// 	result = CreateTST(opcode, code, offset)
-			// } else if opcode&swapMask == swapPrefix {
-			// 	result = CreateSWAP(opcode, code, offset)
+		} else if opcode&swapMask == swapPrefix {
+			return CreateSWAP(opcode)
 			// } else if opcode&extMask == extPrefix {
 			// 	result = CreateEXT(opcode)
 			// } else if opcode&movemMask == movemPrefix {

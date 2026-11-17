@@ -43,6 +43,7 @@ func TestExecution(t *testing.T) {
 	testFiles := []string{
 		"../../../external/m68000_tests/v1/NOP.json",
 		"../../../external/m68000_tests/v1/MOVE.q.json",
+		"../../../external/m68000_tests/v1/SWAP.json",
 	}
 
 	for _, testFile := range testFiles {
@@ -114,8 +115,8 @@ func TestExecution(t *testing.T) {
 				verifyRegister(t, test.Final.A6, cpu.test_registers().Get32(A6), "A6")
 				verifyRegister(t, test.Final.USP, cpu.test_registers().Get32(UserStack), "USP")
 				verifyRegister(t, test.Final.SSP, cpu.test_registers().Get32(SupervisorStack), "SSP")
-				if cpu.test_registers().Get16(SR) != test.Initial.SR {
-					t.Errorf("SR should be 0x%02X but is 0x%02X", test.Initial.SR, cpu.test_registers().Get16(SR))
+				if cpu.test_registers().Get16(SR) != test.Final.SR {
+					t.Errorf("SR should be 0x%04X but is 0x%04X", test.Final.SR, cpu.test_registers().Get16(SR))
 				}
 				verifyRegister(t, test.Final.PC, cpu.test_registers().Get32(PC), "PC")
 

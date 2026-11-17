@@ -502,7 +502,30 @@ func (r *Registers) GetAReg32(reg byte) uint32 {
 	case 7:
 		return getRegister[uint32](r.getA7())
 	default:
-		panic(fmt.Sprintf("Unhanalea register: %v", reg))
+		panic(fmt.Sprintf("Unhandled register: %v", reg))
+	}
+}
+
+func (r *Registers) GetDReg32(reg byte) uint32 {
+	switch reg {
+	case 0:
+		return getRegister[uint32](&r.d0)
+	case 1:
+		return getRegister[uint32](&r.d1)
+	case 2:
+		return getRegister[uint32](&r.d2)
+	case 3:
+		return getRegister[uint32](&r.d3)
+	case 4:
+		return getRegister[uint32](&r.d4)
+	case 5:
+		return getRegister[uint32](&r.d5)
+	case 6:
+		return getRegister[uint32](&r.d6)
+	case 7:
+		return getRegister[uint32](&r.d7)
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", reg))
 	}
 }
 
