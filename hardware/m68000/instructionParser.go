@@ -526,11 +526,11 @@ func (i *instructionParser) decode2(opcode uint16) instruction {
 		// 	} else if opcode&bccMask == bccPrefix {
 		// 		result = CreateBcc(opcode, code, offset)
 		// 	}
-		// case 0b0000000000000111:
-		// 	// MOVEQ
-		// 	if opcode&moveqMask == moveqPrefix {
-		// 		result = CreateMOVEQ(opcode)
-		// 	}
+	case 0b0000000000000111:
+		// MOVEQ
+		if opcode&moveqMask == moveqPrefix {
+			return CreateMOVEQ(opcode)
+		}
 		// case 0b0000000000001000:
 		// 	// OR/DIV/SBCD
 		// 	if opcode&divuMask == divuPrefix {
