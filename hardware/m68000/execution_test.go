@@ -251,8 +251,36 @@ func TestExecution(t *testing.T) {
 				verifyRegister(t, test.Final.A6, cpu.test_registers().Get32(A6), "A6")
 				verifyRegister(t, test.Final.USP, cpu.test_registers().Get32(UserStack), "USP")
 				verifyRegister(t, test.Final.SSP, cpu.test_registers().Get32(SupervisorStack), "SSP")
-				if cpu.test_registers().Get16(SR) != test.Final.SR {
-					t.Errorf("SR should be 0x%04X but is 0x%04X", test.Final.SR, cpu.test_registers().Get16(SR))
+				currentFlags := cpu.test_registers().Get16(SR)
+				if currentFlags != test.Final.SR {
+					t.Errorf("SR should be 0x%04X but is 0x%04X", test.Final.SR, currentFlags)
+					currentC := currentFlags&0b0000000000000001 == 0b0000000000000001
+					currentV := currentFlags&0b0000000000000010 == 0b0000000000000010
+					currentZ := currentFlags&0b0000000000000100 == 0b0000000000000100
+					currentN := currentFlags&0b0000000000001000 == 0b0000000000001000
+					currentX := currentFlags&0b0000000000010000 == 0b0000000000010000
+
+					expectedC := test.Final.SR&0b0000000000000001 == 0b0000000000000001
+					expectedV := test.Final.SR&0b0000000000000010 == 0b0000000000000010
+					expectedZ := test.Final.SR&0b0000000000000100 == 0b0000000000000100
+					expectedN := test.Final.SR&0b0000000000001000 == 0b0000000000001000
+					expectedX := test.Final.SR&0b0000000000010000 == 0b0000000000010000
+
+					if currentX != expectedX {
+						t.Errorf("X expected %t but is %t", expectedX, currentX)
+					}
+					if currentN != expectedN {
+						t.Errorf("N expected %t but is %t", expectedN, currentN)
+					}
+					if currentZ != expectedZ {
+						t.Errorf("Z expected %t but is %t", expectedZ, currentZ)
+					}
+					if currentV != expectedV {
+						t.Errorf("V expected %t but is %t", expectedV, currentV)
+					}
+					if currentC != expectedC {
+						t.Errorf("C expected %t but is %t", expectedC, currentC)
+					}
 				}
 				verifyRegister(t, test.Final.PC, cpu.test_registers().Get32(PC), "PC")
 

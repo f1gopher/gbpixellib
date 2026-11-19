@@ -42,5 +42,11 @@ func (m *moveq) Length() int {
 
 func (m *moveq) Step(registers *Registers, memory memory.Memory[uint32]) bool {
 	registers.SetDReg32(m.destReg, uint32(m.data))
+
+	registers.setFlag(N, m.data < 0)
+	registers.setFlag(Z, m.data == 0)
+	registers.setFlag(V, false)
+	registers.setFlag(C, false)
+
 	return true
 }
