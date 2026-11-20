@@ -414,6 +414,29 @@ func (r *Registers) Set32(target register68000, value uint32) {
 	}
 }
 
+func (r *Registers) SetAReg32(reg byte, value uint32) {
+	switch reg {
+	case 0:
+		setRegister[uint32](&r.a0, value)
+	case 1:
+		setRegister[uint32](&r.a1, value)
+	case 2:
+		setRegister[uint32](&r.a2, value)
+	case 3:
+		setRegister[uint32](&r.a3, value)
+	case 4:
+		setRegister[uint32](&r.a4, value)
+	case 5:
+		setRegister[uint32](&r.a5, value)
+	case 6:
+		setRegister[uint32](&r.a6, value)
+	case 7:
+		setRegister[uint32](r.getA7(), value)
+	default:
+		panic(fmt.Sprintf("Unhandled register: %v", reg))
+	}
+}
+
 func (r *Registers) SetDReg8(reg byte, value uint8) {
 	switch reg {
 	case 0:

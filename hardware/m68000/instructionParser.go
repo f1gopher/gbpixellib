@@ -349,7 +349,7 @@ func (i *instructionParser) decode(opcode uint16, code []uint8, offset int) inst
 		if opcode&abcdMask == abcdPrefix {
 			result = CreateABCD(opcode, code, offset)
 		} else if opcode&exgMask == exgPrefix {
-			result = CreateEXG(opcode, code, offset)
+			result = CreateEXG(opcode)
 		} else if opcode&muluMask == muluPrefix {
 			result = CreateMULU(opcode, code, offset)
 		} else if opcode&andMask == andPrefix {
@@ -531,48 +531,48 @@ func (i *instructionParser) decode2(opcode uint16) instruction {
 		if opcode&moveqMask == moveqPrefix {
 			return CreateMOVEQ(opcode)
 		}
-		// case 0b0000000000001000:
-		// 	// OR/DIV/SBCD
-		// 	if opcode&divuMask == divuPrefix {
-		// 		result = CreateDIVU(opcode, code, offset)
-		// 	} else if opcode&sbcdMask == sbcdPrefix {
-		// 		result = CreateSBCD(opcode, code, offset)
-		// 	} else if opcode&divsMask == divsPrefix {
-		// 		result = CreateDIVS(opcode, code, offset)
-		// 	} else if opcode&orMask == orPrefix {
-		// 		result = CreateOR(opcode, code, offset)
-		// 	}
-		// case 0b0000000000001001:
-		// 	// SUB/SUBX
-		// 	if opcode&subaMask == subaPrefix {
-		// 		result = CreateSUBA(opcode, code, offset)
-		// 	} else if opcode&subMask == subPrefix {
-		// 		result = CreateSUB(opcode, code, offset)
-		// 	}
-		// case 0b0000000000001010:
-		// 	// (Unassigned, Reserved)
-		// case 0b0000000000001011:
-		// 	// CMP/EOR
-		// 	opmode := (opcode >> 6) & 0b000000000000111
+	// case 0b0000000000001000:
+	// 	// OR/DIV/SBCD
+	// 	if opcode&divuMask == divuPrefix {
+	// 		result = CreateDIVU(opcode, code, offset)
+	// 	} else if opcode&sbcdMask == sbcdPrefix {
+	// 		result = CreateSBCD(opcode, code, offset)
+	// 	} else if opcode&divsMask == divsPrefix {
+	// 		result = CreateDIVS(opcode, code, offset)
+	// 	} else if opcode&orMask == orPrefix {
+	// 		result = CreateOR(opcode, code, offset)
+	// 	}
+	// case 0b0000000000001001:
+	// 	// SUB/SUBX
+	// 	if opcode&subaMask == subaPrefix {
+	// 		result = CreateSUBA(opcode, code, offset)
+	// 	} else if opcode&subMask == subPrefix {
+	// 		result = CreateSUB(opcode, code, offset)
+	// 	}
+	// case 0b0000000000001010:
+	// 	// (Unassigned, Reserved)
+	// case 0b0000000000001011:
+	// 	// CMP/EOR
+	// 	opmode := (opcode >> 6) & 0b000000000000111
 
-		// 	if opmode == 0 || opmode == 0b00000001 || opmode == 0b00000010 {
-		// 		result = CreateCMP(opcode, code, offset)
-		// 	} else if opmode == 0b00000011 || opmode == 0b00000111 {
-		// 		result = CreateCMPA(opcode, code, offset)
-		// 	} else {
-		// 		result = CreateEOR(opcode, code, offset)
-		// 	}
-		// case 0b0000000000001100:
+	// 	if opmode == 0 || opmode == 0b00000001 || opmode == 0b00000010 {
+	// 		result = CreateCMP(opcode, code, offset)
+	// 	} else if opmode == 0b00000011 || opmode == 0b00000111 {
+	// 		result = CreateCMPA(opcode, code, offset)
+	// 	} else {
+	// 		result = CreateEOR(opcode, code, offset)
+	// 	}
+	case 0b0000000000001100:
 		// 	// AND/MUL/ABCD/EXG
 		// 	if opcode&abcdMask == abcdPrefix {
 		// 		result = CreateABCD(opcode, code, offset)
-		// 	} else if opcode&exgMask == exgPrefix {
-		// 		result = CreateEXG(opcode, code, offset)
-		// 	} else if opcode&muluMask == muluPrefix {
-		// 		result = CreateMULU(opcode, code, offset)
-		// 	} else if opcode&andMask == andPrefix {
-		// 		result = CreateAND(opcode, code, offset)
-		// 	}
+		if opcode&exgMask == exgPrefix {
+			return CreateEXG(opcode)
+			// 	} else if opcode&muluMask == muluPrefix {
+			// 		result = CreateMULU(opcode, code, offset)
+			// 	} else if opcode&andMask == andPrefix {
+			// 		result = CreateAND(opcode, code, offset)
+		}
 		// case 0b0000000000001101:
 		// 	// ADD/ADDX
 		// 	if opcode&addxMask == addxPrefix {
