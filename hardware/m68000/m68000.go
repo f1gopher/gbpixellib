@@ -28,7 +28,6 @@ type M68000 struct {
 
 	prefetchRequested       bool
 	prefetchAddress         uint32
-	prefetchValue           uint16
 	prefetchCyclesRemaining uint8
 
 	currentInstruction instruction
@@ -38,9 +37,8 @@ func CreateM68000(log *log.Log, memory memory.Memory[uint32]) *M68000 {
 	return &M68000{
 		log:    log,
 		memory: memory,
-		// registers: instructions.Registers{},
-		state: Idle,
-		cycle: 0,
+		state:  Idle,
+		cycle:  0,
 	}
 }
 
@@ -50,10 +48,16 @@ func (m *M68000) Init() {
 
 	m.prefetchRequested = false
 	m.prefetchAddress = 0
-	m.prefetchValue = 0
 	m.prefetchCyclesRemaining = 0
 
 	m.currentInstruction = nil
+
+	// Power on initial state
+	m.registers.Set16(SR, 0x2700)
+	m.registers.Set16(IR_Decoding, 0)
+	m.registers.Set16(IRC_Prefetch, 0)
+	m.registers.Set16(IRD_Executing, 0)
+
 }
 
 func (m *M68000) Reset() {
@@ -73,7 +77,6 @@ func (m *M68000) requestPrefetch(pc uint32) {
 	m.prefetchRequested = true
 	m.prefetchAddress = pc
 	m.prefetchCyclesRemaining = 4
-	m.prefetchValue = m.memory.ReadShort(pc)
 }
 
 func (m *M68000) Step() {
@@ -110,75 +113,50 @@ func (m *M68000) ExecuteCycle() (breakpoint bool) {
 
 		// If 4 cycles are up then place the value in IRC
 		if m.prefetchCyclesRemaining == 1 {
+			prefetchValue := m.memory.ReadShort(m.prefetchAddress)
 			m.prefetchRequested = false
 			m.prefetchAddress = 0
 			m.registers.Set16(
 				IRC_Prefetch,
-				m.prefetchValue)
-			m.prefetchValue = 0
+				prefetchValue)
 		}
 	}
 
 	irc := m.registers.Get16(IRC_Prefetch)
 	ir := m.registers.Get16(IR_Decoding)
 
-	// If the prefetch buffer is completely empty then request a new instruction
-	// and do nothing else
-	if irc == 0 && ir == 0 {
-		// Fetch next instruction from PC address and store in prefetch queue
-	} else if irc != 0 && ir == 0 {
-		// If the first prefetch buffer has a value but the second doesn't
-		// then move the first value along and request the next instruction
+	// Start executing the instruction we have
+	if m.state == Idle {
+		// Move the next instruction out from prefetch queue into executing
+		// and clear the prefetch
+		m.registers.Set16(IRD_Executing, ir)
+		m.registers.Set16(IR_Decoding, 0)
+		// Now move the first prefetch value along into decoding and request
+		// another instruction
 		m.registers.Set16(IR_Decoding, irc)
 		m.registers.Set16(IRC_Prefetch, 0)
 		m.requestPrefetch(m.registers.Get32(PC))
+
+		// Increment PC by 2 now we have started executing that instruction
+		m.registers.IncrementPC(2)
+
+		// TODO - start decoding
+
+		m.state = Decode_Cycle1
+	} else if m.state == Decode_Cycle1 {
+		// This is the second cycle for decoding
+		m.state = Execute_Cycle1
+	} else if m.state == Execute_Cycle1 {
+		m.state = Execute_Cycle2
+	} else if m.state == Execute_Cycle2 {
+		opcode := m.registers.Get16(IRD_Executing)
+		m.currentInstruction = m.parser.decode2(opcode)
+
+		m.currentInstruction.Step(&m.registers, m.memory)
+
+		m.state = Idle
 	} else {
-		// We must have an instruction for ready to execute
-
-		// If the first prefetch is empty then request an instruction
-		if irc == 0 {
-			m.requestPrefetch(m.registers.Get32(PC) + 2)
-		}
-
-		// Start executing the instruction we have
-		if m.state == Idle {
-			// Move the next instruction out from prefetch queue into executing
-			// and clear the prefetch
-			m.registers.Set16(IRD_Executing, ir)
-			m.registers.Set16(IR_Decoding, 0)
-			// Now move the first prefetch value along into decoding and request
-			// another instruction
-			m.registers.Set16(IR_Decoding, irc)
-			m.registers.Set16(IRC_Prefetch, 0)
-			m.requestPrefetch(m.registers.Get32(PC))
-
-			// Increment PC by 2 now we have started executing that instruction
-			m.registers.IncrementPC(2)
-
-			// TODO - start decoding
-
-			m.state = Decode_Cycle1
-		} else if m.state == Decode_Cycle1 {
-			// This is the second cycle for decoding
-			m.state = Execute_Cycle1
-		} else if m.state == Execute_Cycle1 {
-			m.state = Execute_Cycle2
-		} else if m.state == Execute_Cycle2 {
-			opcode := m.registers.Get16(IRD_Executing)
-			m.currentInstruction = m.parser.decode2(opcode)
-
-			m.currentInstruction.Step(&m.registers, m.memory)
-
-			// Execution finished???? so either idle and wait for the next instruction
-			// or start decoding the next intruction
-			if m.registers.Get16(IRC_Prefetch) == 0 {
-				m.state = Idle
-			} else {
-				m.state = Decode_Cycle1
-			}
-		} else {
-			panic(fmt.Sprintf("Unhandled CPU state %v", m.state))
-		}
+		panic(fmt.Sprintf("Unhandled CPU state %v", m.state))
 	}
 
 	m.cycle++

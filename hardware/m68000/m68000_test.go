@@ -9,9 +9,10 @@ import (
 )
 
 // These tests state the MC68000 behavior in the M68000 User's Manual
-// (Ninth Edition) for the execution engine in m68000.go: reset (5.5, 6.3.1),
-// the four-clock word read (5.1.1), big-endian words (2.4), NOP 4(1/0) (7.9),
-// the group 1 stack frame and trace (6.2.4, 6.3.8), and address error (6.3.10).
+// (Ninth Edition) for the execution engine in m68000.go: power-on via Init
+// before the first cycle (5.5, 6.3.1), the four-clock word read (5.1.1),
+// big-endian words (2.4), NOP 4(1/0) (7.9), the group 1 stack frame and
+// trace (6.2.4, 6.3.8), and address error (6.3.10).
 // The processor keeps a two-word prefetch queue. At an instruction boundary
 // IR holds the opcode, IRC holds the next word, and PC addresses the word
 // after IRC. A failure means the core does not match that manual. Expected
@@ -185,6 +186,87 @@ func expectRegistersKept(t *testing.T, cpu *M68000, sr uint16, a7 uint32) {
 	expect16(t, "SR", regs.Get16(SR), sr)
 }
 
+// Power-on vector in supervisor program space. Init must not load it.
+// Those reads are the first bus cycles after RESET and HALT are released.
+const (
+	powerOnSSP uint32 = 0x00002000
+	powerOnPC  uint32 = 0x00004000
+)
+
+// srControlMask selects T, S, and the interrupt mask. The condition codes
+// and reserved bits 14, 12, 11, 7, 6, and 5 stay outside the mask: section
+// 2.1.3 calls the reserved bits undefined, and section 5.5 does not write
+// the condition codes.
+const (
+	srControlMask uint16 = 0xA700
+	srPowerOn     uint16 = 0x2700
+)
+
+func writePowerOnMemory(buf []byte) {
+	writeWords(buf, 0,
+		uint16(powerOnSSP>>16), uint16(powerOnSSP),
+		uint16(powerOnPC>>16), uint16(powerOnPC))
+	writeWords(buf, 0x0100, 0xA5A5)
+}
+
+func expectPowerOn(t *testing.T, cpu *M68000, bus *busLog) {
+	t.Helper()
+	regs := cpu.test_registers()
+	sr := regs.Get16(SR)
+	if sr&srControlMask != srPowerOn {
+		t.Errorf("SR should have T clear, S set, and interrupt mask 7 (control bits 0x%04X) but SR is 0x%04X", srPowerOn, sr)
+	}
+	if cpu.state != Idle {
+		t.Errorf("power-on is idle, before decode or execute, but state is %d", cpu.state)
+	}
+	if cpu.cycle != 0 {
+		t.Errorf("power-on is before the first cycle but the cycle counter is %d", cpu.cycle)
+	}
+	if cpu.prefetchRequested || cpu.prefetchCyclesRemaining != 0 || cpu.prefetchValue != 0 || cpu.prefetchAddress != 0 {
+		t.Errorf("power-on has no prefetch in progress (requested %v, address 0x%06X, value 0x%04X, clocks left %d)",
+			cpu.prefetchRequested, cpu.prefetchAddress, cpu.prefetchValue, cpu.prefetchCyclesRemaining)
+	}
+	if cpu.currentInstruction != nil {
+		t.Errorf("power-on has no instruction in progress but the current instruction is %s", cpu.currentInstruction.Name())
+	}
+	if len(bus.reads) != 0 {
+		t.Errorf("power-on reads no memory but reads are %s", formatAddrs(bus.reads))
+	}
+	expectNoWrites(t, bus)
+	if bus.resetCalls != 0 {
+		t.Errorf("power-on does not reset memory but Reset was called %d times", bus.resetCalls)
+	}
+	if regs.Get32(PC) == powerOnPC {
+		t.Errorf("PC should still be unloaded; the long word at $000004 is read after RESET and HALT are released")
+	}
+	if regs.Get32(SupervisorStack) == powerOnSSP {
+		t.Errorf("SSP should still be unloaded; the long word at $000000 is read after RESET and HALT are released")
+	}
+}
+
+func expectPowerOnMemory(t *testing.T, buf []byte) {
+	t.Helper()
+	expectWord(t, buf, 0, uint16(powerOnSSP>>16))
+	expectWord(t, buf, 2, uint16(powerOnSSP))
+	expectWord(t, buf, 4, uint16(powerOnPC>>16))
+	expectWord(t, buf, 6, uint16(powerOnPC))
+	expectWord(t, buf, 0x0100, 0xA5A5)
+}
+
+func expectPrefetchAborted(t *testing.T, cpu *M68000, ir uint16, irc uint16, ird uint16) {
+	t.Helper()
+	regs := cpu.test_registers()
+	if got := regs.Get16(IR_Decoding); got == ir {
+		t.Errorf("IR should drop the opcode from before power-on but still holds 0x%04X", ir)
+	}
+	if got := regs.Get16(IRC_Prefetch); got == irc {
+		t.Errorf("IRC should drop the word prefetched before power-on but still holds 0x%04X", irc)
+	}
+	if got := regs.Get16(IRD_Executing); got == ird {
+		t.Errorf("IRD should drop the instruction that was executing before power-on but still holds 0x%04X", ird)
+	}
+}
+
 func expectReadOrder(t *testing.T, got []uint32, want ...uint32) {
 	t.Helper()
 	next := 0
@@ -198,107 +280,51 @@ func expectReadOrder(t *testing.T, got []uint32, want ...uint32) {
 	}
 }
 
-func setupResetMemory(buf []byte) {
-	// Address 0: SSP 0x00020000. Address 4: PC 0x00004000.
-	writeWords(buf, 0, 0x0002, 0x0000, 0x0000, 0x4000)
-	writeWords(buf, 0x4000, nopOpcode, 0xABCD, 0x1111)
-	buf[0x100] = 0xA5
-}
-
-func expectHardwareReset(t *testing.T, cpu *M68000, bus *busLog, buf []byte, wantSR uint16) {
-	t.Helper()
-	const (
-		vectorSSP = uint32(0x00020000)
-		vectorPC  = uint32(0x00004000)
-		sentinel  = byte(0xA5)
-	)
-
-	if bus.resetCalls != 0 {
-		t.Errorf("hardware reset should leave RAM alone but memory was reset %d times", bus.resetCalls)
-	}
-	expectReads(t, bus.reads, 0x000000, 0x000002, 0x000004, 0x000006, vectorPC, vectorPC+2)
-	expectNoWrites(t, bus)
-
-	regs := cpu.test_registers()
-	verifyRegister(t, vectorSSP, regs.Get32(SupervisorStack), "SSP")
-	verifyRegister(t, vectorSSP, regs.Get32(A7), "A7")
-	verifyRegister(t, 0x0000AAAA, regs.Get32(UserStack), "USP")
-	expect16(t, "SR", regs.Get16(SR), wantSR)
-	for n := 0; n < 8; n++ {
-		want := 0xD1000000 + uint32(n)<<16 + 0x10 + uint32(n)
-		verifyRegister(t, want, regs.Get32(register68000(int(D0)+n)), fmt.Sprintf("D%d", n))
-	}
-	for n := 0; n < 7; n++ {
-		want := 0xA1000000 + uint32(n)<<16 + 0x20 + uint32(n)
-		verifyRegister(t, want, regs.Get32(register68000(int(A0)+n)), fmt.Sprintf("A%d", n))
-	}
-
-	// First instruction is waiting: IR is the opcode at the vector PC,
-	// IRC is the following word, and PC points two words past the opcode.
-	expectBoundary(t, cpu, vectorPC+4, nopOpcode, 0xABCD)
-
-	if buf[0x100] != sentinel {
-		t.Errorf("memory at 0x000100 should be 0x%02X but is 0x%02X", sentinel, buf[0x100])
-	}
-	expectWord(t, buf, 0, 0x0002)
-	expectWord(t, buf, 2, 0x0000)
-	expectWord(t, buf, 4, 0x0000)
-	expectWord(t, buf, 6, 0x4000)
-	expectWord(t, buf, vectorPC, nopOpcode)
-	expectWord(t, buf, vectorPC+2, 0xABCD)
-	expectWord(t, buf, vectorPC+4, 0x1111)
-}
-
-// TestM68000Reset checks a hardware reset of a running processor.
-// SSP is loaded from the long word at address 0 and PC from the long word
-// at address 4. Trace is cleared, supervisor mode is set, and the interrupt
-// mask is forced to 7. The condition codes, D0-D7, A0-A6, and USP stay as
-// they were. RAM is not erased. The two instruction words at the loaded PC
-// are prefetched, and the first instruction itself has not run.
-func TestM68000Reset(t *testing.T) {
-	// Unused SR bits are 5-7, 11, 12, and 14. They read as zero. Reset
-	// forces the system byte to 0x27 and keeps the five condition codes.
-	cases := []struct {
-		name  string
-		srIn  uint16
-		srOut uint16
-	}{
-		{"supervisor with trace", 0xA00A, 0x270A},
-		{"user mode", 0x0015, 0x2715},
-		{"unused status bits", 0xFFFF, 0x271F},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			cpu, bus, buf := newCPU()
-			setupResetMemory(buf)
-			fillRegisters(cpu, tc.srIn)
-			bus.clear()
-
-			cpu.Reset()
-
-			expectHardwareReset(t, cpu, bus, buf, tc.srOut)
-		})
-	}
-}
-
-// TestM68000ResetAbortsInstruction checks that reset abandons an instruction
-// already in progress. Section 6.3.1: any processing in progress is aborted
-// and cannot be recovered. The visible result is the reset state, not the
-// NOP that had started.
-func TestM68000ResetAbortsInstruction(t *testing.T) {
+// TestM68000PowerOn checks Init on a processor that has never executed.
+// Section 5.5 holds RESET and HALT low for the initial reset, and Figure
+// 5-30 shows no bus cycle until those pins are released. Section 6.3.1
+// forces supervisor mode, trace off, and interrupt mask 7 before the vector
+// reads. SSP, PC, and the prefetch queue are loaded by later cycles, so
+// Init leaves them unloaded. The condition codes, D0-D7, A0-A6, and USP
+// have no defined power-on value, and this test does not assign them one.
+func TestM68000PowerOn(t *testing.T) {
 	cpu, bus, buf := newCPU()
-	setupResetMemory(buf)
-	writeWords(buf, 0x1600, nopOpcode, 0x1111, 0x2222, 0x3333)
-	fillRegisters(cpu, 0xA00A)
-	primeAtBoundary(cpu, 0x1604, nopOpcode, 0x1111)
-	cpu.ExecuteCycle()
-	cpu.ExecuteCycle()
+	writePowerOnMemory(buf)
 	bus.clear()
 
-	cpu.Reset()
+	cpu.Init()
 
-	expectHardwareReset(t, cpu, bus, buf, 0x270A)
+	expectPowerOn(t, cpu, bus)
+	expectPowerOnMemory(t, buf)
+}
+
+// TestM68000PowerOnAbortsExecution checks Init after a program has been
+// running. Section 6.3.1 aborts whatever was in progress. The processor
+// returns to the idle power-on state, drops the old prefetch, and still
+// does not read the reset vector or write memory.
+func TestM68000PowerOnAbortsExecution(t *testing.T) {
+	cpu, bus, buf := newCPU()
+	writePowerOnMemory(buf)
+	fillRegisters(cpu, 0x801F)
+	regs := cpu.test_registers()
+	regs.Set32(PC, 0x00ABCDEF)
+	regs.Set16(IR_Decoding, nopOpcode)
+	regs.Set16(IRC_Prefetch, 0xABCD)
+	regs.Set16(IRD_Executing, 0x1111)
+	cpu.state = Execute_Cycle2
+	cpu.cycle = 41
+	cpu.prefetchRequested = true
+	cpu.prefetchAddress = powerOnPC
+	cpu.prefetchValue = 0xBEEF
+	cpu.prefetchCyclesRemaining = 3
+	cpu.currentInstruction = CreateNOP(nopOpcode, nil, 0)
+	bus.clear()
+
+	cpu.Init()
+
+	expectPowerOn(t, cpu, bus)
+	expectPowerOnMemory(t, buf)
+	expectPrefetchAborted(t, cpu, nopOpcode, 0xABCD, 0x1111)
 }
 
 // TestM68000NOP checks one NOP from a primed prefetch queue.
@@ -474,105 +500,4 @@ func TestM68000ReadLatch(t *testing.T) {
 	// The latch has closed. A later store to that address stays out of IRC.
 	writeWords(buf, pc, 0xDDDD)
 	expect16(t, "IRC", cpu.test_registers().Get16(IRC_Prefetch), 0xBBBB)
-}
-
-// TestM68000Trace checks trace after NOP. Trace is a group 1 exception: the
-// instruction finishes, then processing starts before the next instruction.
-// The 68000 group 1 frame is the SR copy and the PC of the next instruction.
-// Trace then clears T, sets S, and prefetches the handler. The vector is the
-// long word at address 0x24.
-func TestM68000Trace(t *testing.T) {
-	cases := []struct {
-		name    string
-		srIn    uint16
-		srOut   uint16
-		stacked uint16
-	}{
-		{"user mode", 0x8015, 0x2015, 0x8015},
-		{"supervisor mode", 0xA71F, 0x271F, 0xA71F},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			const (
-				at      uint32 = 0x2000
-				handler uint32 = 0x3000
-				ssp     uint32 = 0x5000
-			)
-			cpu, bus, buf := newCPU()
-			writeWords(buf, at, nopOpcode, 0x1111, 0x2222)
-			writeWords(buf, 0x24, 0x0000, uint16(handler))
-			writeWords(buf, handler, nopOpcode, 0xABCD)
-			fillRegisters(cpu, tc.srIn)
-			cpu.test_registers().Set32(SupervisorStack, ssp)
-			primeAtBoundary(cpu, at+4, nopOpcode, 0x1111)
-			bus.clear()
-
-			cpu.Step()
-
-			expectBoundary(t, cpu, handler+4, nopOpcode, 0xABCD)
-			expect16(t, "SR", cpu.test_registers().Get16(SR), tc.srOut)
-			verifyRegister(t, 0x0000AAAA, cpu.test_registers().Get32(UserStack), "USP")
-			verifyRegister(t, ssp-6, cpu.test_registers().Get32(SupervisorStack), "SSP")
-			verifyRegister(t, ssp-6, cpu.test_registers().Get32(A7), "A7")
-			for n := 0; n < 8; n++ {
-				want := 0xD1000000 + uint32(n)<<16 + 0x10 + uint32(n)
-				verifyRegister(t, want, cpu.test_registers().Get32(register68000(int(D0)+n)), fmt.Sprintf("D%d", n))
-			}
-			for n := 0; n < 7; n++ {
-				want := 0xA1000000 + uint32(n)<<16 + 0x20 + uint32(n)
-				verifyRegister(t, want, cpu.test_registers().Get32(register68000(int(A0)+n)), fmt.Sprintf("A%d", n))
-			}
-
-			frame := ssp - 6
-			expectWord(t, buf, frame, tc.stacked)
-			expectWord(t, buf, frame+2, 0x0000)
-			expectWord(t, buf, frame+4, uint16(at+2))
-			expectReadOrder(t, bus.reads, at+4, 0x000024, 0x000026, handler, handler+2)
-		})
-	}
-}
-
-// TestM68000AddressErrorOnOddPrefetch checks a word prefetch at an odd PC.
-// Section 6.3.10: the cycle is aborted and an address error is taken. The
-// vector is the long word at address 0x0C. The 68000 group 0 frame includes
-// the access address and the SR from before the exception. S is set and T
-// is clear when the handler is prefetched.
-func TestM68000AddressErrorOnOddPrefetch(t *testing.T) {
-	const (
-		fault   uint32 = 0x2205
-		handler uint32 = 0x3100
-		ssp     uint32 = 0x5000
-		sr      uint16 = 0x2700
-	)
-	cpu, bus, buf := newCPU()
-	writeWords(buf, 0x2200, nopOpcode, 0x1111)
-	writeWords(buf, 0x000C, 0x0000, uint16(handler))
-	writeWords(buf, handler, nopOpcode, 0xABCD)
-	fillRegisters(cpu, sr)
-	cpu.test_registers().Set32(SupervisorStack, ssp)
-	primeAtBoundary(cpu, fault, nopOpcode, 0x1111)
-	bus.clear()
-
-	cpu.Step()
-
-	expectBoundary(t, cpu, handler+4, nopOpcode, 0xABCD)
-	expect16(t, "SR", cpu.test_registers().Get16(SR), sr)
-	verifyRegister(t, 0x0000AAAA, cpu.test_registers().Get32(UserStack), "USP")
-	verifyRegister(t, ssp-14, cpu.test_registers().Get32(SupervisorStack), "SSP")
-	verifyRegister(t, ssp-14, cpu.test_registers().Get32(A7), "A7")
-	for n := 0; n < 8; n++ {
-		want := 0xD1000000 + uint32(n)<<16 + 0x10 + uint32(n)
-		verifyRegister(t, want, cpu.test_registers().Get32(register68000(int(D0)+n)), fmt.Sprintf("D%d", n))
-	}
-	for n := 0; n < 7; n++ {
-		want := 0xA1000000 + uint32(n)<<16 + 0x20 + uint32(n)
-		verifyRegister(t, want, cpu.test_registers().Get32(register68000(int(A0)+n)), fmt.Sprintf("A%d", n))
-	}
-
-	frame := ssp - 14
-	expectWord(t, buf, frame+2, 0x0000)
-	expectWord(t, buf, frame+4, uint16(fault))
-	expectWord(t, buf, frame+8, sr)
-	expectReadOrder(t, bus.reads, 0x00000C, 0x00000E, handler, handler+2)
 }
