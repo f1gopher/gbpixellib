@@ -89,7 +89,6 @@ func primeAtBoundary(cpu *M68000, pc uint32, opcode uint16, extension uint16) {
 	cpu.state = Idle
 	cpu.prefetchRequested = false
 	cpu.prefetchCyclesRemaining = 0
-	cpu.prefetchValue = 0
 	cpu.cycle = 0
 	regs := cpu.test_registers()
 	regs.Set32(PC, pc)
@@ -222,9 +221,9 @@ func expectPowerOn(t *testing.T, cpu *M68000, bus *busLog) {
 	if cpu.cycle != 0 {
 		t.Errorf("power-on is before the first cycle but the cycle counter is %d", cpu.cycle)
 	}
-	if cpu.prefetchRequested || cpu.prefetchCyclesRemaining != 0 || cpu.prefetchValue != 0 || cpu.prefetchAddress != 0 {
-		t.Errorf("power-on has no prefetch in progress (requested %v, address 0x%06X, value 0x%04X, clocks left %d)",
-			cpu.prefetchRequested, cpu.prefetchAddress, cpu.prefetchValue, cpu.prefetchCyclesRemaining)
+	if cpu.prefetchRequested || cpu.prefetchCyclesRemaining != 0 || cpu.prefetchAddress != 0 {
+		t.Errorf("power-on has no prefetch in progress (requested %v, address 0x%06X, clocks left %d)",
+			cpu.prefetchRequested, cpu.prefetchAddress, cpu.prefetchCyclesRemaining)
 	}
 	if cpu.currentInstruction != nil {
 		t.Errorf("power-on has no instruction in progress but the current instruction is %s", cpu.currentInstruction.Name())
@@ -315,7 +314,6 @@ func TestM68000PowerOnAbortsExecution(t *testing.T) {
 	cpu.cycle = 41
 	cpu.prefetchRequested = true
 	cpu.prefetchAddress = powerOnPC
-	cpu.prefetchValue = 0xBEEF
 	cpu.prefetchCyclesRemaining = 3
 	cpu.currentInstruction = CreateNOP(nopOpcode, nil, 0)
 	bus.clear()
