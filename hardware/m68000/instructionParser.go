@@ -477,8 +477,8 @@ func (i *instructionParser) decode2(opcode uint16) instruction {
 			// 	result = CreateTST(opcode, code, offset)
 		} else if opcode&swapMask == swapPrefix {
 			return CreateSWAP(opcode)
-			// } else if opcode&extMask == extPrefix {
-			// 	result = CreateEXT(opcode)
+		} else if opcode&extMask == extPrefix {
+			return CreateEXT(opcode)
 			// } else if opcode&movemMask == movemPrefix {
 			// 	result = CreateMOVEM(opcode, code, offset)
 			// } else if opcode&notMask == notPrefix {
